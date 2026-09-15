@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
-import { deleteFileFromDrive } from "@/lib/google-drive";
+import { deleteFile } from "@/lib/storage";
 
 export const runtime = "nodejs";
 
@@ -20,10 +20,10 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
   }
 
   if (certificate.driveFileId) {
-    await deleteFileFromDrive(certificate.driveFileId).catch((err) => {
-      // Log but don't block the certificate deletion on a Drive hiccup —
-      // an orphaned Drive file is recoverable manually; a stuck Trash entry is worse.
-      console.error("Failed to delete file from Google Drive:", err);
+    await deleteFile(certificate.driveFileId).catch((err) => {
+      // Log but don't block the certificate deletion on a storage hiccup —
+      // an orphaned file is recoverable manually; a stuck Trash entry is worse.
+      console.error("Failed to delete file from Supabase Storage:", err);
     });
   }
 

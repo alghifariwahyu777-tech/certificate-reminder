@@ -2,19 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getClientSession } from "@/lib/client-auth";
 import { prisma } from "@/lib/prisma";
-import { getDriveFileStream } from "@/lib/google-drive";
+import { getFileStream } from "@/lib/storage";
 
 export const runtime = "nodejs";
 
 /**
  * GET /api/files/[fileId]
  *
- * Proxies a document stored in Google Drive to the browser. The Drive file
+ * Proxies a document stored in Supabase Storage to the browser. The bucket
  * itself is never made public — access is gated here:
  *  - Internal Admin/Viewer: full access to any document.
  *  - Client Portal user: only documents belonging to their own client's
  *    certificates or renewal history — checked against the DB before
- *    fetching anything from Drive, so one client can never enumerate and
+ *    fetching anything from Storage, so one client can never enumerate and
  *    open another client's documents.
  */
 export async function GET(request: NextRequest, context: { params: Promise<{ fileId: string }> }) {
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ fil
   }
 
   try {
-    const { stream, mimeType, fileName } = await getDriveFileStream(params.fileId);
+    const { stream, mimeType, fileName } = await getFileStream(params.fileId);
     const isDownload = request.nextUrl.searchParams.get("download") === "1";
 
     const webStream = new ReadableStream({
@@ -65,9 +65,9 @@ export async function GET(request: NextRequest, context: { params: Promise<{ fil
       },
     });
   } catch (err) {
-    console.error("Failed to fetch file from Google Drive:", err);
+    console.error("Failed to fetch file from Supabase Storage:", err);
     return NextResponse.json(
-      { message: "Dokumen tidak ditemukan atau gagal dimuat dari Google Drive." },
+      { message: "Dokumen tidak ditemukan atau gagal dimuat." },
       { status: 404 }
     );
   }

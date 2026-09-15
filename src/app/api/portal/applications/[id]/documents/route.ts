@@ -3,9 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getClientSession } from "@/lib/client-auth";
 import { MAX_FILE_SIZE, ACCEPTED_FILE_TYPES } from "@/lib/validations";
 import { detectFileType } from "@/lib/file-signature";
-import { uploadFileToDrive } from "@/lib/google-drive";
+import { uploadFile } from "@/lib/storage";
 import { logAudit } from "@/lib/audit";
-import crypto from "crypto";
 
 export const runtime = "nodejs";
 
@@ -66,10 +65,9 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
   }
 
   const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-  const uniqueName = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}-${safeName}`;
 
   try {
-    const { fileId, fileUrl } = await uploadFileToDrive({ buffer, filename: uniqueName, mimeType: detectedType });
+    const { path, fileUrl } = await uploadFile({ buffer, filename: safeName, mimeType: detectedType });
 
     const previous = await prisma.applicationDocument.findFirst({
       where: { applicationId: application.id, serviceRequirementId },
@@ -82,7 +80,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         serviceRequirementId,
         version: (previous?.version || 0) + 1,
         fileUrl,
-        driveFileId: fileId,
+        driveFileId: path,
         fileMimeType: detectedType,
         status: "UPLOADED",
       },
@@ -98,7 +96,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
     return NextResponse.json({ document }, { status: 201 });
   } catch (err) {
-    console.error("Google Drive upload failed:", err);
+    console.error("Supabase Storage upload failed:", err);
     return NextResponse.json(
       { message: "Gagal mengunggah dokumen. Silakan coba lagi." },
       { status: 500 }

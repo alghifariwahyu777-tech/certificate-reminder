@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { MAX_FILE_SIZE, ACCEPTED_FILE_TYPES } from "@/lib/validations";
 import { detectFileType } from "@/lib/file-signature";
-import { uploadFileToDrive } from "@/lib/google-drive";
-import crypto from "crypto";
+import { uploadFile } from "@/lib/storage";
 
 export const runtime = "nodejs";
 
@@ -39,22 +38,21 @@ export async function POST(request: NextRequest) {
   }
 
   const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-  const uniqueName = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}-${safeName}`;
 
   try {
-    const { fileId, fileUrl } = await uploadFileToDrive({
+    const { path, fileUrl } = await uploadFile({
       buffer,
-      filename: uniqueName,
+      filename: safeName,
       mimeType: detectedType,
     });
 
-    return NextResponse.json({ fileUrl, driveFileId: fileId, fileMimeType: detectedType });
+    return NextResponse.json({ fileUrl, driveFileId: path, fileMimeType: detectedType });
   } catch (err) {
-    console.error("Google Drive upload failed:", err);
+    console.error("Supabase Storage upload failed:", err);
     return NextResponse.json(
       {
         message:
-          "Gagal mengunggah ke Google Drive. Pastikan GOOGLE_SERVICE_ACCOUNT_KEY dan GOOGLE_DRIVE_FOLDER_ID sudah dikonfigurasi dengan benar, dan folder sudah di-share ke email service account.",
+          "Gagal mengunggah dokumen. Pastikan SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY sudah dikonfigurasi dengan benar, dan bucket 'documents' sudah dibuat.",
         error: err instanceof Error ? err.message : String(err),
       },
       { status: 500 }
