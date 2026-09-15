@@ -1,0 +1,410 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --- Database provider: PostgreSQL (Supabase) ---
+// `url` is used for normal app queries — point it at Supabase's connection
+// pooler (Transaction mode, port 6543) so this works from serverless too.
+// `directUrl` is used only when running migrations — point it at the direct
+// connection (port 5432), since DDL statements don't play well through the
+// pooler. Both come from Supabase's "Connect" panel.
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("ADMIN") // "ADMIN" | "VIEWER"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  createdAt    DateTime      @default(now())
+  certificates Certificate[]
+}
+
+model Client {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  contactPerson String?
+  email         String?
+  phone         String?
+  address       String?
+  createdAt     DateTime      @default(now())
+  certificates  Certificate[]
+  clientUsers   ClientUser[]
+  applications  Application[]
+}
+
+/// Login accounts for the Client Portal — separate identity space from the
+/// internal `User` model (Admin/Viewer). Each ClientUser belongs to exactly
+/// one Client and can only ever see that client's own data.
+model ClientUser {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name      String
+  email     String   @unique
+  password  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([clientId])
+}
+
+model Department {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  createdAt    DateTime      @default(now())
+  certificates Certificate[]
+}
+
+model Certificate {
+  id                String   @id @default(cuid())
+  certificateNumber String   @unique
+  certificateName   String
+  issuingBody       String?
+  issueDate         DateTime
+  validFrom         DateTime?
+  expiryDate        DateTime
+  storageLocation   String?
+  pic               String
+  picEmail          String?
+  ccEmail           String?
+  description       String?
+  notes             String?
+  fileUrl           String? // app-internal proxy URL, e.g. /api/files/{driveFileId}
+  driveFileId       String? // Google Drive file ID — needed to delete/replace the file
+  fileMimeType      String? // e.g. "application/pdf" | "image/jpeg" — Drive URLs have no extension to sniff
+  categoryId        String
+  category          Category    @relation(fields: [categoryId], references: [id])
+  clientId          String
+  client            Client      @relation(fields: [clientId], references: [id])
+  departmentId      String?
+  department        Department? @relation(fields: [departmentId], references: [id])
+  applicationId     String?     @unique // set when this certificate was issued from an Application (Phase 7)
+  application       Application? @relation(fields: [applicationId], references: [id])
+  serviceId         String? // which Service this was issued under, if via an Application
+  service           Service?    @relation(fields: [serviceId], references: [id])
+  renewals          Renewal[]
+  surveillances     Surveillance[]
+  emailLogs         EmailLog[]
+  notifications     Notification[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  deletedAt         DateTime? // soft delete — set instead of removing the row; see /trash
+
+  @@index([categoryId])
+  @@index([clientId])
+  @@index([departmentId])
+  @@index([expiryDate])
+  @@index([deletedAt])
+  @@index([serviceId])
+}
+
+model Renewal {
+  id                   String      @id @default(cuid())
+  certificateId        String
+  certificate          Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  renewalDate          DateTime    @default(now())
+  previousNumber       String
+  previousExpiryDate   DateTime
+  newCertificateNumber String
+  newValidFrom         DateTime?
+  newExpiryDate        DateTime
+  notes                String?
+  fileUrl              String?
+  driveFileId          String?
+  fileMimeType         String?
+  createdAt            DateTime    @default(now())
+
+  @@index([certificateId])
+}
+
+/// Singleton row (id is always "default") holding the editable reminder
+/// email template. Two editing modes share one row:
+///  - SIMPLE (default): plain-text fields below are dropped into a fixed,
+///    pre-styled layout — friendly for non-technical admins.
+///  - ADVANCED: `bodyHtml` (raw HTML with {{placeholder}} tokens) is used
+///    verbatim instead, for admins who want full control over markup.
+/// See lib/email-template.ts for the token list and rendering logic.
+model EmailTemplate {
+  id          String   @id @default("default")
+  mode        String   @default("SIMPLE") // "SIMPLE" | "ADVANCED"
+  subject     String
+  companyName String?
+  systemName  String?
+  greeting    String?
+  introText   String?
+  closingText String?
+  buttonText  String?
+  footerText  String?
+  bodyHtml    String? // only used when mode = "ADVANCED"
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+}
+
+/// One row per certificate per reminder milestone (90/60/30/14/7/3/1/0 days
+/// before expiry). The unique constraint on (certificateId, milestoneDays)
+/// is what prevents the same reminder from ever being sent twice.
+model EmailLog {
+  id            String      @id @default(cuid())
+  certificateId String
+  certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  milestoneDays Int
+  recipient     String
+  cc            String?
+  status        String // "SENT" | "FAILED" | "SKIPPED"
+  errorMessage  String?
+  sentAt        DateTime    @default(now())
+
+  @@unique([certificateId, milestoneDays])
+  @@index([certificateId])
+}
+
+/// Append-only record of who did what. Written by lib/audit.ts from within
+/// API route handlers — never edited or deleted through the app itself.
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  userName    String
+  action      String // "LOGIN" | "LOGOUT" | "CREATE" | "UPDATE" | "DELETE" | "RESTORE" | "PERMANENT_DELETE" | "UPLOAD" | "RENEW" | "SEND_REMINDER"
+  entityType  String // "Certificate" | "Category" | "Department" | "Client" | "User" | "Renewal" | "Auth" | "Reminder"
+  entityId    String?
+  description String
+  createdAt   DateTime @default(now())
+
+  @@index([entityType])
+  @@index([createdAt])
+}
+
+/// In-app notification center. One row per (certificate, type) so a
+/// certificate doesn't spam duplicate "expiring soon" notifications — it
+/// naturally gets a fresh row once it crosses into "expired".
+model Notification {
+  id            String      @id @default(cuid())
+  certificateId String
+  certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  type          String // "EXPIRING_SOON" | "EXPIRED"
+  message       String
+  status        String      @default("NEW") // "NEW" | "READ" | "DONE"
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([certificateId, type])
+  @@index([status])
+}
+
+// =========================================================================
+// PHASE 4 — SERVICE CATALOG
+// Configuration data for certification services. Workflow is entirely
+// data-driven per service (WorkflowStage rows) — never hard-coded by
+// service name, per the system's core design principle. Phase 5+
+// (Application, tracking) will read this configuration rather than define
+// its own per-service logic.
+// =========================================================================
+
+/// A certification service offered to clients (e.g. "ISO 9001", "Halal").
+/// Each service owns its own document requirements and workflow stages.
+model Service {
+  id                       String              @id @default(cuid())
+  name                     String              @unique
+  code                     String              @unique
+  description              String?
+  isActive                 Boolean             @default(true)
+  requiresAudit            Boolean             @default(true)
+  requiresSurveillance     Boolean             @default(false)
+  surveillanceCount        Int? // how many surveillance visits after certificate issuance
+  surveillanceIntervalMonths Int? // months between each surveillance
+  estimatedProcessingDays  Int? // shown to clients as a rough expectation, not an SLA guarantee
+  createdAt                DateTime            @default(now())
+  updatedAt                DateTime            @updatedAt
+  requirements             ServiceRequirement[]
+  stages                   WorkflowStage[]
+  applications             Application[]
+  certificates             Certificate[]
+}
+
+/// Master catalog of document types (e.g. "NIB", "Legal Document") reused
+/// across services, so admins pick from one consistent list rather than
+/// retyping names per service.
+model DocumentType {
+  id           String               @id @default(cuid())
+  name         String               @unique
+  description  String?
+  createdAt    DateTime             @default(now())
+  requirements ServiceRequirement[]
+}
+
+/// Join between a Service and a DocumentType — what's required (or
+/// optional) to submit for that specific service's initial application.
+model ServiceRequirement {
+  id               String       @id @default(cuid())
+  serviceId        String
+  service          Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  documentTypeId   String
+  documentType     DocumentType @relation(fields: [documentTypeId], references: [id])
+  mandatory        Boolean      @default(true)
+  allowedFileTypes String       @default("pdf,jpg,png") // comma-separated extensions, no dot
+  maxFileSizeMB    Int          @default(10)
+  templateUrl      String? // optional link/proxy URL to a downloadable template
+  displayOrder     Int          @default(0)
+  createdAt        DateTime     @default(now())
+  applicationDocuments ApplicationDocument[]
+
+  @@unique([serviceId, documentTypeId])
+  @@index([serviceId])
+}
+
+/// One stage in a service's certification workflow. Sequence + stageType
+/// are configuration, not code — Phase 6 tracking will walk these rows in
+/// `sequence` order for a given service, regardless of what the service is
+/// named. `clientVisible`/`clientDescription` control what a client sees in
+/// their portal vs. internal-only stages.
+model WorkflowStage {
+  id                String   @id @default(cuid())
+  serviceId         String
+  service           Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  name              String
+  stageType         String // APPLICATION | DOCUMENT_REVIEW | PREPARATION | AUDIT | ASSESSMENT |
+                            // CERTIFICATION_DECISION | CERTIFICATE_ISSUANCE | SURVEILLANCE | COMPLETED | CUSTOM
+  sequence          Int
+  slaDays           Int?
+  picRole           String? // free-text role/department expected to own this stage
+  clientVisible     Boolean  @default(true)
+  clientDescription String? // plain-language description shown to clients (vs. internal name)
+  createdAt         DateTime @default(now())
+  applicationStages ApplicationStage[]
+
+  @@unique([serviceId, sequence])
+  @@index([serviceId])
+}
+
+// =========================================================================
+// PHASE 5 — APPLICATION
+// Client-submitted certification applications: initial document upload,
+// internal review with revision requests, and document versioning. Once an
+// application is Approved here, later phases (6-7) take over process
+// tracking and certificate issuance — this phase owns intake only.
+// =========================================================================
+
+/// A certification application submitted by a client for one Service.
+/// Starts as DRAFT while the client is still filling it out / uploading
+/// documents, then moves through review states once submitted.
+model Application {
+  id                String    @id @default(cuid())
+  applicationNumber String    @unique // e.g. CERT-APP-2026-000123
+  clientId          String
+  client            Client    @relation(fields: [clientId], references: [id])
+  serviceId         String
+  service           Service   @relation(fields: [serviceId], references: [id])
+  contactName       String
+  contactPosition   String?
+  contactEmail      String?
+  contactPhone      String?
+  description       String?
+  notes             String? // internal-only note, never shown to the client
+  status            String    @default("DRAFT")
+  // DRAFT | SUBMITTED | DOCUMENT_REVIEW | REVISION_REQUIRED | APPROVED | REJECTED | CANCELLED | COMPLETED
+  submittedAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  documents         ApplicationDocument[]
+  stages            ApplicationStage[]
+  certificate       Certificate?
+
+  @@index([clientId])
+  @@index([serviceId])
+  @@index([status])
+}
+
+/// One uploaded document against one of the service's requirements. Old
+/// versions are kept (not deleted) when a client re-uploads after a
+/// revision request — `version` increments and prior rows stay as history,
+/// per the system's document-versioning requirement.
+model ApplicationDocument {
+  id                   String             @id @default(cuid())
+  applicationId        String
+  application          Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  serviceRequirementId String
+  serviceRequirement   ServiceRequirement @relation(fields: [serviceRequirementId], references: [id])
+  version              Int                @default(1)
+  fileUrl              String
+  driveFileId          String
+  fileMimeType         String
+  status               String             @default("UPLOADED") // UPLOADED | APPROVED | REVISION_REQUIRED
+  reviewComment        String?
+  reviewedBy           String?
+  reviewedAt           DateTime?
+  createdAt            DateTime           @default(now())
+
+  @@index([applicationId])
+  @@index([serviceRequirementId])
+}
+
+// =========================================================================
+// PHASE 6 — TRACKING
+// Once an Application is APPROVED, one ApplicationStage row is generated
+// per WorkflowStage on its Service (in `sequence` order) — this is the
+// per-application progress instance of the service's configured template.
+// Internal updates status/dates/PIC here; clients see a read-only timeline
+// filtered to `clientVisible` stages, using `clientDescription` as the
+// plain-language label — never the internal stage name or notes.
+// =========================================================================
+
+model ApplicationStage {
+  id              String        @id @default(cuid())
+  applicationId   String
+  application     Application   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  workflowStageId String
+  workflowStage   WorkflowStage @relation(fields: [workflowStageId], references: [id])
+  status          String        @default("PENDING") // PENDING | IN_PROGRESS | COMPLETED
+  startDate       DateTime?
+  targetDate      DateTime? // startDate + workflowStage.slaDays, set when the stage starts
+  completedDate   DateTime?
+  picName         String?
+  internalNote    String? // internal-only, never shown to the client
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([applicationId, workflowStageId])
+  @@index([applicationId])
+}
+
+// =========================================================================
+// PHASE 8 — SURVEILLANCE
+// Auto-generated when a Certificate is issued for a service that requires
+// surveillance (Service.requiresSurveillance) — one row per visit, spaced
+// `surveillanceIntervalMonths` apart starting from the certificate's issue
+// date. No document upload here by design, same principle as Phase 6
+// tracking: schedule, status, PIC, and a result note — nothing more.
+// =========================================================================
+
+model Surveillance {
+  id             String    @id @default(cuid())
+  certificateId  String
+  certificate    Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  sequenceNumber Int // 1st, 2nd, ... surveillance visit for this certificate
+  scheduledDate  DateTime
+  status         String    @default("SCHEDULED") // SCHEDULED | CONFIRMED | IN_PROGRESS | COMPLETED | CANCELLED | POSTPONED
+  completedDate  DateTime?
+  picName        String?
+  notes          String? // internal-only
+  result         String? // outcome shown to the client once completed
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([certificateId, sequenceNumber])
+  @@index([certificateId])
+  @@index([status])
+  @@index([scheduledDate])
+}
+

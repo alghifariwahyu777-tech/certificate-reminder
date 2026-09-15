@@ -1,0 +1,145 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+body {
+  background-color: #f7f7f4;
+  color: #0f172a;
+  font-family: var(--font-body);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.dark body {
+  background-color: #0b1120;
+  color: #e2e8f0;
+}
+
+/* Ledger-style hairline background texture for the sidebar */
+.ledger-rail {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.035) 0px,
+    rgba(255, 255, 255, 0.035) 1px,
+    transparent 1px,
+    transparent 28px
+  );
+}
+
+.stamp-badge {
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 4px;
+  border-width: 1px;
+  border-style: solid;
+}
+
+/* Skeleton loading placeholder */
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+.skeleton {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  background-color: #e2e8f0;
+  border-radius: 4px;
+}
+.dark .skeleton {
+  background-color: #1e293b;
+}
+
+/*
+ * Blanket dark-mode overrides for the handful of "default" text/surface
+ * utility classes used throughout the app (text-ink, bg-white, slate
+ * borders, etc.). Components with bespoke dark: variants (Card, Button,
+ * Input...) already set matching colors explicitly, so this just extends
+ * the same palette to page-level markup without touching every file.
+ */
+.dark .text-ink {
+  color: #f1f5f9;
+}
+.dark .text-slate-400 {
+  color: #64748b;
+}
+.dark .text-slate-500 {
+  color: #94a3b8;
+}
+.dark .text-slate-600 {
+  color: #cbd5e1;
+}
+.dark .text-slate-700 {
+  color: #e2e8f0;
+}
+.dark .bg-white {
+  background-color: #0f172a;
+}
+.dark .bg-slate-50 {
+  background-color: #1e293b;
+}
+.dark .bg-slate-50\/60 {
+  background-color: rgba(30, 41, 59, 0.6);
+}
+.dark .border-slate-100 {
+  border-color: #1e293b;
+}
+.dark .border-slate-200 {
+  border-color: #334155;
+}
+.dark .hover\:bg-slate-50:hover {
+  background-color: #1e293b;
+}
+.dark .hover\:bg-slate-100:hover {
+  background-color: #334155;
+}
+
+/* visible keyboard focus */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

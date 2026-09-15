@@ -1,0 +1,441 @@
+# Certificate Reminder — PT Sucofindo (Persero)
+
+Sistem internal untuk mengelola sertifikat klien yang menggunakan jasa sertifikasi, inspeksi,
+dan kalibrasi PT Sucofindo (Persero) — lengkap dengan pemantauan masa berlaku, riwayat
+perpanjangan, reminder email, notification center, audit log, kontrol akses berbasis role, dan
+export laporan.
+
+## Teknologi
+
+| Layer          | Teknologi                                   |
+| -------------- | -------------------------------------------- |
+| Framework      | Next.js 15 (App Router)                      |
+| Bahasa         | TypeScript                                   |
+| Styling        | Tailwind CSS                                 |
+| ORM / Database | Prisma ORM + SQLite *(siap dimigrasikan ke PostgreSQL/Supabase)* |
+| Form & Validasi| React Hook Form + Zod                        |
+| Auth           | Session JWT (jose) + bcrypt, role Admin/Viewer |
+| Email          | Resend (mode simulasi otomatis jika API key belum diisi) |
+| Export         | ExcelJS (.xlsx) + PDFKit (.pdf)              |
+| Grafik         | Recharts                                     |
+| Ikon           | Lucide React                                 |
+
+## Fitur
+
+### Penyempurnaan Terbaru
+- **Phase 9 — Reporting**: 3 laporan baru melengkapi 6 laporan Certificate yang sudah ada —
+  **Status Permohonan** (semua Application + lama proses hingga sertifikat terbit), **Jadwal
+  Surveillance** (seluruh kunjungan surveillance lintas sertifikat), dan **Kepatuhan SLA**
+  (aktual vs target hari per tahap workflow, status Tepat Waktu/Terlambat/Berjalan). Sama
+  seperti laporan lain, bisa diunduh Excel atau PDF dari `/reports`.
+- **Phase 8 — Surveillance**: begitu sertifikat diterbitkan dari layanan yang membutuhkan
+  surveillance (`Service.requiresSurveillance`), sistem otomatis membuat jadwal
+  `Surveillance` — satu per kunjungan, berjarak `surveillanceIntervalMonths` bulan dari
+  tanggal terbit. Admin kelola status (Terjadwal/Dikonfirmasi/Berjalan/Selesai/Dibatalkan/
+  Ditunda), PIC, dan hasil dari halaman detail sertifikat. Jadwal yang lewat tapi belum
+  selesai otomatis ditandai "Terlambat" (dihitung on-the-fly, sama seperti status sertifikat
+  — tidak butuh job terpisah). Klien melihat jadwal surveillance terdekat di Dashboard Portal.
+- **Phase 7 — Certificate Issuance**: begitu permohonan berstatus "Disetujui", tombol
+  **"Terbitkan Sertifikat"** muncul di `/applications/[id]`. Mengisi form (nomor, kategori,
+  tanggal, PIC, upload dokumen) dan submit akan **otomatis**: membuat record `Certificate`
+  baru (langsung masuk sistem reminder harian yang sudah ada), menyelesaikan `Application`
+  (status → Selesai), dan menutup seluruh tahap tracking (Phase 6) yang tersisa. Klien melihat
+  banner "Sertifikat telah diterbitkan" di halaman permohonannya, dengan link ke Sertifikat
+  Saya. *(Penjadwalan Surveillance otomatis untuk layanan yang membutuhkannya — lihat Phase 8
+  di Roadmap.)*
+- **Phase 6 — Tracking**: begitu permohonan disetujui, sistem otomatis membuat timeline
+  progress dari `WorkflowStage` layanan tersebut (`ApplicationStage`, satu per tahap, sesuai
+  urutan). Internal update status tiap tahap (Belum Dimulai/Sedang Berjalan/Selesai), PIC, dan
+  catatan internal dari `/applications/[id]`. Klien lihat versi read-only di
+  `/portal/applications/[id]` — hanya tahap yang ditandai "tampilkan ke klien", dengan bahasa
+  yang lebih mudah dipahami (`clientDescription`), bukan nama tahap internal.
+- **Phase 5 — Application**: klien bisa mengajukan sertifikasi online dari Client Portal
+  (`/portal/applications/new`), upload dokumen per checklist persyaratan layanan, lalu
+  mengajukan. Internal me-review tiap dokumen (`/applications/[id]`) — setujui atau minta
+  revisi dengan komentar — dan mengatur status keseluruhan permohonan (Draft → Diajukan →
+  Review → Revisi/Disetujui/Ditolak). Dokumen mendukung **versioning** — versi lama tidak
+  dihapus saat klien mengunggah ulang setelah revisi diminta.
+- **Phase 4 — Service Catalog**: master data layanan sertifikasi (`Service`), jenis dokumen
+  (`DocumentType`), persyaratan dokumen per layanan (`ServiceRequirement`), dan tahap workflow
+  per layanan (`WorkflowStage`) — **seluruhnya data-driven**, bukan hard-code per nama layanan.
+  Admin kelola dari `/services` (+ `/services/[id]` untuk persyaratan & workflow) dan
+  `/document-types`. Klien bisa lihat katalog read-only dari `/portal/services`.
+- **Migrasi ke PostgreSQL (Supabase)**: `schema.prisma` sekarang pakai provider `postgresql`
+  dengan `url` (pooler, untuk query normal) dan `directUrl` (koneksi langsung, khusus migrasi)
+  — pola standar Prisma+Supabase.
+- **Penyimpanan dokumen pindah ke Google Drive**: menggantikan `public/uploads` yang tidak
+  bertahan di deployment serverless. File diunggah via Service Account, diakses lewat proxy
+  `/api/files/[fileId]` yang mensyaratkan login — dokumen di Drive sendiri tetap privat.
+- **Client Portal (fondasi)**: login terpisah untuk klien (`/portal/login`), dashboard &
+  daftar sertifikat sendiri, admin bisa membuat akun portal per klien dari halaman `/clients`.
+- **Soft delete + Trash**: menghapus sertifikat (satu atau bulk) sekarang memindahkannya ke
+  `/trash` (Admin only), bukan menghapus permanen. Dari sana bisa **dipulihkan** atau **dihapus
+  permanen**. Semua query lain (dashboard, laporan, reminder, notifikasi) otomatis mengabaikan
+  sertifikat yang ada di Trash.
+- **Dashboard dioptimalkan**: statistik sekarang dihitung lewat `COUNT()` langsung di database,
+  bukan memuat seluruh baris sertifikat ke memori lalu dihitung manual — tetap cepat walau data
+  sudah ribuan baris.
+- **Import massal dari Excel**: halaman `/certificate/import` (Admin only) — unggah file `.xlsx`
+  untuk menambahkan banyak sertifikat sekaligus. Sediakan tombol download template, dan
+  Kategori/Klien/Divisi yang belum ada otomatis dibuat berdasarkan nama di spreadsheet. Baris
+  dengan nomor sertifikat yang sudah ada akan dilewati (tidak menimpa data lama), dan setiap
+  baris dilaporkan status individualnya (dibuat/dilewati/error).
+- **Rate limiting login**: maksimal 5 percobaan gagal per kombinasi IP+email dalam 15 menit,
+  mencegah brute-force password.
+- **Validasi environment variable saat startup**: kalau `.env` belum lengkap, aplikasi
+  menampilkan pesan jelas ("variable X belum diisi") alih-alih error teknis yang membingungkan.
+- **Dark mode**: toggle ikon matahari/bulan di navbar (dan halaman login), tersimpan di
+  `localStorage`, tanpa efek "flash" warna terang sesaat sebelum halaman selesai dimuat.
+- **Skeleton loading**: tabel sertifikat, audit log, dan notifikasi kini menampilkan placeholder
+  animasi saat memuat data, bukan lagi spinner polos di tengah layar.
+- **Export PDF diperbaiki**: tabel sekarang punya lebar kolom proporsional (bukan rata sama
+  rata) dan border yang rapi di setiap baris/kolom, termasuk untuk laporan yang lebih dari satu
+  halaman. Juga ditambahkan `serverExternalPackages: ["pdfkit"]` di `next.config.js` — ini
+  memperbaiki bug umum di mana PDFKit gagal menemukan file font bawaannya saat di-bundle Next.js.
+- **Template email — mode Sederhana & Lanjutan**: halaman `/email-template` (Admin only) kini
+  punya dua mode. **Sederhana** (default): form biasa berisi Nama Perusahaan, Salam Pembuka,
+  Paragraf Pembuka/Penutup, Teks Tombol, dan Footer — tabel detail sertifikat (nama, nomor,
+  kategori, dst.) otomatis ditampilkan tanpa perlu diatur. **Lanjutan**: textarea HTML mentah
+  untuk yang butuh kontrol penuh atas tata letak. Kedua mode punya live preview di sisi kanan dan
+  tombol reset ke default masing-masing. Tombol "Lihat Contoh Template" di Dashboard membuka
+  preview lengkap di tab baru.
+- **Ubah password sendiri** dari halaman Profile (tidak perlu lewat Admin lain).
+- **Validasi upload diperketat**: file diverifikasi dari *magic bytes* aslinya, bukan cuma
+  ekstensi/MIME type yang bisa dipalsukan.
+- **Dashboard KPI lengkap**: breakdown <30/<60/<90 hari (kumulatif), grafik tren bulanan 12
+  bulan ke depan, dan widget "Aktivitas Terbaru" (Admin).
+- **CC Email**: setiap sertifikat bisa punya email atasan/manager yang otomatis di-CC saat
+  reminder terkirim.
+- **Bulk actions**: pilih banyak sertifikat sekaligus di halaman Certificate untuk dihapus
+  bersamaan (Admin only).
+
+
+### Manajemen Sertifikat
+- CRUD lengkap (Nomor, Nama, Klien, Kategori, Divisi, Instansi Penerbit, PIC & Email PIC,
+  Tanggal Terbit/Berlaku/Berakhir, Lokasi Penyimpanan, Deskripsi, Catatan).
+- Upload dokumen PDF/JPG/PNG hingga 20 MB dengan preview.
+- **Renewal**: riwayat perpanjangan tersimpan permanen, data aktif otomatis ter-update.
+- Pencarian, filter (klien/kategori/divisi/status/tahun), sorting, pagination.
+- Status dihitung otomatis (Active / Expiring Soon ≤30 hari / Expired).
+
+### Data Pendukung
+**Clients**, **Category**, **Departments** — masing-masing dengan CRUD sendiri.
+
+### Auth & Role (Admin / Viewer)
+- **Administrator**: akses penuh ke seluruh fitur, termasuk halaman Users & Audit Log.
+- **Viewer**: hanya melihat dashboard, data, unduh dokumen, dan histori — tombol ubah data
+  disembunyikan di UI *dan* ditolak di API meski URL diakses langsung.
+- Halaman **Users** (Admin-only): kelola pengguna & role, dengan proteksi anti-self-lockout.
+
+### Email Reminder
+- Milestone: **90, 60, 30, 14, 7, 3, 1 hari** sebelum berakhir, dan **hari-H**.
+- Template HTML profesional (logo, detail sertifikat, tombol aksi, footer otomatis).
+- Anti-duplikat via tabel `EmailLog` — satu (sertifikat, milestone) hanya terkirim sekali.
+- Kartu **Reminder Email** di Dashboard (Admin-only): tombol trigger manual + log terbaru.
+- Mode simulasi otomatis jika `RESEND_API_KEY` kosong (tidak pernah error, hanya mencatat log).
+- **Belum ada cron aktif** — lihat bagian *Mengaktifkan Cron* untuk mengaktifkannya.
+
+### Notification Center
+- Notifikasi otomatis dibuat untuk setiap sertifikat yang masuk status **Expiring Soon** atau
+  **Expired** (disinkronkan setiap kali data notifikasi diambil — tidak perlu cron terpisah).
+- Ikon lonceng di Navbar dengan badge jumlah baru, polling tiap 60 detik, dropdown quick-view.
+- Halaman penuh `/notifications` dengan tab status: **Baru / Sudah Dibaca / Selesai
+  Ditindaklanjuti**, bisa diakses Admin maupun Viewer.
+
+### Audit Log
+- Mencatat: login, logout, tambah/ubah/hapus sertifikat, kategori, divisi, klien, pengguna,
+  renewal, pengiriman reminder, dan ekspor laporan.
+- Halaman `/audit-log` (Admin-only): filter aksi, entitas, pencarian, pagination.
+- Penulisan log bersifat *fire-and-forget* — kegagalan mencatat log tidak pernah membatalkan
+  aksi utama pengguna.
+
+### Export Laporan
+- 6 jenis laporan: **Sertifikat Aktif**, **Akan Berakhir**, **Kedaluwarsa**, **Histori
+  Renewal**, **Rekap per Divisi**, **Rekap per Kategori**.
+- Setiap laporan bisa diunduh sebagai **Excel (.xlsx)** atau **PDF** dari halaman `/reports`.
+- Setiap ekspor tercatat di Audit Log.
+
+### Service Catalog (`/services`, `/document-types`) — Phase 4
+- **`Service`**: master layanan sertifikasi — nama, kode, deskripsi, estimasi hari proses,
+  butuh audit?, butuh surveillance? (+ jumlah & interval bulan jika ya).
+- **`DocumentType`**: master jenis dokumen yang dipakai ulang lintas layanan (mis. "NIB",
+  "Legal Document") — dikelola terpisah di `/document-types`.
+- **`ServiceRequirement`**: persyaratan dokumen per layanan (wajib/opsional, tipe file yang
+  diterima, ukuran maks, urutan tampil) — dikelola dari halaman detail tiap layanan.
+- **`WorkflowStage`**: tahap-tahap proses sertifikasi per layanan (nama, tipe tahap, urutan,
+  SLA hari, PIC role, visibilitas & deskripsi untuk klien) — **sepenuhnya data-driven**,
+  bukan `if service == "X"` di kode, sesuai prinsip inti sistem ini.
+- Klien melihat versi read-only di **Katalog Layanan** (`/portal/services`): deskripsi,
+  daftar dokumen yang perlu disiapkan, dan alur proses (hanya tahap yang ditandai
+  "tampilkan ke klien").
+
+### Client Portal (`/portal`) — Fondasi
+- **Login terpisah** dari sisi internal — cookie session, identity model (`ClientUser`), dan
+  middleware sendiri. Tidak pernah tercampur dengan sesi Admin/Viewer.
+- **Dashboard klien**: ringkasan status sertifikat milik perusahaannya sendiri (Aktif/Akan
+  Berakhir/Kedaluwarsa), daftar "Perlu Perhatian".
+- **Sertifikat Saya**: daftar lengkap + lihat/download dokumen (lewat proxy yang sama dengan
+  sisi internal, dengan verifikasi kepemilikan — klien A tidak bisa akses dokumen klien B).
+- **Katalog Layanan**: lihat layanan sertifikasi yang tersedia, persyaratan dokumen, dan alur
+  prosesnya (lihat bagian Service Catalog di atas).
+- **Pengajuan Sertifikasi** (`/portal/applications`): klien mengajukan sertifikasi baru, upload
+  dokumen per checklist, lihat status & catatan revisi dari reviewer — lihat bagian Application
+  di atas.
+- **Admin mengelola akun portal** klien dari halaman `/clients` — tombol kunci di tiap kartu
+  klien untuk tambah/edit/nonaktifkan/hapus akun login klien tersebut.
+- Widget "Jadwal Surveillance" masih berupa placeholder jujur — fitur ini termasuk fase
+  pengembangan berikutnya (Workflow Tracking, Certificate Issuance, Surveillance) yang belum
+  dibangun.
+
+## Struktur Folder
+
+```text
+certificate-reminder/
+├── prisma/
+│   ├── schema.prisma   # User(role), Category, Department, Client, Certificate, Renewal,
+│   │                   # EmailLog, AuditLog, Notification
+│   └── seed.ts          # 1 admin, 1 viewer, 7 kategori, 5 divisi, 6 klien, 20 sertifikat, 1 renewal
+├── src/
+│   ├── app/
+│   │   ├── (auth)/login/
+│   │   ├── (app)/                     # Route group terautentikasi (dengan sidebar)
+│   │   │   ├── dashboard/             # + Reminder Center (admin only)
+│   │   │   ├── certificate/
+│   │   │   ├── notifications/
+│   │   │   ├── reports/
+│   │   │   ├── clients/, category/, departments/
+│   │   │   ├── users/                 # Admin only
+│   │   │   ├── audit-log/             # Admin only
+│   │   │   └── profile/
+│   │   └── api/
+│   │       ├── auth/login, auth/logout
+│   │       ├── certificates, certificates/[id], certificates/[id]/renewals
+│   │       ├── clients, categories, departments, users   (mutasi = admin only)
+│   │       ├── notifications, notifications/[id], notifications/mark-all-read
+│   │       ├── reports/export         # ?type=...&format=xlsx|pdf
+│   │       ├── audit-log              # Admin only
+│   │       ├── upload
+│   │       └── reminders/run          # Manual trigger (admin) atau cron (CRON_SECRET)
+│   ├── components/
+│   │   ├── ui/, layout/ (+ NotificationBell), certificate/, client/, category/, department/,
+│   │   │   user/, dashboard/ (+ ReminderCenter), notification/, audit/
+│   ├── lib/
+│   │   ├── prisma.ts, auth.ts, status.ts, validations.ts, certificate-payload.ts
+│   │   ├── email.ts, reminder.ts        # Email Reminder
+│   │   ├── notifications.ts             # Notification Center
+│   │   ├── audit.ts                     # Audit Log
+│   │   ├── reports.ts, excel-report.ts, pdf-report.ts   # Export Laporan
+│   ├── middleware.ts       # Auth guard + role-based page redirect
+│   └── types/
+└── public/uploads/
+```
+
+## Instalasi
+
+**Prasyarat:** Node.js 18.18+ dan npm, project Supabase (PostgreSQL), project Google Cloud
+dengan Drive API (untuk penyimpanan dokumen).
+
+```bash
+cd certificate-reminder
+npm install
+cp .env.example .env
+# Ubah SESSION_SECRET menjadi string acak yang panjang & rahasia.
+# Isi DATABASE_URL & DIRECT_URL dengan connection string Supabase Anda.
+# Isi GOOGLE_SERVICE_ACCOUNT_KEY & GOOGLE_DRIVE_FOLDER_ID — lihat bagian
+# "Setup Google Drive" di bawah untuk cara mendapatkannya.
+```
+
+### Instalasi baru
+
+```bash
+npx prisma migrate dev --name init
+npx prisma db seed
+npm run dev
+```
+
+### Upgrade dari versi sebelumnya (skema berubah — PostgreSQL, ClientUser, driveFileId, dll.)
+
+Karena provider database berubah dari SQLite ke PostgreSQL, migration history lama tidak bisa
+dipakai lagi — hapus dan buat ulang dari nol terhadap database Postgres Anda:
+
+```bash
+rm -rf prisma/migrations
+npx prisma migrate dev --name init_postgres
+npx prisma db seed
+npm run dev
+```
+
+Buka [http://localhost:3000](http://localhost:3000) untuk portal internal, atau
+[http://localhost:3000/portal/login](http://localhost:3000/portal/login) untuk Client Portal.
+
+## Setup Google Drive (penyimpanan dokumen)
+
+Aplikasi ini menyimpan dokumen sertifikat/renewal di Google Drive, bukan di server itu sendiri.
+Tanpa konfigurasi ini, fitur upload dokumen tidak akan berfungsi — fitur lain tetap berjalan.
+
+**1. Buat Google Cloud Project & aktifkan Drive API**
+- Buka [console.cloud.google.com](https://console.cloud.google.com), buat project baru
+- Menu **APIs & Services → Enable APIs and Services** → cari **"Google Drive API"** → **Enable**
+
+**2. Buat Service Account & unduh key JSON**
+- Menu **APIs & Services → Credentials → Create Credentials → Service Account**
+- Buka service account yang baru dibuat → tab **Keys** → **Add Key → Create new key** → **JSON**
+
+**3. Buat folder di Google Drive & bagikan ke service account**
+- Buat folder baru (mis. "Certificate Reminder - Dokumen")
+- Klik kanan → **Share** → tempel email service account (field `client_email` di file JSON,
+  bentuknya `nama@project.iam.gserviceaccount.com`) → akses **Editor**
+- Salin **folder ID** dari URL: `drive.google.com/drive/folders/`**`INI_FOLDER_ID_NYA`**
+
+**4. Isi `.env`**
+```
+GOOGLE_SERVICE_ACCOUNT_KEY='{"type":"service_account", ...seluruh isi file JSON...}'
+GOOGLE_DRIVE_FOLDER_ID="folder_id_dari_langkah_3"
+```
+Kalau tanda kutip JSON bermasalah di shell/hosting Anda, encode dulu ke base64 (kode otomatis
+mendeteksi & mendecode base64):
+```bash
+# Mac/Linux
+base64 -i nama-file-key.json | tr -d '\n'
+# Windows PowerShell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("nama-file-key.json"))
+```
+
+> **Keamanan**: dokumen di Drive **tidak** dibuat publik. Pengguna (internal maupun Client
+> Portal) mengakses dokumen lewat `/api/files/[fileId]`, yang mensyaratkan login terlebih
+> dahulu — dan untuk Client Portal, hanya dokumen milik klien yang bersangkutan yang bisa
+> diakses (diverifikasi lewat database sebelum meneruskan permintaan ke Drive).
+
+## Cara Login
+
+**Internal** ([http://localhost:3000/login](http://localhost:3000/login)):
+```
+Administrator : admin@certificatereminder.id  / admin123
+Viewer (demo) : viewer@certificatereminder.id / viewer123
+```
+
+**Client Portal** ([http://localhost:3000/portal/login](http://localhost:3000/portal/login)):
+```
+Klien (demo) : portal@nusantarapangan.co.id / portal123
+```
+
+> Ganti semua password ini sebelum digunakan di lingkungan produksi.
+
+## Mengaktifkan Email Reminder Sungguhan
+
+1. Buat akun gratis di [resend.com](https://resend.com), ambil API key-nya.
+2. Isi di `.env`:
+   ```
+   RESEND_API_KEY="re_xxxxxxxxxxxx"
+   EMAIL_FROM="Certificate Reminder <reminder@domainanda.com>"
+   APP_URL="https://domain-produksi-anda.com"
+   ```
+3. Restart server. Isi field **Email PIC** di setiap sertifikat — reminder hanya terkirim kalau
+   field ini diisi.
+
+### Mengaktifkan Cron (pengecekan otomatis harian)
+
+**Opsi A — Vercel Cron**: tambahkan `vercel.json` di root project:
+```json
+{ "crons": [{ "path": "/api/reminders/run", "schedule": "0 1 * * *" }] }
+```
+Isi `CRON_SECRET` di environment variables Vercel untuk mengamankan endpoint (periksa dokumentasi
+Vercel Cron terbaru untuk cara header otentikasinya dikirim).
+
+**Opsi B — crontab di VPS/server biasa**:
+```bash
+0 8 * * * curl -s -X POST https://domain-anda.com/api/reminders/run \
+  -H "Authorization: Bearer $CRON_SECRET"
+```
+
+**Opsi C — manual**: tombol "Kirim Reminder Sekarang" di Dashboard (Admin).
+
+## Database & Migration
+
+- Skema di `prisma/schema.prisma`. Setelah mengubahnya, jalankan
+  `npx prisma migrate dev --name <deskripsi>`.
+- Lihat/ubah data visual: `npx prisma studio`.
+- Reset total + seed ulang: `npx prisma migrate reset`.
+
+## Build untuk Produksi
+
+```bash
+npm run build
+npm run start
+```
+
+`npm run build` sekarang otomatis menjalankan `prisma generate` dan `prisma migrate deploy`
+sebelum `next build` — jadi migration database ikut diterapkan setiap kali build dijalankan
+(termasuk saat deploy ke Vercel), tanpa langkah manual tambahan.
+
+> **Catatan PDFKit**: generator PDF (`lib/pdf-report.ts`) menggunakan font standar bawaan PDF
+> (Helvetica) sehingga tidak butuh file font tambahan. Pastikan target deployment menjalankan
+> runtime Node.js standar untuk API routes (bukan Edge Runtime), karena PDFKit memerlukan akses
+> filesystem Node.js saat membaca metrik font internalnya. Route yang butuh ini
+> (`/api/upload`, `/api/files/[fileId]`, `/api/reports/export`, `/api/certificates/import*`)
+> sudah ditandai `export const runtime = "nodejs"` secara eksplisit di kodenya.
+
+### Deploy ke Vercel (Hobby)
+
+1. **Push project ke GitHub**, lalu import ke [vercel.com](https://vercel.com) sebagai project baru.
+2. **Isi Environment Variables** di Project Settings → Environment Variables (samakan dengan
+   `.env` lokal Anda): `DATABASE_URL`, `DIRECT_URL`, `SESSION_SECRET`,
+   `GOOGLE_SERVICE_ACCOUNT_KEY`, `GOOGLE_DRIVE_FOLDER_ID`, `RESEND_API_KEY`, `EMAIL_FROM`,
+   `CRON_SECRET`. Untuk `APP_URL`, isi dengan domain Vercel Anda setelah deploy pertama
+   (mis. `https://nama-project.vercel.app`), lalu redeploy sekali agar link di email reminder
+   mengarah ke domain yang benar.
+3. **Deploy**. Build pertama akan otomatis membuat seluruh tabel di database Supabase Anda
+   (lewat `prisma migrate deploy` di build script). Setelah itu, jalankan seed **sekali** dari
+   komputer lokal Anda (bukan dari Vercel) dengan `DATABASE_URL`/`DIRECT_URL` produksi di
+   `.env` lokal: `npx prisma db seed`.
+4. **`vercel.json`** sudah disertakan untuk menjadwalkan `/api/reminders/run` sekali sehari —
+   ini sudah disesuaikan dengan batas plan **Hobby** (maksimal 1x/hari, waktu tidak presisi,
+   bisa meleset dalam rentang 1 jam). Kalau nanti upgrade ke Pro, jadwal bisa dipercepat/lebih
+   presisi dengan mengubah `schedule` di `vercel.json`.
+
+**Batasan plan Hobby yang perlu diperhatikan** (karena sistem ini dipakai sebagai aplikasi
+internal perusahaan, bukan proyek pribadi):
+- Plan Hobby resminya untuk pemakaian personal/non-komersial — pertimbangkan upgrade ke **Pro**
+  begitu sistem ini benar-benar dipakai operasional oleh PT Sucofindo.
+- Timeout function default 60 detik — cukup untuk upload dokumen, export laporan, dan
+  reminder harian pada skala data saat ini, tapi perlu dipantau kalau data sudah sangat besar.
+- Kuota Active CPU 4 jam/bulan — cukup untuk pemakaian ringan-menengah; kalau makin banyak
+  staf yang mengakses rutin, ini bisa jadi alasan utama untuk upgrade ke Pro.
+
+## Roadmap Selanjutnya
+
+Sistem ini telah berkembang menjadi **Certification Application, Tracking & Certificate
+Management System** yang utuh — seluruh **9 fase** dari spesifikasi awal sudah dibangun:
+
+- ~~Phase 1-2 — Foundation & Certificate Reminder~~ **✅ Selesai**
+- ~~Phase 3 — Client Portal~~ **✅ Selesai**
+- ~~Phase 4 — Service Catalog~~ **✅ Selesai**
+- ~~Phase 5 — Application~~ **✅ Selesai**
+- ~~Phase 6 — Tracking~~ **✅ Selesai**
+- ~~Phase 7 — Certificate Issuance~~ **✅ Selesai**
+- ~~Phase 8 — Surveillance~~ **✅ Selesai** *(catatan: reminder email surveillance belum ada —
+  saat ini hanya tampil di Dashboard Portal, belum dikirim via email seperti reminder
+  sertifikat)*
+- ~~Phase 9 — Reporting~~ **✅ Selesai**
+
+### Kemungkinan penyempurnaan lanjutan (di luar 9 fase awal)
+
+- **Reminder email untuk surveillance** — kirim email H-30/H-7 sebelum jadwal surveillance,
+  meniru pola reminder sertifikat yang sudah ada.
+- **Notifikasi email untuk event Application** — saat ini Notification Center hanya mencakup
+  sertifikat; event seperti "Dokumen Perlu Revisi" atau "Sertifikat Diterbitkan" belum memicu
+  email/notifikasi otomatis ke klien (klien harus cek portal secara manual).
+- **Dashboard Internal untuk Application/Surveillance** — Dashboard saat ini masih fokus ke
+  Certificate; bisa ditambah ringkasan "Permohonan Baru", "Perlu Direview", "Surveillance
+  Terlambat" di satu tempat.
+- **Multi-dokumen per requirement** — saat ini satu `ServiceRequirement` hanya menyimpan
+  dokumen versi terbaru per aplikasi; lampiran pendukung tambahan belum didukung.
+- Item infrastruktur dari sebelumnya (belum krusial): Supabase Storage sebagai redundansi
+  Google Drive, migrasi ke NextAuth/Auth.js jika suatu saat perlu SSO.
+
+Item infrastruktur yang masih relevan:
+- **Supabase Storage** untuk backup/redundansi dokumen selain Google Drive (opsional).
+- **NextAuth/Auth.js**: bisa menggantikan sistem auth saat ini (JWT+bcrypt+role) tanpa mengubah
+  struktur `role` yang sudah ada di model `User`/`ClientUser`, jika suatu saat perlu SSO/OAuth.
+- **Dark Mode** dan komponen UI tambahan (skeleton loading, drawer) — sudah ada di sisi
+  internal, belum sepenuhnya konsisten di Client Portal.
