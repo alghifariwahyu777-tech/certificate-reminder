@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { LoginForm } from "@/components/LoginForm";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ShieldCheck } from "lucide-react";
@@ -51,7 +52,7 @@ export default function LoginPage() {
             Masukkan email dan kata sandi Anda untuk mengelola registry sertifikat.
           </p>
 
-          <LoginForm />
+          <Suspense fallback={null}>            <LoginForm />          </Suspense>
         </div>
       </div>
     </div>

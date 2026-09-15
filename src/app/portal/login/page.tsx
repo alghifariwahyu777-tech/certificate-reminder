@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { PortalLoginForm } from "@/components/portal/PortalLoginForm";
 import { Building2 } from "lucide-react";
 
@@ -48,7 +49,7 @@ export default function PortalLoginPage() {
             Khusus untuk klien PT Sucofindo (Persero) yang menggunakan jasa sertifikasi.
           </p>
 
-          <PortalLoginForm />
+          <Suspense fallback={null}>            <PortalLoginForm />          </Suspense>
         </div>
       </div>
     </div>
