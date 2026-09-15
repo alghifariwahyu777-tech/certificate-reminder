@@ -5,7 +5,9 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Certificate Reminder | PT Sucofindo (Persero)",
-  description: "Sistem internal untuk mengelola dan memantau masa berlaku sertifikat klien PT Sucofindo (Persero).",
+  description:
+    "Ensuring Quality, Protecting Trust — sistem internal untuk mengelola dan memantau masa berlaku sertifikat klien PT Sucofindo (Persero).",
+  icons: { icon: "/brand/logo-sucofindo-icon.png" },
 };
 
 // Runs before React hydrates so the correct theme class is already on

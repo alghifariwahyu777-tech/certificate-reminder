@@ -22,9 +22,9 @@ import {
   FileType,
   ClipboardList,
   LogOut,
-  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SucofindoMark } from "@/components/brand/SucofindoLogo";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false },
@@ -64,10 +64,15 @@ export function MobileNav({ role }: { role: "ADMIN" | "VIEWER" }) {
           <div className="w-64 bg-ink text-slate-300 flex flex-col ledger-rail">
             <div className="flex items-center justify-between px-5 py-5 border-b border-white/10">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded bg-accent/20 text-accent-light">
-                  <ShieldCheck className="h-4.5 w-4.5" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shrink-0 p-1">
+                  <SucofindoMark size={20} />
                 </div>
-                <p className="font-display font-semibold text-white text-sm">Certificate</p>
+                <div>
+                  <p className="font-display font-semibold text-white text-sm leading-tight">Certificate Reminder</p>
+                  <p className="font-mono text-[8px] tracking-[0.1em] text-brand-teal uppercase leading-tight mt-0.5">
+                    Ensuring Quality, Protecting Trust
+                  </p>
+                </div>
               </div>
               <button onClick={() => setOpen(false)} aria-label="Tutup menu" className="text-slate-400">
                 <X className="h-5 w-5" />

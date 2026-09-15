@@ -19,9 +19,9 @@ import {
   FileType,
   ClipboardList,
   LogOut,
-  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SucofindoMark } from "@/components/brand/SucofindoLogo";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false },
@@ -48,15 +48,15 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" }) {
   return (
     <aside className="ledger-rail hidden md:flex md:w-60 md:flex-col bg-ink text-slate-300 min-h-screen shrink-0">
       <div className="flex items-center gap-2.5 px-5 py-5 border-b border-white/10">
-        <div className="flex h-8 w-8 items-center justify-center rounded bg-accent/20 text-accent-light">
-          <ShieldCheck className="h-4.5 w-4.5" />
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shrink-0 p-1">
+          <SucofindoMark size={20} />
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="font-display font-semibold text-white text-sm leading-tight">
             Certificate Reminder
           </p>
-          <p className="font-mono text-[10px] tracking-widest text-slate-400 uppercase leading-tight">
-            PT Sucofindo (Persero)
+          <p className="font-mono text-[9px] tracking-[0.1em] text-brand-teal uppercase leading-tight mt-0.5">
+            Ensuring Quality, Protecting Trust
           </p>
         </div>
       </div>

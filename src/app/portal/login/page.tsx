@@ -1,16 +1,21 @@
 import { Suspense } from "react";
 import { PortalLoginForm } from "@/components/portal/PortalLoginForm";
-import { Building2 } from "lucide-react";
+import { SucofindoLogo, SucofindoMark } from "@/components/brand/SucofindoLogo";
 
 export default function PortalLoginPage() {
   return (
     <div className="min-h-screen flex bg-paper dark:bg-slate-950">
-      <div className="hidden lg:flex lg:w-1/2 bg-ink ledger-rail text-white flex-col justify-between p-12">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded bg-accent/20 text-accent-light">
-            <Building2 className="h-5 w-5" />
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-ink via-ink to-brand-blueDark ledger-rail text-white flex-col justify-between p-12">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white shrink-0 p-1.5">
+            <SucofindoMark size={26} />
           </div>
-          <span className="font-display font-semibold text-lg">Client Portal</span>
+          <div>
+            <span className="font-display font-semibold text-lg block leading-tight">Client Portal</span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-brand-teal">
+              Ensuring Quality, Protecting Trust
+            </span>
+          </div>
         </div>
 
         <div>
@@ -33,12 +38,10 @@ export default function PortalLoginPage() {
 
       <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
         <div className="w-full max-w-sm">
-          <div className="lg:hidden flex items-center gap-2.5 mb-8 justify-center">
-            <div className="flex h-9 w-9 items-center justify-center rounded bg-ink text-white">
-              <Building2 className="h-5 w-5" />
-            </div>
-            <span className="font-display font-semibold text-lg text-ink dark:text-slate-100">
-              Client Portal
+          <div className="flex flex-col items-center mb-8">
+            <SucofindoLogo height={40} className="mb-2" />
+            <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-brand-blue dark:text-brand-teal">
+              Ensuring Quality, Protecting Trust
             </span>
           </div>
 
@@ -49,7 +52,9 @@ export default function PortalLoginPage() {
             Khusus untuk klien PT Sucofindo (Persero) yang menggunakan jasa sertifikasi.
           </p>
 
-          <Suspense fallback={null}>            <PortalLoginForm />          </Suspense>
+          <Suspense fallback={null}>
+            <PortalLoginForm />
+          </Suspense>
         </div>
       </div>
     </div>

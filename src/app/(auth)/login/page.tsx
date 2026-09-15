@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { LoginForm } from "@/components/LoginForm";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { ShieldCheck } from "lucide-react";
+import { SucofindoLogo, SucofindoMark } from "@/components/brand/SucofindoLogo";
 
 export default function LoginPage() {
   return (
@@ -11,12 +11,17 @@ export default function LoginPage() {
       </div>
 
       {/* Left: ledger rail panel, hidden on small screens */}
-      <div className="hidden lg:flex lg:w-1/2 bg-ink ledger-rail text-white flex-col justify-between p-12">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded bg-accent/20 text-accent-light">
-            <ShieldCheck className="h-5 w-5" />
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-ink via-ink to-brand-blueDark ledger-rail text-white flex-col justify-between p-12">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white shrink-0 p-1.5">
+            <SucofindoMark size={26} />
           </div>
-          <span className="font-display font-semibold text-lg">Certificate Reminder</span>
+          <div>
+            <span className="font-display font-semibold text-lg block leading-tight">Certificate Reminder</span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-brand-teal">
+              Ensuring Quality, Protecting Trust
+            </span>
+          </div>
         </div>
 
         <div>
@@ -40,11 +45,11 @@ export default function LoginPage() {
       {/* Right: login form */}
       <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
         <div className="w-full max-w-sm">
-          <div className="lg:hidden flex items-center gap-2.5 mb-8 justify-center">
-            <div className="flex h-9 w-9 items-center justify-center rounded bg-ink text-white">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-            <span className="font-display font-semibold text-lg text-ink">Certificate Reminder</span>
+          <div className="flex flex-col items-center mb-8">
+            <SucofindoLogo height={40} className="mb-2" />
+            <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-brand-blue dark:text-brand-teal">
+              Ensuring Quality, Protecting Trust
+            </span>
           </div>
 
           <h1 className="font-display text-2xl font-semibold text-ink mb-1.5">Masuk ke akun Admin</h1>
@@ -52,7 +57,9 @@ export default function LoginPage() {
             Masukkan email dan kata sandi Anda untuk mengelola registry sertifikat.
           </p>
 
-          <Suspense fallback={null}>            <LoginForm />          </Suspense>
+          <Suspense fallback={null}>
+            <LoginForm />
+          </Suspense>
         </div>
       </div>
     </div>
