@@ -4,7 +4,8 @@ import { getSession, requireAdmin } from "@/lib/auth";
 import { renewalSchema } from "@/lib/validations";
 import { logAudit } from "@/lib/audit";
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const session = await getSession();
   if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
@@ -16,7 +17,8 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   return NextResponse.json({ renewals });
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const auth = await requireAdmin();
   if ("error" in auth) return auth.error;
 

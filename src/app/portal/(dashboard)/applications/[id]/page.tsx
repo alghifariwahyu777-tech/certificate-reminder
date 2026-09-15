@@ -3,7 +3,8 @@ import { getClientSession } from "@/lib/client-auth";
 import { prisma } from "@/lib/prisma";
 import { PortalApplicationDetail } from "@/components/portal/PortalApplicationDetail";
 
-export default async function PortalApplicationDetailPage({ params }: { params: { id: string } }) {
+export default async function PortalApplicationDetailPage(context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const session = await getClientSession();
   if (!session) return null;
 

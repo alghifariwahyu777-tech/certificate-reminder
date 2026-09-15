@@ -6,7 +6,8 @@ import { Navbar } from "@/components/layout/Navbar";
 import { ApplicationReviewDetail } from "@/components/application/ApplicationReviewDetail";
 import { ArrowLeft } from "lucide-react";
 
-export default async function ApplicationDetailPage({ params }: { params: { id: string } }) {
+export default async function ApplicationDetailPage(context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const session = await getSession();
 
   const [application, categories, departments] = await Promise.all([

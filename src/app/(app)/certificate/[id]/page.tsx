@@ -12,7 +12,8 @@ import { getDaysRemaining } from "@/lib/status";
 import { formatDate } from "@/lib/utils";
 import { Pencil, Download, ArrowLeft, FileWarning } from "lucide-react";
 
-export default async function CertificateDetailPage({ params }: { params: { id: string } }) {
+export default async function CertificateDetailPage(context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const session = await getSession();
   const [certificate, renewals, surveillances] = await Promise.all([
     prisma.certificate.findFirst({

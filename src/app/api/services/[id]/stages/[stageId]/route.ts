@@ -6,8 +6,9 @@ import { logAudit } from "@/lib/audit";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; stageId: string } }
+  context: { params: Promise<{ id: string; stageId: string }> }
 ) {
+  const params = await context.params;
   const auth = await requireAdmin();
   if ("error" in auth) return auth.error;
 
@@ -49,8 +50,9 @@ export async function PUT(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string; stageId: string } }
+  context: { params: Promise<{ id: string; stageId: string }> }
 ) {
+  const params = await context.params;
   const auth = await requireAdmin();
   if ("error" in auth) return auth.error;
 

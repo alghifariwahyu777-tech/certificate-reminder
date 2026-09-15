@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 
-export async function POST(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const auth = await requireAdmin();
   if ("error" in auth) return auth.error;
 

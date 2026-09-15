@@ -17,7 +17,8 @@ const STAGE_TYPE_LABELS: Record<string, string> = {
   CUSTOM: "Kustom",
 };
 
-export default async function PortalServiceDetailPage({ params }: { params: { id: string } }) {
+export default async function PortalServiceDetailPage(context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const service = await prisma.service.findFirst({
     where: { id: params.id, isActive: true },
     include: {

@@ -17,7 +17,8 @@ export const runtime = "nodejs";
  *    fetching anything from Drive, so one client can never enumerate and
  *    open another client's documents.
  */
-export async function GET(request: NextRequest, { params }: { params: { fileId: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ fileId: string }> }) {
+  const params = await context.params;
   const internalSession = await getSession();
   const clientSession = internalSession ? null : await getClientSession();
 

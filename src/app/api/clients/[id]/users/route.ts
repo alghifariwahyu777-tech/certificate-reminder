@@ -10,7 +10,8 @@ const createClientUserSchema = z.object({
   password: z.string().min(6, "Password minimal 6 karakter"),
 });
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const auth = await requireAdmin();
   if ("error" in auth) return auth.error;
 
@@ -23,7 +24,8 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   return NextResponse.json({ clientUsers });
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const auth = await requireAdmin();
   if ("error" in auth) return auth.error;
 

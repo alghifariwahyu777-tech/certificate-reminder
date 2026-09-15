@@ -18,7 +18,8 @@ import { logAudit } from "@/lib/audit";
  * Reminder emails need no separate "activation" step — the existing daily
  * reminder check already scans every non-deleted Certificate automatically.
  */
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const auth = await requireAdmin();
   if ("error" in auth) return auth.error;
 

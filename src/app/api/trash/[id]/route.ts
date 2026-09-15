@@ -7,7 +7,8 @@ import { deleteFileFromDrive } from "@/lib/google-drive";
 export const runtime = "nodejs";
 
 /** Permanently deletes a certificate that is already in Trash — this cannot be undone. */
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const auth = await requireAdmin();
   if ("error" in auth) return auth.error;
 

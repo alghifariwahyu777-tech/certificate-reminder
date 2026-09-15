@@ -17,7 +17,8 @@ export const runtime = "nodejs";
  * REVISION_REQUIRED) — once submitted for review, documents are locked
  * until the internal reviewer sends it back for revision.
  */
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const session = await getClientSession();
   if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 

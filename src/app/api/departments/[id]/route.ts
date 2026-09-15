@@ -4,7 +4,8 @@ import { getSession, requireAdmin } from "@/lib/auth";
 import { departmentSchema } from "@/lib/validations";
 import { logAudit } from "@/lib/audit";
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const auth = await requireAdmin();
   if ("error" in auth) return auth.error;
 
@@ -41,7 +42,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   return NextResponse.json({ department });
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const auth = await requireAdmin();
   if ("error" in auth) return auth.error;
 

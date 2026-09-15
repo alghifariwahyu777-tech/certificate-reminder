@@ -7,7 +7,8 @@ const updateSchema = z.object({
   status: z.enum(["NEW", "READ", "DONE"]),
 });
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const session = await getSession();
   if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 

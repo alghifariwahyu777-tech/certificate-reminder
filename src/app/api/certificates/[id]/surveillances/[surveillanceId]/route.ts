@@ -7,8 +7,9 @@ import { logAudit } from "@/lib/audit";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; surveillanceId: string } }
+  context: { params: Promise<{ id: string; surveillanceId: string }> }
 ) {
+  const params = await context.params;
   const auth = await requireAdmin();
   if ("error" in auth) return auth.error;
 

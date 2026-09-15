@@ -4,7 +4,8 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { CertificateForm } from "@/components/certificate/CertificateForm";
 
-export default async function EditCertificatePage({ params }: { params: { id: string } }) {
+export default async function EditCertificatePage(context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const session = await getSession();
   const [certificate, categories, clients, departments] = await Promise.all([
     prisma.certificate.findFirst({

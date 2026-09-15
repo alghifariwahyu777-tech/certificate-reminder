@@ -6,7 +6,8 @@ import { Navbar } from "@/components/layout/Navbar";
 import { ServiceDetailManager } from "@/components/service/ServiceDetailManager";
 import { ArrowLeft } from "lucide-react";
 
-export default async function ServiceDetailPage({ params }: { params: { id: string } }) {
+export default async function ServiceDetailPage(context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const session = await getSession();
 
   const [service, documentTypes] = await Promise.all([
