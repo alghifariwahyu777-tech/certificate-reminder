@@ -9,7 +9,7 @@ export async function GET() {
   if ("error" in auth) return auth.error;
 
   const buffer = await generateImportTemplate();
-  return new NextResponse(buffer, {
+  return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": 'attachment; filename="template-import-sertifikat.xlsx"',

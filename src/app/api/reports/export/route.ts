@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
   try {
     if (format === "xlsx") {
       const buffer = await generateExcelReport(table);
-      return new NextResponse(buffer, {
+      return new NextResponse(new Uint8Array(buffer), {
         headers: {
           "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
           "Content-Disposition": `attachment; filename="${fileSlug}.xlsx"`,
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     }
 
     const pdfBuffer = await generatePdfReport(table);
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${fileSlug}.pdf"`,
