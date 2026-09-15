@@ -250,6 +250,7 @@ export function ApplicationReviewDetail({
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("folder", "certificates");
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       const body = await res.json();
       if (!res.ok) {

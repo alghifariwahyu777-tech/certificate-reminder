@@ -26,19 +26,25 @@ export type StorageUploadResult = {
   fileUrl: string; // app-internal proxy URL, e.g. /api/files/{encoded path}
 };
 
+export type StorageFolder = "certificates" | "renewals" | "applications" | "misc";
+
 /**
- * Uploads a file buffer to the private "documents" bucket. Access is gated
- * entirely by our own /api/files/[fileId] proxy — never by a public Storage
- * URL — so the bucket stays private and every request re-checks the
- * caller's session and (for Client Portal users) document ownership.
+ * Uploads a file buffer to the private "documents" bucket, under a folder
+ * that reflects what it's for (e.g. "certificates/…", "applications/…").
+ * This is purely for browsability in the Supabase dashboard — the actual
+ * link between a file and its record always comes from the database
+ * (`driveFileId` column), never from the path itself, since the file is
+ * uploaded before the record that will reference it exists.
  */
 export async function uploadFile(params: {
   buffer: Buffer;
   filename: string;
   mimeType: string;
+  folder?: StorageFolder;
 }): Promise<StorageUploadResult> {
   const supabase = getStorageClient();
-  const path = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}-${params.filename}`;
+  const folder = params.folder || "misc";
+  const path = `${folder}/${Date.now()}-${crypto.randomBytes(4).toString("hex")}-${params.filename}`;
 
   const { error } = await supabase.storage.from(BUCKET_NAME).upload(path, params.buffer, {
     contentType: params.mimeType,
@@ -49,7 +55,7 @@ export async function uploadFile(params: {
     throw new Error(`Supabase Storage upload failed: ${error.message}`);
   }
 
-  return { path, fileUrl: `/api/files/${encodeURIComponent(path)}` };
+  return { path, fileUrl: `/api/files/${path}` };
 }
 
 /** Permanently deletes a file from Storage. Safe to call even if already gone. */
@@ -84,9 +90,9 @@ export async function getFileStream(path: string): Promise<StorageFileStream> {
   const stream = Readable.from(buffer);
 
   // Supabase's download() doesn't return the original filename, so we
-  // derive a reasonable one from the storage path (strip our timestamp
-  // prefix) and fall back to the blob's reported MIME type.
-  const fileName = path.replace(/^\d+-[0-9a-f]{8}-/, "") || "document";
+  // derive a reasonable one from the storage path (strip the folder prefix
+  // and our timestamp prefix) and fall back to the blob's reported MIME type.
+  const fileName = path.replace(/^[^/]+\//, "").replace(/^\d+-[0-9a-f]{8}-/, "") || "document";
 
   return {
     stream,

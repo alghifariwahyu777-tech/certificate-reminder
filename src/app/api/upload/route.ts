@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { MAX_FILE_SIZE, ACCEPTED_FILE_TYPES } from "@/lib/validations";
 import { detectFileType } from "@/lib/file-signature";
-import { uploadFile } from "@/lib/storage";
+import { uploadFile, type StorageFolder } from "@/lib/storage";
 
 export const runtime = "nodejs";
+
+const ALLOWED_FOLDERS: StorageFolder[] = ["certificates", "renewals", "applications", "misc"];
 
 export async function POST(request: NextRequest) {
   const auth = await requireAdmin();
@@ -12,6 +14,13 @@ export async function POST(request: NextRequest) {
 
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
+  const requestedFolder = formData.get("folder") as string | null;
+  // Whitelisted, never taken as a raw path — the client only ever picks
+  // among these four fixed values, so there's no way to inject an
+  // arbitrary storage path from the upload form.
+  const folder = ALLOWED_FOLDERS.includes(requestedFolder as StorageFolder)
+    ? (requestedFolder as StorageFolder)
+    : "misc";
 
   if (!file) {
     return NextResponse.json({ message: "File tidak ditemukan." }, { status: 400 });
@@ -44,6 +53,7 @@ export async function POST(request: NextRequest) {
       buffer,
       filename: safeName,
       mimeType: detectedType,
+      folder,
     });
 
     return NextResponse.json({ fileUrl, driveFileId: path, fileMimeType: detectedType });

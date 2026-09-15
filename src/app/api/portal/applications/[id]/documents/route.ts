@@ -67,7 +67,12 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
   const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
 
   try {
-    const { path, fileUrl } = await uploadFile({ buffer, filename: safeName, mimeType: detectedType });
+    const { path, fileUrl } = await uploadFile({
+      buffer,
+      filename: safeName,
+      mimeType: detectedType,
+      folder: "applications",
+    });
 
     const previous = await prisma.applicationDocument.findFirst({
       where: { applicationId: application.id, serviceRequirementId },
