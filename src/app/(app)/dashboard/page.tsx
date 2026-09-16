@@ -173,25 +173,25 @@ export default async function DashboardPage() {
       accent: "text-signal-active bg-signal-activeBg border-signal-activeBorder",
     },
     {
-      label: "Akan Berakhir <30 Hari",
+      label: "Berakhir < 30 Hari",
       value: within30,
       icon: TimerReset,
       accent: "text-signal-soon bg-signal-soonBg border-signal-soonBorder",
     },
     {
-      label: "Akan Berakhir <60 Hari",
+      label: "Berakhir < 60 Hari",
       value: within60,
       icon: TimerReset,
       accent: "text-signal-soon bg-signal-soonBg border-signal-soonBorder",
     },
     {
-      label: "Akan Berakhir <90 Hari",
+      label: "Berakhir < 90 Hari",
       value: within90,
       icon: TimerReset,
       accent: "text-signal-soon bg-signal-soonBg border-signal-soonBorder",
     },
     {
-      label: "Sudah Expired",
+      label: "Expired",
       value: expired,
       icon: AlertTriangle,
       accent: "text-signal-expired bg-signal-expiredBg border-signal-expiredBorder",
@@ -230,17 +230,17 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {stats.map((s) => (
-            <Card key={s.label}>
-              <CardContent className="flex items-start justify-between">
+            <Card key={s.label} className="h-full">
+              <CardContent className="flex items-start justify-between h-full">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-500 font-medium mb-1.5">
+                  <p className="text-xs uppercase tracking-wide text-slate-500 font-medium mb-1.5 leading-snug min-h-[2rem]">
                     {s.label}
                   </p>
                   <p className="font-display text-2xl font-semibold text-ink font-mono">{s.value}</p>
                 </div>
-                <div className={`h-9 w-9 rounded flex items-center justify-center border ${s.accent}`}>
+                <div className={`h-9 w-9 rounded flex items-center justify-center border shrink-0 ${s.accent}`}>
                   <s.icon className="h-4.5 w-4.5" />
                 </div>
               </CardContent>

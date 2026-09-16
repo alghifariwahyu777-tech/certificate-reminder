@@ -46,7 +46,7 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" }) {
   const items = NAV_ITEMS.filter((item) => !item.adminOnly || role === "ADMIN");
 
   return (
-    <aside className="ledger-rail hidden md:flex md:w-60 md:flex-col bg-ink text-slate-300 min-h-screen shrink-0">
+    <aside className="hidden md:flex md:w-60 md:flex-col bg-ink text-slate-300 min-h-screen shrink-0">
       <div className="flex items-center gap-2.5 px-5 py-5 border-b border-white/10">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shrink-0 p-1">
           <SucofindoMark size={20} />

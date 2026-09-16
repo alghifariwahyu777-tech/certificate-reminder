@@ -61,7 +61,7 @@ export function MobileNav({ role }: { role: "ADMIN" | "VIEWER" }) {
 
       {open && (
         <div className="fixed inset-0 z-50 flex">
-          <div className="w-64 bg-ink text-slate-300 flex flex-col ledger-rail">
+          <div className="w-64 bg-ink text-slate-300 flex flex-col">
             <div className="flex items-center justify-between px-5 py-5 border-b border-white/10">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shrink-0 p-1">
