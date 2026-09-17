@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { Readable } from "stream";
 import crypto from "crypto";
 
 const BUCKET_NAME = "documents";
