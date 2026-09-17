@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { documentReviewSchema } from "@/lib/validations";
 import { logAudit } from "@/lib/audit";
+import { notifyDocumentRevisionRequested } from "@/lib/notifications";
 
 export async function PUT(
   request: NextRequest,
@@ -38,6 +39,30 @@ export async function PUT(
   });
 
   const application = await prisma.application.findUnique({ where: { id: params.id } });
+
+  // Requesting revision on one document also flips the overall application
+  // status — previously this needed a separate manual step from the admin,
+  // which was easy to forget (the client couldn't re-upload until it was
+  // done). Only auto-flips while the application is still under active
+  // review, never overriding a terminal state like APPROVED/COMPLETED.
+  if (
+    parsed.data.status === "REVISION_REQUIRED" &&
+    application &&
+    ["SUBMITTED", "DOCUMENT_REVIEW"].includes(application.status)
+  ) {
+    await prisma.application.update({
+      where: { id: params.id },
+      data: { status: "REVISION_REQUIRED" },
+    });
+  }
+
+  if (parsed.data.status === "REVISION_REQUIRED" && application) {
+    await notifyDocumentRevisionRequested({
+      applicationId: application.id,
+      applicationNumber: application.applicationNumber,
+      documentTypeName: document.serviceRequirement.documentType.name,
+    });
+  }
 
   await logAudit({
     userId: auth.session.userId,

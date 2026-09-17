@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, TimerReset, CheckCheck, Check } from "lucide-react";
+import { AlertTriangle, TimerReset, ClipboardList, CheckCheck, Check } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { SkeletonListItems } from "@/components/ui/Skeleton";
@@ -11,12 +11,29 @@ import { cn, formatDate } from "@/lib/utils";
 
 type NotificationItem = {
   id: string;
-  type: "EXPIRING_SOON" | "EXPIRED";
+  type: "EXPIRING_SOON" | "EXPIRED" | "APP_SUBMITTED" | "APP_REVISION_REQUIRED" | "APP_APPROVED" | "APP_CERTIFICATE_ISSUED";
   message: string;
   status: "NEW" | "READ" | "DONE";
   createdAt: string;
-  certificate: { id: string; certificateName: string; certificateNumber: string };
+  certificate: { id: string; certificateName: string; certificateNumber: string } | null;
+  application: { id: string; applicationNumber: string } | null;
 };
+
+function iconFor(type: NotificationItem["type"]) {
+  if (type === "EXPIRED") return { Icon: AlertTriangle, color: "text-signal-expired" };
+  if (type === "EXPIRING_SOON") return { Icon: TimerReset, color: "text-signal-soon" };
+  return { Icon: ClipboardList, color: "text-accent" };
+}
+
+function linkFor(n: NotificationItem) {
+  if (n.certificate) return `/certificate/${n.certificate.id}`;
+  if (n.application) return `/applications/${n.application.id}`;
+  return "/notifications";
+}
+
+function refFor(n: NotificationItem) {
+  return n.certificate?.certificateNumber || n.application?.applicationNumber || "";
+}
 
 const TABS: { value: string; label: string }[] = [
   { value: "", label: "Semua" },
@@ -92,21 +109,16 @@ export function NotificationList() {
         ) : (
           <div className="divide-y divide-slate-100">
             {notifications.map((n) => {
-              const Icon = n.type === "EXPIRED" ? AlertTriangle : TimerReset;
+              const { Icon, color } = iconFor(n.type);
               return (
                 <div key={n.id} className="flex items-start gap-3 px-5 py-4">
-                  <Icon
-                    className={cn(
-                      "h-4.5 w-4.5 mt-0.5 shrink-0",
-                      n.type === "EXPIRED" ? "text-signal-expired" : "text-signal-soon"
-                    )}
-                  />
+                  <Icon className={cn("h-4.5 w-4.5 mt-0.5 shrink-0", color)} />
                   <div className="min-w-0 flex-1">
-                    <Link href={`/certificate/${n.certificate.id}`} className="text-sm text-ink hover:text-accent">
+                    <Link href={linkFor(n)} className="text-sm text-ink hover:text-accent">
                       {n.message}
                     </Link>
                     <p className="text-xs text-slate-400 mt-1 font-mono">
-                      {n.certificate.certificateNumber} · {formatDate(n.createdAt)}
+                      {refFor(n)} · {formatDate(n.createdAt)}
                     </p>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">

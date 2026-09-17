@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getClientSession } from "@/lib/client-auth";
 import { logAudit } from "@/lib/audit";
+import { notifyApplicationSubmitted } from "@/lib/notifications";
 
 export async function POST(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -10,7 +11,7 @@ export async function POST(_request: NextRequest, context: { params: Promise<{ i
 
   const application = await prisma.application.findFirst({
     where: { id: params.id, clientId: session.clientId },
-    include: { service: { include: { requirements: true } }, documents: true },
+    include: { service: { include: { requirements: true } }, documents: true, client: true },
   });
   if (!application) return NextResponse.json({ message: "Permohonan tidak ditemukan." }, { status: 404 });
 
@@ -41,6 +42,14 @@ export async function POST(_request: NextRequest, context: { params: Promise<{ i
   const updated = await prisma.application.update({
     where: { id: application.id },
     data: { status: "SUBMITTED", submittedAt: new Date() },
+  });
+
+  await notifyApplicationSubmitted({
+    applicationId: application.id,
+    applicationNumber: application.applicationNumber,
+    clientName: application.client.name,
+    serviceName: application.service.name,
+    isResubmission: wasRevision,
   });
 
   await logAudit({

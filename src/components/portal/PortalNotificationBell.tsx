@@ -2,32 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, CheckCheck, AlertTriangle, TimerReset, ClipboardList } from "lucide-react";
+import { Bell, CheckCheck, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type NotificationItem = {
   id: string;
-  type: "EXPIRING_SOON" | "EXPIRED" | "APP_SUBMITTED" | "APP_REVISION_REQUIRED" | "APP_APPROVED" | "APP_CERTIFICATE_ISSUED";
+  type: "APP_REVISION_REQUIRED" | "APP_APPROVED" | "APP_CERTIFICATE_ISSUED";
   message: string;
   status: "NEW" | "READ" | "DONE";
   createdAt: string;
-  certificate: { id: string; certificateName: string; certificateNumber: string } | null;
   application: { id: string; applicationNumber: string } | null;
 };
 
-function iconFor(type: NotificationItem["type"]) {
-  if (type === "EXPIRED") return { Icon: AlertTriangle, color: "text-signal-expired" };
-  if (type === "EXPIRING_SOON") return { Icon: TimerReset, color: "text-signal-soon" };
-  return { Icon: ClipboardList, color: "text-accent" };
-}
-
-function linkFor(n: NotificationItem) {
-  if (n.certificate) return `/certificate/${n.certificate.id}`;
-  if (n.application) return `/applications/${n.application.id}`;
-  return "/notifications";
-}
-
-export function NotificationBell() {
+export function PortalNotificationBell() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [newCount, setNewCount] = useState(0);
@@ -36,7 +23,7 @@ export function NotificationBell() {
 
   async function fetchNotifications() {
     try {
-      const res = await fetch("/api/notifications?limit=8");
+      const res = await fetch("/api/portal/notifications?limit=8");
       const data = await res.json();
       setNotifications(data.notifications || []);
       setNewCount(data.newCount || 0);
@@ -64,7 +51,7 @@ export function NotificationBell() {
   async function markAsRead(id: string) {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, status: "READ" } : n)));
     setNewCount((prev) => Math.max(0, prev - 1));
-    await fetch(`/api/notifications/${id}`, {
+    await fetch(`/api/portal/notifications/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: "READ" }),
@@ -74,7 +61,7 @@ export function NotificationBell() {
   async function markAllRead() {
     setNotifications((prev) => prev.map((n) => (n.status === "NEW" ? { ...n, status: "READ" } : n)));
     setNewCount(0);
-    await fetch("/api/notifications/mark-all-read", { method: "POST" });
+    await fetch("/api/portal/notifications/mark-all-read", { method: "POST" });
   }
 
   return (
@@ -82,7 +69,7 @@ export function NotificationBell() {
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label="Notifikasi"
-        className="relative p-2 rounded hover:bg-slate-100 text-slate-500"
+        className="relative p-2 rounded hover:bg-white/10 text-slate-300 hover:text-white"
       >
         <Bell className="h-4.5 w-4.5" />
         {newCount > 0 && (
@@ -93,9 +80,9 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-md shadow-panel z-50 max-h-[70vh] overflow-y-auto">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-            <p className="text-sm font-semibold text-ink">Notifikasi</p>
+        <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md shadow-panel z-50 max-h-[70vh] overflow-y-auto">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+            <p className="text-sm font-semibold text-ink dark:text-slate-100">Notifikasi</p>
             {newCount > 0 && (
               <button
                 onClick={markAllRead}
@@ -112,37 +99,26 @@ export function NotificationBell() {
           ) : notifications.length === 0 ? (
             <p className="px-4 py-8 text-center text-xs text-slate-400">Tidak ada notifikasi.</p>
           ) : (
-            <div className="divide-y divide-slate-100">
-              {notifications.map((n) => {
-                const { Icon, color } = iconFor(n.type);
-                return (
-                  <Link
-                    key={n.id}
-                    href={linkFor(n)}
-                    onClick={() => n.status === "NEW" && markAsRead(n.id)}
-                    className={cn(
-                      "flex items-start gap-2.5 px-4 py-3 hover:bg-slate-50 block",
-                      n.status === "NEW" && "bg-accent/5"
-                    )}
-                  >
-                    <Icon className={cn("h-4 w-4 mt-0.5 shrink-0", color)} />
-                    <div className="min-w-0">
-                      <p className="text-xs text-ink leading-snug">{n.message}</p>
-                      <p className="text-[10px] text-slate-400 mt-1 font-mono uppercase">{n.status}</p>
-                    </div>
-                  </Link>
-                );
-              })}
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {notifications.map((n) => (
+                <Link
+                  key={n.id}
+                  href={n.application ? `/portal/applications/${n.application.id}` : "/portal"}
+                  onClick={() => n.status === "NEW" && markAsRead(n.id)}
+                  className={cn(
+                    "flex items-start gap-2.5 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 block",
+                    n.status === "NEW" && "bg-accent/5"
+                  )}
+                >
+                  <ClipboardList className="h-4 w-4 mt-0.5 shrink-0 text-accent" />
+                  <div className="min-w-0">
+                    <p className="text-xs text-ink dark:text-slate-100 leading-snug">{n.message}</p>
+                    <p className="text-[10px] text-slate-400 mt-1 font-mono uppercase">{n.status}</p>
+                  </div>
+                </Link>
+              ))}
             </div>
           )}
-
-          <Link
-            href="/notifications"
-            onClick={() => setOpen(false)}
-            className="block text-center text-xs font-medium text-accent hover:text-accent-light px-4 py-3 border-t border-slate-100"
-          >
-            Lihat Semua Notifikasi
-          </Link>
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { issueCertificateSchema } from "@/lib/validations";
 import { generateSurveillanceSchedule } from "@/lib/surveillance";
+import { notifyCertificateIssued } from "@/lib/notifications";
 import { logAudit } from "@/lib/audit";
 
 /**
@@ -104,6 +105,12 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       intervalMonths: application.service.surveillanceIntervalMonths || 0,
     });
   }
+
+  await notifyCertificateIssued({
+    applicationId: application.id,
+    applicationNumber: application.applicationNumber,
+    certificateNumber: certificate.certificateNumber,
+  });
 
   await logAudit({
     userId: auth.session.userId,

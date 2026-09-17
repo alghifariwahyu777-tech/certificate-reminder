@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getCertificateStatus, getDaysRemaining } from "@/lib/status";
 import { APPLICATION_STATUS_LABELS } from "@/lib/application";
 import { SURVEILLANCE_STATUS_LABELS } from "@/lib/surveillance";
+import { getMonitoringRows } from "@/lib/monitoring";
 
 export type ReportType =
   | "active"
@@ -12,7 +13,8 @@ export type ReportType =
   | "recap_category"
   | "application_status"
   | "surveillance"
-  | "sla";
+  | "sla"
+  | "monitoring";
 
 export const REPORT_LABELS: Record<ReportType, string> = {
   active: "Sertifikat Aktif",
@@ -24,6 +26,7 @@ export const REPORT_LABELS: Record<ReportType, string> = {
   application_status: "Status Permohonan",
   surveillance: "Jadwal Surveillance",
   sla: "Kepatuhan SLA Tahap Workflow",
+  monitoring: "Monitoring Manajemen",
 };
 
 export type ReportTable = {
@@ -264,6 +267,37 @@ async function slaComplianceReport(): Promise<ReportTable> {
   };
 }
 
+async function monitoringReport(): Promise<ReportTable> {
+  const rows = await getMonitoringRows();
+
+  return {
+    title: REPORT_LABELS.monitoring,
+    generatedAt: new Date(),
+    columns: [
+      "No",
+      "Nomor Permohonan",
+      "Klien",
+      "Layanan",
+      "Status",
+      "Tahap Saat Ini",
+      "Hari di Tahap Ini",
+      "Total Hari Proses",
+      "Nilai Kontrak (Rp)",
+    ],
+    rows: rows.map((r, i) => [
+      i + 1,
+      r.applicationNumber,
+      r.clientName,
+      r.serviceName,
+      r.overallState === "SELESAI" ? "Selesai" : r.overallState === "BERHENTI" ? r.statusLabel : "Berjalan",
+      r.currentStageName || "-",
+      r.daysInCurrentStage ?? "-",
+      r.totalDays,
+      r.contractValue ?? 0,
+    ]),
+  };
+}
+
 export async function getReportTable(type: ReportType): Promise<ReportTable> {
   switch (type) {
     case "active":
@@ -284,5 +318,7 @@ export async function getReportTable(type: ReportType): Promise<ReportTable> {
       return surveillanceReport();
     case "sla":
       return slaComplianceReport();
+    case "monitoring":
+      return monitoringReport();
   }
 }

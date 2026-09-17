@@ -23,6 +23,15 @@ export laporan.
 ## Fitur
 
 ### Penyempurnaan Terbaru
+- **Notifikasi Application**: notifikasi otomatis di 4 titik proses — permohonan baru/diajukan ulang
+  (ke Admin), dokumen perlu revisi (ke Klien, sekaligus otomatis mengubah status permohonan —
+  tidak perlu lagi 2 langkah manual), permohonan disetujui (ke Klien), dan sertifikat terbit (ke
+  Klien). Client Portal sekarang punya lonceng notifikasi sendiri (`/api/portal/notifications`),
+  terpisah dari Notification Center internal.
+- **Monitoring Manajemen** (`/monitoring`, Admin & Viewer): dashboard baru menampilkan tahap
+  permohonan yang sedang berjalan, sudah berapa hari di tahap itu, total lama proses, dan
+  **Nilai Kontrak** (Rupiah, diinput Admin di halaman detail permohonan) — lengkap dengan kartu
+  ringkasan (Total/Berjalan/Selesai) dan **export Excel**.
 - **Phase 9 — Reporting**: 3 laporan baru melengkapi 6 laporan Certificate yang sudah ada —
   **Status Permohonan** (semua Application + lama proses hingga sertifikat terbit), **Jadwal
   Surveillance** (seluruh kunjungan surveillance lintas sertifikat), dan **Kepatuhan SLA**

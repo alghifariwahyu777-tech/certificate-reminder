@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, FileBadge2, Layers, ClipboardList, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SucofindoMark } from "@/components/brand/SucofindoLogo";
+import { PortalNotificationBell } from "@/components/portal/PortalNotificationBell";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -42,7 +43,8 @@ export function PortalNavbar({ clientName, userName }: { clientName: string; use
           </div>
 
           <div className="flex items-center gap-2.5">
-            <ThemeToggle />
+            <PortalNotificationBell />
+            <ThemeToggle className="!text-slate-300 hover:!bg-white/10" />
             <div className="hidden sm:flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-brand-teal text-white flex items-center justify-center text-xs font-semibold font-mono">
                 {initials || "U"}

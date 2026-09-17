@@ -65,6 +65,7 @@ export default async function ApplicationDetailPage(context: { params: Promise<{
             submittedAt: application.submittedAt?.toISOString() || null,
             clientName: application.client.name,
             serviceName: application.service.name,
+            contractValue: application.contractValue ? Number(application.contractValue) : null,
           }}
           requirements={application.service.requirements.map((r) => ({
             id: r.id,

@@ -255,6 +255,13 @@ export const issueCertificateSchema = z.object({
 });
 export type IssueCertificateInput = z.infer<typeof issueCertificateSchema>;
 
+// --- Monitoring: Contract Value ---
+
+export const contractValueSchema = z.object({
+  contractValue: z.coerce.number().min(0, "Nilai kontrak tidak boleh negatif"),
+});
+export type ContractValueInput = z.infer<typeof contractValueSchema>;
+
 // --- Phase 8: Surveillance ---
 
 export const surveillanceSchema = z.object({

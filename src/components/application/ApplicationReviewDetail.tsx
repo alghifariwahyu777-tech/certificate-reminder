@@ -42,6 +42,7 @@ type ApplicationInfo = {
   submittedAt: string | null;
   clientName: string;
   serviceName: string;
+  contractValue: number | null;
 };
 
 type RequirementInfo = { id: string; documentTypeName: string; mandatory: boolean };
@@ -109,6 +110,10 @@ export function ApplicationReviewDetail({
   const [notes, setNotes] = useState(application.notes || "");
   const [statusSaving, setStatusSaving] = useState(false);
 
+  const [contractValue, setContractValue] = useState(application.contractValue?.toString() || "");
+  const [contractSaving, setContractSaving] = useState(false);
+  const [contractError, setContractError] = useState<string | null>(null);
+
   const [stageEditTarget, setStageEditTarget] = useState<StageInfo | null>(null);
   const [stageEditStatus, setStageEditStatus] = useState("PENDING");
   const [stageEditPic, setStageEditPic] = useState("");
@@ -163,6 +168,26 @@ export function ApplicationReviewDetail({
       router.refresh();
     } finally {
       setStatusSaving(false);
+    }
+  }
+
+  async function handleSaveContractValue() {
+    setContractError(null);
+    setContractSaving(true);
+    try {
+      const res = await fetch(`/api/applications/${application.id}/contract-value`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contractValue: contractValue ? Number(contractValue) : 0 }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        setContractError(body.message || "Gagal menyimpan nilai kontrak.");
+        return;
+      }
+      showToast("Nilai kontrak berhasil disimpan.");
+    } finally {
+      setContractSaving(false);
     }
   }
 
@@ -515,6 +540,36 @@ export function ApplicationReviewDetail({
               <Button onClick={handleSaveStatus} isLoading={statusSaving} className="w-full">
                 Simpan
               </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Nilai Kontrak</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="app-contract-value">Nilai Kontrak (Rp)</Label>
+                <Input
+                  id="app-contract-value"
+                  type="number"
+                  min={0}
+                  placeholder="0"
+                  value={contractValue}
+                  onChange={(e) => setContractValue(e.target.value)}
+                />
+              </div>
+              {contractError && (
+                <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+                  {contractError}
+                </div>
+              )}
+              <Button onClick={handleSaveContractValue} isLoading={contractSaving} className="w-full">
+                Simpan Nilai Kontrak
+              </Button>
+              <p className="text-xs text-slate-400">
+                Dipakai untuk halaman Monitoring — tidak terlihat oleh klien.
+              </p>
             </CardContent>
           </Card>
         </div>

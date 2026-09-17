@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
-import { applicationStatusSchema } from "@/lib/validations";
-import { APPLICATION_STATUS_LABELS, generateApplicationStages } from "@/lib/application";
-import { notifyApplicationApproved } from "@/lib/notifications";
+import { contractValueSchema } from "@/lib/validations";
 import { logAudit } from "@/lib/audit";
 
 export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -15,7 +13,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
   if (!application) return NextResponse.json({ message: "Permohonan tidak ditemukan." }, { status: 404 });
 
   const body = await request.json().catch(() => null);
-  const parsed = applicationStatusSchema.safeParse(body);
+  const parsed = contractValueSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { message: parsed.error.errors[0]?.message || "Data tidak valid." },
@@ -23,26 +21,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     );
   }
 
-  const isNewlyApproved = parsed.data.status === "APPROVED" && application.status !== "APPROVED";
-
   const updated = await prisma.application.update({
     where: { id: params.id },
-    data: { status: parsed.data.status, notes: parsed.data.notes ?? application.notes },
+    data: { contractValue: parsed.data.contractValue },
   });
-
-  // First time this application becomes APPROVED, instantiate its tracking
-  // timeline from the service's configured WorkflowStage template. Safe to
-  // call on every APPROVED transition — it no-ops if stages already exist.
-  if (parsed.data.status === "APPROVED") {
-    await generateApplicationStages(application.id, application.serviceId);
-  }
-
-  if (isNewlyApproved) {
-    await notifyApplicationApproved({
-      applicationId: application.id,
-      applicationNumber: application.applicationNumber,
-    });
-  }
 
   await logAudit({
     userId: auth.session.userId,
@@ -50,7 +32,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     action: "UPDATE",
     entityType: "Application",
     entityId: application.id,
-    description: `Mengubah status permohonan ${application.applicationNumber} menjadi "${APPLICATION_STATUS_LABELS[parsed.data.status]}".`,
+    description: `Mengubah nilai kontrak permohonan ${application.applicationNumber} menjadi Rp ${parsed.data.contractValue.toLocaleString("id-ID")}.`,
   });
 
   return NextResponse.json({ application: updated });

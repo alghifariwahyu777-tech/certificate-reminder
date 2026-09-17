@@ -190,17 +190,24 @@ model AuditLog {
 /// certificate doesn't spam duplicate "expiring soon" notifications — it
 /// naturally gets a fresh row once it crosses into "expired".
 model Notification {
-  id            String      @id @default(cuid())
-  certificateId String
-  certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
-  type          String // "EXPIRING_SOON" | "EXPIRED"
+  id            String       @id @default(cuid())
+  certificateId String?
+  certificate   Certificate? @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  applicationId String?
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  audience      String       @default("INTERNAL") // "INTERNAL" (admin/viewer) | "CLIENT" (client portal, scoped via application.clientId)
+  type          String
+  // Certificate: "EXPIRING_SOON" | "EXPIRED"
+  // Application: "APP_SUBMITTED" | "APP_REVISION_REQUIRED" | "APP_APPROVED" | "APP_CERTIFICATE_ISSUED"
   message       String
-  status        String      @default("NEW") // "NEW" | "READ" | "DONE"
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  status        String       @default("NEW") // "NEW" | "READ" | "DONE"
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   @@unique([certificateId, type])
   @@index([status])
+  @@index([audience])
+  @@index([applicationId])
 }
 
 // =========================================================================
@@ -312,6 +319,7 @@ model Application {
   contactPhone      String?
   description       String?
   notes             String? // internal-only note, never shown to the client
+  contractValue     Decimal?  @db.Decimal(18, 2) // Rupiah value of this engagement — admin-entered, used for management monitoring/reporting
   status            String    @default("DRAFT")
   // DRAFT | SUBMITTED | DOCUMENT_REVIEW | REVISION_REQUIRED | APPROVED | REJECTED | CANCELLED | COMPLETED
   submittedAt       DateTime?
@@ -320,6 +328,7 @@ model Application {
   documents         ApplicationDocument[]
   stages            ApplicationStage[]
   certificate       Certificate?
+  notifications     Notification[]
 
   @@index([clientId])
   @@index([serviceId])
