@@ -5,7 +5,7 @@ import { SucofindoLogo, SucofindoMark } from "@/components/brand/SucofindoLogo";
 export default function PortalLoginPage() {
   return (
     <div className="min-h-screen flex bg-paper dark:bg-slate-950">
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-ink via-ink to-brand-blueDark ledger-rail text-white flex-col justify-between p-12">
+      <div className="hidden lg:flex lg:w-1/2 bg-ink ledger-rail text-white flex-col justify-between p-12">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white shrink-0 p-1.5">
             <SucofindoMark size={26} />
