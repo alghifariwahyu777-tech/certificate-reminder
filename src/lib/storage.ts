@@ -87,7 +87,6 @@ export async function getFileStream(path: string): Promise<StorageFileStream> {
   // so the proxy route can pipe it the same way it did for Google Drive.
   const arrayBuffer = await data.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
-  const { Readable } = await import("stream");
   const stream = Readable.from(buffer);
 
   // Supabase's download() doesn't return the original filename, so we
