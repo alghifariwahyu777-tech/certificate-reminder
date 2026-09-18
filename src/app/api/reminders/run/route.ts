@@ -1,19 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { runReminderCheck } from "@/lib/reminder";
 import { logAudit } from "@/lib/audit";
 
-/**
- * POST /api/reminders/run
- *
- * Two ways to call this:
- *  1. From the app UI — an authenticated Admin clicks "Kirim Reminder Sekarang".
- *  2. From an external scheduler (Vercel Cron, OS cron via curl, etc.) — send
- *     header `Authorization: Bearer <CRON_SECRET>` instead of a session cookie.
- *     No cron is wired up to call this automatically yet; see README for how
- *     to schedule it once you're ready to activate real sending.
- */
-export async function POST(request: NextRequest) {
+async function handleReminderRun(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = request.headers.get("authorization");
   const isCronCall = !!cronSecret && authHeader === `Bearer ${cronSecret}`;
@@ -43,4 +33,12 @@ export async function POST(request: NextRequest) {
   });
 
   return NextResponse.json({ summary });
+}
+
+export async function GET(request: NextRequest) {
+  return handleReminderRun(request);
+}
+
+export async function POST(request: NextRequest) {
+  return handleReminderRun(request);
 }
