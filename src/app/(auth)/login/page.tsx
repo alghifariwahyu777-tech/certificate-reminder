@@ -29,11 +29,11 @@ export default function LoginPage() {
             PT Sucofindo (Persero) — Internal System
           </p>
           <h2 className="font-display text-3xl font-semibold leading-tight max-w-md">
-            Setiap sertifikat klien punya tanggal kedaluwarsa. Jangan biarkan itu jadi kejutan.
+            Track. Remind. Renew. Stay Certified.
           </h2>
           <p className="text-slate-400 mt-4 max-w-sm text-sm">
-            Satu dasbor internal untuk memantau sertifikasi, inspeksi, dan kalibrasi milik seluruh
-            klien Sucofindo — lengkap dengan status, riwayat renewal, dan dokumen pendukung.
+            An internal platform to monitor client certifications, inspections, and
+  calibrations—keeping validity, renewals, and supporting documents under control.
           </p>
         </div>
 
@@ -65,4 +65,6 @@ export default function LoginPage() {
     </div>
   );
 }
+
+
 
