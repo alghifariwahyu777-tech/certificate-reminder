@@ -340,7 +340,7 @@ export default async function DashboardPage() {
         {session?.role === "ADMIN" && (
           <ReminderCenter
             pendingCount={pendingReminderCount}
-            emailConfigured={!!process.env.RESEND_API_KEY}
+            emailConfigured={!!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD)}
             recentLogs={recentEmailLogs}
           />
         )}

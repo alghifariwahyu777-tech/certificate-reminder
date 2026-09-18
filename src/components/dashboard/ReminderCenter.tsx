@@ -104,7 +104,7 @@ export function ReminderCenter({
       <CardContent className="space-y-4">
         {!emailConfigured && (
           <div className="rounded border border-signal-soonBorder bg-signal-soonBg px-3 py-2.5 text-xs text-signal-soon">
-            <strong>RESEND_API_KEY belum dikonfigurasi.</strong> Menjalankan reminder akan tetap mencatat
+            <strong>GMAIL_USER dan GMAIL_APP_PASSWORD belum dikonfigurasi.</strong> Menjalankan reminder akan tetap mencatat
             log (mode simulasi) tapi tidak benar-benar mengirim email. Lihat README untuk cara mengaktifkan.
           </div>
         )}

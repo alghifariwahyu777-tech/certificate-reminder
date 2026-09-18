@@ -23,6 +23,12 @@ export laporan.
 ## Fitur
 
 ### Penyempurnaan Terbaru
+- **Email reminder pindah dari Resend ke Gmail SMTP**: tidak perlu verifikasi domain (cocok untuk
+  yang belum punya domain sendiri) — cukup akun Gmail + App Password. Env var
+  `RESEND_API_KEY`/`EMAIL_FROM` diganti `GMAIL_USER`/`GMAIL_APP_PASSWORD`/`EMAIL_FROM_NAME`.
+  Sekalian diperbaiki 2 bug: cron reminder harian tidak pernah benar-benar jalan (Vercel Cron
+  kirim `GET`, tapi route-nya cuma terima `POST`) dan middleware sempat memblokir request cron
+  itu sendiri sebelum sampai ke kodenya.
 - **Notifikasi Application**: notifikasi otomatis di 4 titik proses — permohonan baru/diajukan ulang
   (ke Admin), dokumen perlu revisi (ke Klien, sekaligus otomatis mengubah status permohonan —
   tidak perlu lagi 2 langkah manual), permohonan disetujui (ke Klien), dan sertifikat terbit (ke
@@ -141,7 +147,7 @@ export laporan.
 - Template HTML profesional (logo, detail sertifikat, tombol aksi, footer otomatis).
 - Anti-duplikat via tabel `EmailLog` — satu (sertifikat, milestone) hanya terkirim sekali.
 - Kartu **Reminder Email** di Dashboard (Admin-only): tombol trigger manual + log terbaru.
-- Mode simulasi otomatis jika `RESEND_API_KEY` kosong (tidak pernah error, hanya mencatat log).
+- Mode simulasi otomatis jika `GMAIL_USER`/`GMAIL_APP_PASSWORD` kosong (tidak pernah error, hanya mencatat log).
 - **Belum ada cron aktif** — lihat bagian *Mengaktifkan Cron* untuk mengaktifkannya.
 
 ### Notification Center
@@ -332,15 +338,27 @@ Klien (demo) : portal@nusantarapangan.co.id / portal123
 
 ## Mengaktifkan Email Reminder Sungguhan
 
-1. Buat akun gratis di [resend.com](https://resend.com), ambil API key-nya.
-2. Isi di `.env`:
+Dikirim lewat SMTP Gmail Anda sendiri — tidak perlu verifikasi domain, tapi dibatasi ~500
+email/hari (akun Gmail gratis) dan selalu terkirim dari alamat Gmail asli Anda, bukan domain
+perusahaan.
+
+1. Aktifkan **2-Step Verification** di akun Google Anda: [myaccount.google.com/security](https://myaccount.google.com/security)
+2. Buat **App Password** khusus (bukan password Gmail biasa — Google sudah tidak mengizinkan
+   itu untuk SMTP): [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
+3. Isi di `.env`:
    ```
-   RESEND_API_KEY="re_xxxxxxxxxxxx"
-   EMAIL_FROM="Certificate Reminder <reminder@domainanda.com>"
+   GMAIL_USER="nama.anda@gmail.com"
+   GMAIL_APP_PASSWORD="16_karakter_dari_langkah_2"
+   EMAIL_FROM_NAME="Certificate Reminder - PT Sucofindo (Persero)"
    APP_URL="https://domain-produksi-anda.com"
    ```
-3. Restart server. Isi field **Email PIC** di setiap sertifikat — reminder hanya terkirim kalau
+4. Restart server. Isi field **Email PIC** di setiap sertifikat — reminder hanya terkirim kalau
    field ini diisi.
+
+> **Kalau nanti punya domain perusahaan sendiri** (mis. `sucofindo.co.id`) dan ingin email
+> terkirim dari alamat itu (bukan `@gmail.com`), gunakan penyedia email transaksional seperti
+> Resend/SendGrid yang mendukung verifikasi domain — butuh akses ke pengaturan DNS domain
+> tersebut.
 
 ### Mengaktifkan Cron (pengecekan otomatis harian)
 
@@ -389,7 +407,7 @@ sebelum `next build` — jadi migration database ikut diterapkan setiap kali bui
 1. **Push project ke GitHub**, lalu import ke [vercel.com](https://vercel.com) sebagai project baru.
 2. **Isi Environment Variables** di Project Settings → Environment Variables (samakan dengan
    `.env` lokal Anda): `DATABASE_URL`, `DIRECT_URL`, `SESSION_SECRET`,
-   `GOOGLE_SERVICE_ACCOUNT_KEY`, `GOOGLE_DRIVE_FOLDER_ID`, `RESEND_API_KEY`, `EMAIL_FROM`,
+   `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GMAIL_USER`, `GMAIL_APP_PASSWORD`,
    `CRON_SECRET`. Untuk `APP_URL`, isi dengan domain Vercel Anda setelah deploy pertama
    (mis. `https://nama-project.vercel.app`), lalu redeploy sekali agar link di email reminder
    mengarah ke domain yang benar.

@@ -1,8 +1,20 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { runReminderCheck } from "@/lib/reminder";
 import { logAudit } from "@/lib/audit";
 
+/**
+ * /api/reminders/run — GET and POST both run the same check.
+ *
+ * Two ways to call this:
+ *  1. From the app UI — an authenticated Admin clicks "Kirim Reminder Sekarang"
+ *     (sends POST, using their session cookie).
+ *  2. From Vercel Cron (see vercel.json) — Vercel always calls the configured
+ *     path with GET, and automatically attaches `Authorization: Bearer
+ *     <CRON_SECRET>` when CRON_SECRET is set as an environment variable. An
+ *     OS-level cron via curl can call either verb the same way, manually
+ *     setting that same header.
+ */
 async function handleReminderRun(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = request.headers.get("authorization");

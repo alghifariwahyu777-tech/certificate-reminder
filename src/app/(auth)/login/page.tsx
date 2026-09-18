@@ -33,7 +33,7 @@ export default function LoginPage() {
           </h2>
           <p className="text-slate-400 mt-4 max-w-sm text-sm">
             An internal platform to monitor client certifications, inspections, and
-  calibrations—keeping validity, renewals, and supporting documents under control.
+            calibrations—keeping validity, renewals, and supporting documents under control.
           </p>
         </div>
 
@@ -65,6 +65,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-
-
