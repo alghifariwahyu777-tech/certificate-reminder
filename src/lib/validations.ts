@@ -197,7 +197,7 @@ export const applicationSchema = z.object({
   serviceId: z.string().min(1, "Layanan wajib dipilih"),
   contactName: z.string().min(1, "Nama kontak wajib diisi").max(120, "Maksimal 120 karakter"),
   contactPosition: z.string().max(120, "Maksimal 120 karakter").optional(),
-  contactEmail: z.string().email("Format email tidak valid").optional().or(z.literal("")),
+  contactEmail: z.string().min(1, "Email PIC wajib diisi").email("Format email tidak valid"),
   contactPhone: z.string().max(30, "Maksimal 30 karakter").optional(),
   description: z.string().optional(),
 });

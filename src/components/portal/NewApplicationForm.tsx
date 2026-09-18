@@ -78,13 +78,16 @@ export function NewApplicationForm({ services }: { services: ServiceOption[] }) 
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="app-contact-email">Email Kontak</Label>
+              <Label htmlFor="app-contact-email">Email PIC</Label>
               <Input
                 id="app-contact-email"
                 type="email"
                 error={errors.contactEmail?.message}
                 {...register("contactEmail")}
               />
+              <p className="text-xs text-slate-400 mt-1">
+                Reminder masa berlaku sertifikat akan dikirim ke email ini.
+              </p>
             </div>
             <div>
               <Label htmlFor="app-contact-phone">Telepon Kontak</Label>

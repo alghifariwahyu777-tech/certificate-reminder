@@ -21,6 +21,7 @@ import {
   Gauge,
   UserSquare2,
   Award,
+  Tags,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,7 @@ const NAV_ITEMS = [
   { href: "/monitoring", label: "Monitoring", icon: Gauge, adminOnly: false },
   { href: "/employees", label: "Personil", icon: UserSquare2, adminOnly: false },
   { href: "/personnel-certifications", label: "Sertifikasi Personil", icon: Award, adminOnly: false },
+  { href: "/personnel-categories", label: "Kategori Sertifikasi Personil", icon: Tags, adminOnly: false },
   { href: "/services", label: "Services", icon: Layers, adminOnly: false },
   { href: "/document-types", label: "Document Types", icon: FileType, adminOnly: false },
   { href: "/notifications", label: "Notifications", icon: Bell, adminOnly: false },
