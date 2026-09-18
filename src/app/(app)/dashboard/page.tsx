@@ -140,6 +140,7 @@ export default async function DashboardPage() {
 
     const [logs, auditEntries] = await Promise.all([
       prisma.emailLog.findMany({
+        where: { certificateId: { not: null } },
         orderBy: { sentAt: "desc" },
         take: 6,
         include: { certificate: { select: { certificateNumber: true, certificateName: true } } },
@@ -147,15 +148,17 @@ export default async function DashboardPage() {
       prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 6 }),
     ]);
 
-    recentEmailLogs = logs.map((l) => ({
-      id: l.id,
-      certificateNumber: l.certificate.certificateNumber,
-      certificateName: l.certificate.certificateName,
-      milestoneDays: l.milestoneDays,
-      status: l.status as "SENT" | "FAILED" | "SKIPPED",
-      recipient: l.recipient,
-      sentAt: l.sentAt.toISOString(),
-    }));
+    recentEmailLogs = logs
+      .filter((l) => l.certificate !== null)
+      .map((l) => ({
+        id: l.id,
+        certificateNumber: l.certificate!.certificateNumber,
+        certificateName: l.certificate!.certificateName,
+        milestoneDays: l.milestoneDays,
+        status: l.status as "SENT" | "FAILED" | "SKIPPED",
+        recipient: l.recipient,
+        sentAt: l.sentAt.toISOString(),
+      }));
     recentActivity = auditEntries.map((a) => ({
       id: a.id,
       userName: a.userName,
