@@ -48,14 +48,16 @@ model Client {
 /// internal `User` model (Admin/Viewer). Each ClientUser belongs to exactly
 /// one Client and can only ever see that client's own data.
 model ClientUser {
-  id        String   @id @default(cuid())
-  clientId  String
-  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  name      String
-  email     String   @unique
-  password  String
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
+  id               String    @id @default(cuid())
+  clientId         String
+  client           Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name             String
+  email            String    @unique
+  password         String
+  isActive         Boolean   @default(true)
+  resetToken       String?   @unique
+  resetTokenExpiry DateTime?
+  createdAt        DateTime  @default(now())
 
   @@index([clientId])
 }
@@ -486,5 +488,14 @@ model PersonnelCertification {
   @@index([categoryId])
   @@index([expiryDate])
   @@index([deletedAt])
+}
+
+/// Single-row settings table (id is always "default") for admin-configurable
+/// values that don't belong to any other model — same singleton pattern as
+/// EmailTemplate.
+model AppSettings {
+  id                  String   @id @default("default")
+  adminWhatsappNumber String? // full international format, digits only, e.g. "6281234567890" — used to build wa.me links
+  updatedAt           DateTime @updatedAt
 }
 

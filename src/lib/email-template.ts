@@ -185,10 +185,19 @@ export function buildSimpleTemplateHtml(fields: SimpleTemplateFields, data: Remi
         <td align="center">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#ffffff;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;">
             <tr>
-              <td style="background-color:#0F172A;padding:24px 32px;">
-                <span style="color:#ffffff;font-size:16px;font-weight:bold;letter-spacing:0.02em;">${companyName}</span>
-                <br />
-                <span style="color:#94A3B8;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;">${systemName}</span>
+              <td style="background-color:#0F172A;padding:28px 32px;border-bottom:3px solid #0EA89B;">
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="background-color:#ffffff;border-radius:8px;padding:6px;width:40px;height:40px;">
+                      <img src="${values.appUrl}/brand/logo-sucofindo-icon.png" width="28" height="28" alt="${companyName}" style="display:block;" />
+                    </td>
+                    <td style="padding-left:12px;">
+                      <span style="color:#ffffff;font-size:16px;font-weight:bold;letter-spacing:0.02em;">${companyName}</span>
+                      <br />
+                      <span style="color:#0EA89B;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;">${systemName}</span>
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr>
@@ -231,7 +240,7 @@ export function buildSimpleTemplateHtml(fields: SimpleTemplateFields, data: Remi
 
                 <table role="presentation" cellpadding="0" cellspacing="0">
                   <tr>
-                    <td style="border-radius:6px;background-color:#0F172A;">
+                    <td style="border-radius:6px;background-color:#0EA89B;">
                       <a href="${values.appUrl}/certificate" style="display:inline-block;padding:12px 24px;color:#ffffff;font-size:13px;font-weight:bold;text-decoration:none;">
                         ${escapeHtml(fields.buttonText || DEFAULT_SIMPLE_FIELDS.buttonText)}
                       </a>

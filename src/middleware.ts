@@ -25,7 +25,13 @@ function getSecretKey() {
 
 async function handlePortalRoute(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
-  const isPublic = pathname === "/portal/login" || pathname.startsWith("/api/portal/auth/login");
+  const isPublic =
+    pathname === "/portal/login" ||
+    pathname === "/portal/forgot-password" ||
+    pathname === "/portal/reset-password" ||
+    pathname.startsWith("/api/portal/auth/login") ||
+    pathname.startsWith("/api/portal/forgot-password") ||
+    pathname.startsWith("/api/portal/reset-password");
 
   const token = request.cookies.get(PORTAL_SESSION_COOKIE)?.value;
   let isAuthenticated = false;

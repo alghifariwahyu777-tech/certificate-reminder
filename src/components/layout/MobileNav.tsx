@@ -25,6 +25,7 @@ import {
   UserSquare2,
   Award,
   Tags,
+  Settings,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -35,9 +36,9 @@ const NAV_ITEMS = [
   { href: "/certificate", label: "Certificate", icon: FileBadge2, adminOnly: false },
   { href: "/applications", label: "Applications", icon: ClipboardList, adminOnly: false },
   { href: "/monitoring", label: "Monitoring", icon: Gauge, adminOnly: false },
-  { href: "/employees", label: "Personil", icon: UserSquare2, adminOnly: false },
-  { href: "/personnel-certifications", label: "Sertifikasi Personil", icon: Award, adminOnly: false },
-  { href: "/personnel-categories", label: "Kategori Sertifikasi Personil", icon: Tags, adminOnly: false },
+  { href: "/employees", label: "Personnel", icon: UserSquare2, adminOnly: false },
+  { href: "/personnel-certifications", label: "Personnel Certifications", icon: Award, adminOnly: false },
+  { href: "/personnel-categories", label: "Certification Categories", icon: Tags, adminOnly: false },
   { href: "/services", label: "Services", icon: Layers, adminOnly: false },
   { href: "/document-types", label: "Document Types", icon: FileType, adminOnly: false },
   { href: "/notifications", label: "Notifications", icon: Bell, adminOnly: false },
@@ -46,6 +47,7 @@ const NAV_ITEMS = [
   { href: "/category", label: "Category", icon: FolderKanban, adminOnly: false },
   { href: "/departments", label: "Departments", icon: Building, adminOnly: false },
   { href: "/users", label: "Users", icon: Users, adminOnly: true },
+  { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
   { href: "/email-template", label: "Email Template", icon: Mail, adminOnly: true },
   { href: "/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true },
   { href: "/trash", label: "Trash", icon: Trash2, adminOnly: true },

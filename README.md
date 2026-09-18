@@ -23,6 +23,19 @@ export laporan.
 ## Fitur
 
 ### Penyempurnaan Terbaru
+- **UX & branding batch**: hapus efek garis di halaman login, konsistensi bahasa Inggris untuk
+  label menu Personnel/Personnel Certifications/Certification Categories, logo Sucofindo
+  ditambahkan ke template email reminder (sertifikat klien & personil), keterangan tujuan
+  reminder di field Email PIC.
+- **Settings (Admin)**: halaman baru `/settings` untuk nomor WhatsApp admin, ditampilkan sebagai
+  tombol mengambang "Hubungi Admin" di Client Portal (link `wa.me`, tanpa API berbayar).
+- **Self-service password (Client Portal)**: klien bisa ubah password sendiri
+  (`/portal/change-password`) dan reset lewat email jika lupa (`/portal/forgot-password` →
+  tautan email → `/portal/reset-password`), pakai Gmail SMTP yang sama.
+- Skema: `AppSettings` (baru), `ClientUser.resetToken`/`resetTokenExpiry`. (Reminder sertifikasi
+  personil lewat WhatsApp sempat dipertimbangkan tapi diputuskan tidak dilanjutkan — semua
+  layanan WhatsApp Business API berbayar per pesan, tidak ada opsi gratis setara Gmail SMTP.
+  Reminder personil tetap berjalan lewat email, ke karyawan + CC HR/atasan.)
 - **Personnel Certification Reminder** — fitur pengingat baru, terpisah dari sertifikat klien:
   melacak sertifikasi/kompetensi personil internal (K3, SIM, auditor, dll.) lewat menu
   **Personil** (`/employees`), **Kategori Sertifikasi Personil** (`/personnel-categories`), dan

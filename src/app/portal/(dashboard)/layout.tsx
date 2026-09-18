@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getClientSession } from "@/lib/client-auth";
 import { prisma } from "@/lib/prisma";
 import { PortalNavbar } from "@/components/portal/PortalNavbar";
+import { PortalWhatsAppButton } from "@/components/portal/PortalWhatsAppButton";
 
 export default async function PortalDashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getClientSession();
@@ -17,6 +18,7 @@ export default async function PortalDashboardLayout({ children }: { children: Re
       <footer className="px-5 md:px-8 py-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-400 dark:text-slate-500 font-mono">
         PT Sucofindo (Persero) · Client Portal
       </footer>
+      <PortalWhatsAppButton />
     </div>
   );
 }

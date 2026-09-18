@@ -301,8 +301,27 @@ export const personnelCertificationSchema = z.object({
   expiryDate: z.string().min(1, "Tanggal berakhir wajib diisi"),
   ccEmail: z.string().email("Format email tidak valid").optional().or(z.literal("")),
   notes: z.string().optional(),
-  fileUrl: z.string().optional(),
-  driveFileId: z.string().optional(),
-  fileMimeType: z.string().optional(),
+  fileUrl: z.string().nullable().optional(),
+  driveFileId: z.string().nullable().optional(),
+  fileMimeType: z.string().nullable().optional(),
 });
 export type PersonnelCertificationInput = z.infer<typeof personnelCertificationSchema>;
+
+// --- Client Portal: self-service password management ---
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Password saat ini wajib diisi"),
+  newPassword: z.string().min(8, "Password baru minimal 8 karakter"),
+});
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().min(1, "Email wajib diisi").email("Format email tidak valid"),
+});
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Token wajib ada"),
+  newPassword: z.string().min(8, "Password baru minimal 8 karakter"),
+});
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

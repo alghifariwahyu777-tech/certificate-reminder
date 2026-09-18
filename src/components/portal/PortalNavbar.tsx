@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileBadge2, Layers, ClipboardList, LogOut } from "lucide-react";
+import { LayoutDashboard, FileBadge2, Layers, ClipboardList, LogOut, KeyRound } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SucofindoMark } from "@/components/brand/SucofindoLogo";
 import { PortalNotificationBell } from "@/components/portal/PortalNotificationBell";
@@ -51,6 +51,14 @@ export function PortalNavbar({ clientName, userName }: { clientName: string; use
               </div>
               <span className="text-sm text-white">{userName}</span>
             </div>
+            <Link
+              href="/portal/change-password"
+              className="p-2 rounded hover:bg-white/10 text-slate-300 hover:text-white"
+              aria-label="Ubah Password"
+              title="Ubah Password"
+            >
+              <KeyRound className="h-4 w-4" />
+            </Link>
             <form action="/api/portal/auth/logout" method="POST">
               <button
                 type="submit"

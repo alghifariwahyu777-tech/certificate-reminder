@@ -236,6 +236,7 @@ export function CertificateForm({
               error={errors.picEmail?.message}
               {...register("picEmail")}
             />
+            <p className="text-xs text-slate-400 mt-1">Reminder sertifikasi akan dikirim ke email ini.</p>
           </div>
 
           <div>
