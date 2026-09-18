@@ -13,5 +13,5 @@ export async function POST(request: NextRequest) {
     });
   }
   await destroyClientSession();
-  return NextResponse.redirect(new URL("/portal/login", request.url));
+  return NextResponse.redirect(new URL("/portal/login", request.url), { status: 303 });
 }
