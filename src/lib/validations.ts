@@ -272,3 +272,37 @@ export const surveillanceSchema = z.object({
   result: z.string().max(1000, "Maksimal 1000 karakter").optional(),
 });
 export type SurveillanceInput = z.infer<typeof surveillanceSchema>;
+
+// --- Personnel Certification Reminder ---
+
+export const employeeSchema = z.object({
+  name: z.string().min(1, "Nama wajib diisi").max(120, "Maksimal 120 karakter"),
+  employeeId: z.string().max(50, "Maksimal 50 karakter").optional(),
+  position: z.string().max(120, "Maksimal 120 karakter").optional(),
+  departmentId: z.string().optional(),
+  email: z.string().min(1, "Email wajib diisi").email("Format email tidak valid"),
+  isActive: z.boolean(),
+});
+export type EmployeeInput = z.infer<typeof employeeSchema>;
+
+export const personnelCategorySchema = z.object({
+  name: z.string().min(1, "Nama kategori wajib diisi").max(120, "Maksimal 120 karakter"),
+});
+export type PersonnelCategoryInput = z.infer<typeof personnelCategorySchema>;
+
+export const personnelCertificationSchema = z.object({
+  employeeId: z.string().min(1, "Personil wajib dipilih"),
+  categoryId: z.string().min(1, "Kategori wajib dipilih"),
+  certificationName: z.string().min(1, "Nama sertifikasi wajib diisi").max(200, "Maksimal 200 karakter"),
+  certificationNumber: z.string().max(100, "Maksimal 100 karakter").optional(),
+  issuingBody: z.string().max(200, "Maksimal 200 karakter").optional(),
+  issueDate: z.string().optional(),
+  validFrom: z.string().optional(),
+  expiryDate: z.string().min(1, "Tanggal berakhir wajib diisi"),
+  ccEmail: z.string().email("Format email tidak valid").optional().or(z.literal("")),
+  notes: z.string().optional(),
+  fileUrl: z.string().optional(),
+  driveFileId: z.string().optional(),
+  fileMimeType: z.string().optional(),
+});
+export type PersonnelCertificationInput = z.infer<typeof personnelCertificationSchema>;

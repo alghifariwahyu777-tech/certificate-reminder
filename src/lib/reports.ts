@@ -14,7 +14,8 @@ export type ReportType =
   | "application_status"
   | "surveillance"
   | "sla"
-  | "monitoring";
+  | "monitoring"
+  | "personnel_certifications";
 
 export const REPORT_LABELS: Record<ReportType, string> = {
   active: "Sertifikat Aktif",
@@ -27,6 +28,7 @@ export const REPORT_LABELS: Record<ReportType, string> = {
   surveillance: "Jadwal Surveillance",
   sla: "Kepatuhan SLA Tahap Workflow",
   monitoring: "Monitoring Manajemen",
+  personnel_certifications: "Sertifikasi Personil",
 };
 
 export type ReportTable = {
@@ -298,6 +300,47 @@ async function monitoringReport(): Promise<ReportTable> {
   };
 }
 
+async function personnelCertificationsReport(): Promise<ReportTable> {
+  const certifications = await prisma.personnelCertification.findMany({
+    where: { deletedAt: null },
+    include: { employee: { include: { department: true } }, category: true },
+    orderBy: { expiryDate: "asc" },
+  });
+
+  return {
+    title: REPORT_LABELS.personnel_certifications,
+    generatedAt: new Date(),
+    columns: [
+      "No",
+      "Nama Personil",
+      "NIP",
+      "Jabatan",
+      "Divisi",
+      "Kategori",
+      "Nama Sertifikasi",
+      "Nomor",
+      "Tanggal Berakhir",
+      "Status",
+    ],
+    rows: certifications.map((c, i) => [
+      i + 1,
+      c.employee.name,
+      c.employee.employeeId || "-",
+      c.employee.position || "-",
+      c.employee.department?.name || "-",
+      c.category.name,
+      c.certificationName,
+      c.certificationNumber || "-",
+      c.expiryDate.toLocaleDateString("id-ID"),
+      getCertificateStatus(c.expiryDate) === "EXPIRED"
+        ? "Expired"
+        : getCertificateStatus(c.expiryDate) === "EXPIRING_SOON"
+          ? "Expiring Soon"
+          : "Active",
+    ]),
+  };
+}
+
 export async function getReportTable(type: ReportType): Promise<ReportTable> {
   switch (type) {
     case "active":
@@ -320,5 +363,7 @@ export async function getReportTable(type: ReportType): Promise<ReportTable> {
       return slaComplianceReport();
     case "monitoring":
       return monitoringReport();
+    case "personnel_certifications":
+      return personnelCertificationsReport();
   }
 }

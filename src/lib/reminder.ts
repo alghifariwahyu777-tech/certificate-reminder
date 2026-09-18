@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getDaysRemaining } from "@/lib/status";
 import { sendReminderEmail } from "@/lib/email";
+import { sendPersonnelReminderEmail } from "@/lib/personnel-email";
 
 /** Reminder milestones per spec: days remaining before expiry (0 = expiry day itself). */
 export const REMINDER_MILESTONES = [90, 60, 30, 14, 7, 3, 1, 0] as const;
@@ -20,18 +21,26 @@ export type ReminderRunSummary = {
 };
 
 /**
- * Checks every certificate against the reminder milestone schedule and
- * sends an email for any certificate that lands exactly on a milestone
- * today, skipping any (certificate, milestone) pair that already has an
- * EmailLog entry so the same reminder is never sent twice.
+ * Checks every certificate AND every personnel certification against the
+ * same reminder milestone schedule, sending an email for anything that
+ * lands exactly on a milestone today. Each (record, milestone) pair is
+ * only ever sent once — tracked via EmailLog's unique constraints — so
+ * running this check multiple times in a day is always safe.
  */
 export async function runReminderCheck(): Promise<ReminderRunSummary> {
+  const summary: ReminderRunSummary = { checked: 0, sent: 0, failed: 0, skipped: 0, details: [] };
+
+  await runCertificateReminders(summary);
+  await runPersonnelReminders(summary);
+
+  return summary;
+}
+
+async function runCertificateReminders(summary: ReminderRunSummary): Promise<void> {
   const certificates = await prisma.certificate.findMany({
     where: { deletedAt: null },
     include: { category: true, client: true },
   });
-
-  const summary: ReminderRunSummary = { checked: 0, sent: 0, failed: 0, skipped: 0, details: [] };
 
   for (const cert of certificates) {
     const daysRemaining = getDaysRemaining(cert.expiryDate);
@@ -40,7 +49,6 @@ export async function runReminderCheck(): Promise<ReminderRunSummary> {
 
     summary.checked += 1;
 
-    // Already sent for this exact certificate + milestone? Skip silently.
     const alreadySent = await prisma.emailLog.findUnique({
       where: { certificateId_milestoneDays: { certificateId: cert.id, milestoneDays: milestone } },
     });
@@ -104,6 +112,87 @@ export async function runReminderCheck(): Promise<ReminderRunSummary> {
       errorMessage: "errorMessage" in result ? result.errorMessage : undefined,
     });
   }
+}
 
-  return summary;
+async function runPersonnelReminders(summary: ReminderRunSummary): Promise<void> {
+  const certifications = await prisma.personnelCertification.findMany({
+    where: { deletedAt: null },
+    include: { category: true, employee: { include: { department: true } } },
+  });
+
+  for (const cert of certifications) {
+    if (!cert.employee.isActive) continue; // don't chase reminders for staff no longer active
+
+    const daysRemaining = getDaysRemaining(cert.expiryDate);
+    const milestone = REMINDER_MILESTONES.find((m) => m === daysRemaining);
+    if (milestone === undefined) continue;
+
+    summary.checked += 1;
+
+    const alreadySent = await prisma.emailLog.findUnique({
+      where: {
+        personnelCertificationId_milestoneDays: { personnelCertificationId: cert.id, milestoneDays: milestone },
+      },
+    });
+    if (alreadySent) continue;
+
+    if (!cert.employee.email) {
+      await prisma.emailLog.create({
+        data: {
+          personnelCertificationId: cert.id,
+          milestoneDays: milestone,
+          recipient: "-",
+          status: "SKIPPED",
+          errorMessage: "Email personil belum diisi.",
+        },
+      });
+      summary.skipped += 1;
+      summary.details.push({
+        certificateNumber: cert.certificationNumber || "-",
+        certificateName: `${cert.certificationName} (${cert.employee.name})`,
+        milestoneDays: milestone,
+        status: "SKIPPED",
+        errorMessage: "Email personil belum diisi.",
+      });
+      continue;
+    }
+
+    const result = await sendPersonnelReminderEmail({
+      to: cert.employee.email,
+      cc: cert.ccEmail,
+      data: {
+        employeeName: cert.employee.name,
+        position: cert.employee.position,
+        departmentName: cert.employee.department?.name || null,
+        certificationName: cert.certificationName,
+        certificationNumber: cert.certificationNumber,
+        categoryName: cert.category.name,
+        expiryDate: cert.expiryDate,
+        daysRemaining,
+      },
+    });
+
+    await prisma.emailLog.create({
+      data: {
+        personnelCertificationId: cert.id,
+        milestoneDays: milestone,
+        recipient: cert.employee.email,
+        cc: cert.ccEmail,
+        status: result.status,
+        errorMessage: "errorMessage" in result ? result.errorMessage : null,
+      },
+    });
+
+    if (result.status === "SENT") summary.sent += 1;
+    else if (result.status === "FAILED") summary.failed += 1;
+    else summary.skipped += 1;
+
+    summary.details.push({
+      certificateNumber: cert.certificationNumber || "-",
+      certificateName: `${cert.certificationName} (${cert.employee.name})`,
+      milestoneDays: milestone,
+      status: result.status,
+      errorMessage: "errorMessage" in result ? result.errorMessage : undefined,
+    });
+  }
 }

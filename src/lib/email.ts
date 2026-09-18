@@ -17,7 +17,7 @@ export type { ReminderEmailData } from "@/lib/email-template";
  * Gmail account (2,000/day on Google Workspace), and the sender always
  * shows as that Gmail address, not a company domain.
  */
-function getTransporter() {
+export function getTransporter() {
   const user = process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD;
   if (!user || !pass) return null;

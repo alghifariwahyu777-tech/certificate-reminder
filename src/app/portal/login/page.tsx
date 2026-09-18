@@ -23,10 +23,11 @@ export default function PortalLoginPage() {
             PT Sucofindo (Persero)
           </p>
           <h2 className="font-display text-3xl font-semibold leading-tight max-w-md">
-            Your Certifications, Always in Control.
+            Pantau sertifikat perusahaan Anda, kapan saja.
           </h2>
           <p className="text-slate-400 mt-4 max-w-sm text-sm">
-            Monitor your certification status, validity, and supporting documents in one easy-to-access portal.
+            Lihat status, masa berlaku, dan dokumen sertifikat perusahaan Anda langsung dari
+            portal ini.
           </p>
         </div>
 

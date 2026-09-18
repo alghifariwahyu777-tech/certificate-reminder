@@ -65,6 +65,7 @@ model Department {
   name         String        @unique
   createdAt    DateTime      @default(now())
   certificates Certificate[]
+  employees    Employee[]
 }
 
 model Certificate {
@@ -156,18 +157,22 @@ model EmailTemplate {
 /// before expiry). The unique constraint on (certificateId, milestoneDays)
 /// is what prevents the same reminder from ever being sent twice.
 model EmailLog {
-  id            String      @id @default(cuid())
-  certificateId String
-  certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
-  milestoneDays Int
-  recipient     String
-  cc            String?
-  status        String // "SENT" | "FAILED" | "SKIPPED"
-  errorMessage  String?
-  sentAt        DateTime    @default(now())
+  id                       String                  @id @default(cuid())
+  certificateId            String?
+  certificate              Certificate?            @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  personnelCertificationId String?
+  personnelCertification   PersonnelCertification? @relation(fields: [personnelCertificationId], references: [id], onDelete: Cascade)
+  milestoneDays            Int
+  recipient                String
+  cc                       String?
+  status                   String // "SENT" | "FAILED" | "SKIPPED"
+  errorMessage             String?
+  sentAt                   DateTime                @default(now())
 
   @@unique([certificateId, milestoneDays])
+  @@unique([personnelCertificationId, milestoneDays])
   @@index([certificateId])
+  @@index([personnelCertificationId])
 }
 
 /// Append-only record of who did what. Written by lib/audit.ts from within
@@ -415,5 +420,71 @@ model Surveillance {
   @@index([certificateId])
   @@index([status])
   @@index([scheduledDate])
+}
+
+// =========================================================================
+// PERSONNEL CERTIFICATION REMINDER
+// A separate track from client Certificates — tracks internal staff's own
+// certifications/competencies (K3, SIM, auditor licenses, etc.) so both the
+// employee and their HR/supervisor get expiry reminders. Deliberately kept
+// as its own set of models (not reusing Certificate/Client) since the
+// subject is fundamentally different (an employee, not a client company),
+// even though the shape of the data looks similar.
+// =========================================================================
+
+/// Internal staff member being tracked for certification reminders. No
+/// login of their own — purely admin-managed, they only ever receive email.
+model Employee {
+  id             String                 @id @default(cuid())
+  name           String
+  employeeId     String?                @unique // NIP / employee number, optional
+  position       String? // jabatan
+  departmentId   String?
+  department     Department?            @relation(fields: [departmentId], references: [id])
+  email          String
+  isActive       Boolean                @default(true)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  certifications PersonnelCertification[]
+
+  @@index([departmentId])
+}
+
+/// Master category list for personnel certifications — kept separate from
+/// the client-certificate `Category` model since the two taxonomies serve
+/// different purposes (competency areas vs. client service categories).
+model PersonnelCertificationCategory {
+  id            String                   @id @default(cuid())
+  name          String                   @unique
+  createdAt     DateTime                 @default(now())
+  certifications PersonnelCertification[]
+}
+
+model PersonnelCertification {
+  id                 String                          @id @default(cuid())
+  employeeId         String
+  employee           Employee                        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  categoryId         String
+  category           PersonnelCertificationCategory  @relation(fields: [categoryId], references: [id])
+  certificationName  String
+  certificationNumber String?
+  issuingBody        String?
+  issueDate          DateTime?
+  validFrom          DateTime?
+  expiryDate         DateTime
+  fileUrl            String?
+  driveFileId        String? // Supabase Storage object path (see Certificate.driveFileId for naming history)
+  fileMimeType       String?
+  ccEmail            String? // HR/supervisor email — CC'd alongside the employee's own reminder
+  notes              String?
+  createdAt          DateTime                        @default(now())
+  updatedAt          DateTime                        @updatedAt
+  deletedAt          DateTime? // soft delete, same pattern as Certificate
+  emailLogs          EmailLog[]
+
+  @@index([employeeId])
+  @@index([categoryId])
+  @@index([expiryDate])
+  @@index([deletedAt])
 }
 

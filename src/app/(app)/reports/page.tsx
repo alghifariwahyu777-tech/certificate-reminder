@@ -2,7 +2,7 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { Card, CardContent } from "@/components/ui/Card";
 import { REPORT_LABELS, type ReportType } from "@/lib/reports";
-import { FileSpreadsheet, FileText, ShieldCheck, AlertTriangle, TimerReset, RefreshCw, Building, FolderKanban, ClipboardList, CalendarClock, Gauge, Wallet } from "lucide-react";
+import { FileSpreadsheet, FileText, ShieldCheck, AlertTriangle, TimerReset, RefreshCw, Building, FolderKanban, ClipboardList, CalendarClock, Gauge, Wallet, UserSquare2 } from "lucide-react";
 
 const REPORT_CARDS: { type: ReportType; description: string; icon: typeof ShieldCheck }[] = [
   {
@@ -54,6 +54,11 @@ const REPORT_CARDS: { type: ReportType; description: string; icon: typeof Shield
     type: "monitoring",
     description: "Ringkasan proses & nilai kontrak seluruh permohonan untuk manajemen.",
     icon: Wallet,
+  },
+  {
+    type: "personnel_certifications",
+    description: "Daftar sertifikasi/kompetensi personil internal beserta status masa berlakunya.",
+    icon: UserSquare2,
   },
 ];
 

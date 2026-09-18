@@ -21,6 +21,7 @@ const VALID_TYPES: ReportType[] = [
   "surveillance",
   "sla",
   "monitoring",
+  "personnel_certifications",
 ];
 
 export async function GET(request: NextRequest) {

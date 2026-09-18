@@ -23,6 +23,13 @@ export laporan.
 ## Fitur
 
 ### Penyempurnaan Terbaru
+- **Personnel Certification Reminder** — fitur pengingat baru, terpisah dari sertifikat klien:
+  melacak sertifikasi/kompetensi personil internal (K3, SIM, auditor, dll.) lewat menu
+  **Personil** (`/employees`), **Kategori Sertifikasi Personil** (`/personnel-categories`), dan
+  **Sertifikasi Personil** (`/personnel-certifications`). Reminder harian yang sudah ada kini
+  juga memindai data ini dan mengirim ke **email personil sekaligus email HR/atasan (CC)**.
+  Personil tidak punya login sendiri — murni dikelola Admin, hanya menerima email. Termasuk
+  export Excel tersendiri di halaman Reports.
 - **Email reminder pindah dari Resend ke Gmail SMTP**: tidak perlu verifikasi domain (cocok untuk
   yang belum punya domain sendiri) — cukup akun Gmail + App Password. Env var
   `RESEND_API_KEY`/`EMAIL_FROM` diganti `GMAIL_USER`/`GMAIL_APP_PASSWORD`/`EMAIL_FROM_NAME`.

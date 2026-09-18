@@ -6,7 +6,7 @@ import { uploadFile, type StorageFolder } from "@/lib/storage";
 
 export const runtime = "nodejs";
 
-const ALLOWED_FOLDERS: StorageFolder[] = ["certificates", "renewals", "applications", "misc"];
+const ALLOWED_FOLDERS: StorageFolder[] = ["certificates", "renewals", "applications", "personnel", "misc"];
 
 export async function POST(request: NextRequest) {
   const auth = await requireAdmin();

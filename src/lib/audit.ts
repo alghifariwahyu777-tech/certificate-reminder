@@ -22,7 +22,9 @@ export type AuditEntityType =
   | "Auth"
   | "Reminder"
   | "Service"
-  | "Application";
+  | "Application"
+  | "Employee"
+  | "PersonnelCertification";
 
 /**
  * Fire-and-forget audit trail write. Never throws — a logging failure
