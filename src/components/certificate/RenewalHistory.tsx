@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input, Label, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
 import { useToast } from "@/components/ui/Toast";
 import { formatDate } from "@/lib/utils";
 import type { Renewal } from "@/types/certificate";
@@ -262,6 +263,7 @@ export function CertificateRenewalSection({
                 </button>
               </div>
             )}
+            {uploading && <div className="mt-2"><UploadProgressBar /></div>}
             {uploadError && <p className="mt-1 text-xs text-signal-expired">{uploadError}</p>}
           </div>
 

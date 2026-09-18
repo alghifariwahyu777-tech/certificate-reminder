@@ -9,6 +9,7 @@ import { certificateSchema, type CertificateInput, MAX_FILE_SIZE, ACCEPTED_FILE_
 import { Input, Label, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
+import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
 import { useToast } from "@/components/ui/Toast";
 import { formatFileSize } from "@/lib/utils";
 import type { CategoryLite, ClientLite, DepartmentLite, CertificateWithCategory } from "@/types/certificate";
@@ -318,6 +319,7 @@ export function CertificateForm({
                 </button>
               </div>
             )}
+            {uploading && <div className="mt-2"><UploadProgressBar /></div>}
             {uploadError && <p className="mt-1 text-xs text-signal-expired">{uploadError}</p>}
           </div>
         </CardContent>

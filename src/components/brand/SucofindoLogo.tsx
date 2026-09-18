@@ -10,7 +10,8 @@ export function SucofindoLogo({ className, height = 32 }: { className?: string; 
       width={width}
       height={height}
       className={className}
-      priority      unoptimized
+      priority
+      unoptimized
     />
   );
 }
@@ -25,7 +26,8 @@ export function SucofindoMark({ className, size = 28 }: { className?: string; si
       width={width}
       height={size}
       className={className}
-      priority      unoptimized
+      priority
+      unoptimized
     />
   );
 }

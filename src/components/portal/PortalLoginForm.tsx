@@ -8,6 +8,7 @@ import { LogIn } from "lucide-react";
 import { loginSchema, type LoginInput } from "@/lib/validations";
 import { Input, Label } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { startTopLoading } from "@/components/TopLoadingBar";
 
 export function PortalLoginForm() {
   const router = useRouter();
@@ -35,6 +36,7 @@ export function PortalLoginForm() {
     }
 
     const redirect = searchParams.get("redirect") || "/portal";
+    startTopLoading();
     router.push(redirect);
     router.refresh();
   }

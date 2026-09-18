@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Select, Textarea, Label, Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
+import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
 import { useToast } from "@/components/ui/Toast";
 import { formatDate } from "@/lib/utils";
 import {
@@ -762,6 +763,11 @@ export function ApplicationReviewDetail({
                 {issueUploading ? "Mengunggah..." : issueFileName || "Klik untuk unggah file (PDF/JPG/PNG)"}
               </span>
             </label>
+            {issueUploading && (
+              <div className="mt-2">
+                <UploadProgressBar />
+              </div>
+            )}
           </div>
 
           {issueError && (

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Upload, Eye, CheckCircle2, AlertTriangle, MinusCircle, Send, Workflow, Circle, Award } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
 import { useToast } from "@/components/ui/Toast";
 import { formatDate } from "@/lib/utils";
 import { APPLICATION_STATUS_LABELS, APPLICATION_STATUS_COLORS } from "@/lib/application";
@@ -303,6 +304,11 @@ export function PortalApplicationDetail({
                       )}
                     </div>
                   </div>
+                  {uploadingId === r.id && (
+                    <div className="mt-2">
+                      <UploadProgressBar />
+                    </div>
+                  )}
                 </div>
               );
             })}
