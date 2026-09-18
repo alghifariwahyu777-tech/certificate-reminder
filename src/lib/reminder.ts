@@ -54,14 +54,30 @@ async function runCertificateReminders(summary: ReminderRunSummary): Promise<voi
     });
     if (alreadySent) continue;
 
-    if (!cert.picEmail) {
+    // Certificates issued through the Application flow carry a verified PIC
+    // email (the applicant's own email from their portal submission), so
+    // both the PIC and the client's general company email get reminded.
+    // Certificates entered directly by Admin (applicationId is null — either
+    // legacy data from before the Application flow existed, or a manual
+    // entry bypassing the portal) only have an admin-typed PIC email with no
+    // such verification, so those go to the company email alone.
+    const recipients = cert.applicationId
+      ? Array.from(new Set([cert.picEmail, cert.client.email].filter((e): e is string => !!e)))
+      : cert.client.email
+        ? [cert.client.email]
+        : [];
+
+    if (recipients.length === 0) {
+      const reason = cert.applicationId
+        ? "Email PIC dan email perusahaan klien belum diisi."
+        : "Email perusahaan klien belum diisi (sertifikat lama, tidak memakai email PIC).";
       await prisma.emailLog.create({
         data: {
           certificateId: cert.id,
           milestoneDays: milestone,
           recipient: "-",
           status: "SKIPPED",
-          errorMessage: "Email PIC belum diisi untuk sertifikat ini.",
+          errorMessage: reason,
         },
       });
       summary.skipped += 1;
@@ -70,13 +86,14 @@ async function runCertificateReminders(summary: ReminderRunSummary): Promise<voi
         certificateName: cert.certificateName,
         milestoneDays: milestone,
         status: "SKIPPED",
-        errorMessage: "Email PIC belum diisi.",
+        errorMessage: reason,
       });
       continue;
     }
 
+    const recipientList = recipients.join(", ");
     const result = await sendReminderEmail({
-      to: cert.picEmail,
+      to: recipientList,
       cc: cert.ccEmail,
       data: {
         certificateName: cert.certificateName,
@@ -93,7 +110,7 @@ async function runCertificateReminders(summary: ReminderRunSummary): Promise<voi
       data: {
         certificateId: cert.id,
         milestoneDays: milestone,
-        recipient: cert.picEmail,
+        recipient: recipientList,
         cc: cert.ccEmail,
         status: result.status,
         errorMessage: "errorMessage" in result ? result.errorMessage : null,
