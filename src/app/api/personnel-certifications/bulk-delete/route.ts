@@ -1,0 +1,46 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
+
+const bulkDeleteSchema = z.object({
+  ids: z.array(z.string()).min(1, "Pilih minimal satu sertifikasi."),
+});
+
+/** Bulk soft-delete — moves the selected personnel certifications to Trash rather than removing them. */
+export async function POST(request: NextRequest) {
+  const auth = await requireAdmin();
+  if ("error" in auth) return auth.error;
+
+  const body = await request.json().catch(() => null);
+  const parsed = bulkDeleteSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { message: parsed.error.errors[0]?.message || "Data tidak valid." },
+      { status: 400 }
+    );
+  }
+
+  const certifications = await prisma.personnelCertification.findMany({
+    where: { id: { in: parsed.data.ids }, deletedAt: null },
+    select: { id: true, certificationName: true },
+  });
+
+  const result = await prisma.personnelCertification.updateMany({
+    where: { id: { in: certifications.map((c) => c.id) } },
+    data: { deletedAt: new Date() },
+  });
+
+  await logAudit({
+    userId: auth.session.userId,
+    userName: auth.session.name,
+    action: "DELETE",
+    entityType: "PersonnelCertification",
+    description: `Memindahkan ${result.count} sertifikasi personil ke Trash sekaligus: ${certifications
+      .map((c) => c.certificationName)
+      .join(", ")}.`,
+  });
+
+  return NextResponse.json({ deletedCount: result.count });
+}

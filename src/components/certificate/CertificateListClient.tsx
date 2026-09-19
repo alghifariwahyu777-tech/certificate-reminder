@@ -177,8 +177,8 @@ export function CertificateListClient({
   return (
     <div className="space-y-4">
       <div className="flex flex-col lg:flex-row lg:items-center gap-3 justify-between">
-        <div className="flex flex-1 flex-col sm:flex-row flex-wrap gap-3">
-          <div className="relative flex-1 max-w-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 flex-1">
+          <div className="relative col-span-2 sm:col-span-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Cari nama, nomor, klien, atau PIC..."
@@ -187,7 +187,7 @@ export function CertificateListClient({
               className="pl-9"
             />
           </div>
-          <Select value={clientId} onChange={(e) => setClientId(e.target.value)} className="sm:w-44">
+          <Select value={clientId} onChange={(e) => setClientId(e.target.value)}>
             <option value="">Semua Klien</option>
             {clients.map((c) => (
               <option key={c.id} value={c.id}>
@@ -195,7 +195,7 @@ export function CertificateListClient({
               </option>
             ))}
           </Select>
-          <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="sm:w-40">
+          <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
             <option value="">Semua Kategori</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
@@ -203,7 +203,7 @@ export function CertificateListClient({
               </option>
             ))}
           </Select>
-          <Select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)} className="sm:w-40">
+          <Select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
             <option value="">Semua Divisi</option>
             {departments.map((d) => (
               <option key={d.id} value={d.id}>
@@ -211,13 +211,13 @@ export function CertificateListClient({
               </option>
             ))}
           </Select>
-          <Select value={status} onChange={(e) => setStatus(e.target.value)} className="sm:w-40">
+          <Select value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">Semua Status</option>
             <option value="ACTIVE">Active</option>
             <option value="EXPIRING_SOON">Expiring Soon</option>
             <option value="EXPIRED">Expired</option>
           </Select>
-          <Select value={year} onChange={(e) => setYear(e.target.value)} className="sm:w-32">
+          <Select value={year} onChange={(e) => setYear(e.target.value)}>
             <option value="">Semua Tahun</option>
             {years.map((y) => (
               <option key={y} value={y}>

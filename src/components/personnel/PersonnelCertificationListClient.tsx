@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, Plus, Eye, Pencil, Trash2, FileSpreadsheet } from "lucide-react";
+import { Search, Plus, Eye, Pencil, Trash2, FileSpreadsheet, X } from "lucide-react";
 import { Input, Select } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -16,6 +16,7 @@ type CertItem = {
   id: string;
   certificationName: string;
   certificationNumber: string | null;
+  categoryId: string;
   categoryName: string;
   employeeName: string;
   departmentName: string | null;
@@ -25,18 +26,30 @@ type CertItem = {
 
 export function PersonnelCertificationListClient({
   initialCertifications,
+  categories,
   canManage = true,
 }: {
   initialCertifications: CertItem[];
+  categories: { id: string; name: string }[];
   canManage?: boolean;
 }) {
   const router = useRouter();
   const { showToast } = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [yearFilter, setYearFilter] = useState("");
   const [items, setItems] = useState(initialCertifications);
   const [deleteTarget, setDeleteTarget] = useState<CertItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const years = useMemo(() => {
+    const current = new Date().getFullYear();
+    return Array.from({ length: 7 }, (_, i) => current - 2 + i);
+  }, []);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -47,9 +60,26 @@ export function PersonnelCertificationListClient({
         c.employeeName.toLowerCase().includes(q) ||
         (c.certificationNumber || "").toLowerCase().includes(q);
       const matchesStatus = !statusFilter || getCertificateStatus(c.expiryDate) === statusFilter;
-      return matchesSearch && matchesStatus;
+      const matchesCategory = !categoryFilter || c.categoryId === categoryFilter;
+      const matchesYear = !yearFilter || new Date(c.expiryDate).getFullYear() === Number(yearFilter);
+      return matchesSearch && matchesStatus && matchesCategory && matchesYear;
     });
-  }, [items, search, statusFilter]);
+  }, [items, search, statusFilter, categoryFilter, yearFilter]);
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((prev) =>
+      prev.size === filtered.length ? new Set() : new Set(filtered.map((c) => c.id))
+    );
+  }
 
   async function confirmDelete() {
     if (!deleteTarget) return;
@@ -70,36 +100,75 @@ export function PersonnelCertificationListClient({
     }
   }
 
+  async function confirmBulkDelete() {
+    setBulkDeleting(true);
+    try {
+      const res = await fetch("/api/personnel-certifications/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showToast(body.message || "Gagal menghapus sertifikasi terpilih.", "error");
+        return;
+      }
+      setItems((prev) => prev.filter((i) => !selectedIds.has(i.id)));
+      showToast(`${body.deletedCount} sertifikasi berhasil dihapus.`);
+      setBulkDeleteOpen(false);
+      setSelectedIds(new Set());
+      router.refresh();
+    } finally {
+      setBulkDeleting(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-        <div className="flex flex-col sm:flex-row gap-3 flex-1">
-          <div className="relative max-w-sm flex-1">
+      <div className="flex flex-col lg:flex-row lg:items-center gap-3 justify-between">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
+          <div className="relative col-span-2 sm:col-span-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
-              placeholder="Cari nama sertifikasi atau personil..."
+              placeholder="Cari nama, nomor, atau personil..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
             />
           </div>
-          <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="sm:w-48">
+          <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+            <option value="">Semua Kategori</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+          <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="">Semua Status</option>
             <option value="ACTIVE">Active</option>
             <option value="EXPIRING_SOON">Expiring Soon</option>
             <option value="EXPIRED">Expired</option>
           </Select>
+          <Select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
+            <option value="">Semua Tahun</option>
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </Select>
         </div>
         {canManage && (
-          <div className="flex gap-2">
-            <Link href="/personnel-certifications/import">
-              <Button variant="outline">
+          <div className="flex gap-2 w-full lg:w-auto">
+            <Link href="/personnel-certifications/import" className="flex-1 lg:flex-none">
+              <Button variant="outline" className="whitespace-nowrap w-full">
                 <FileSpreadsheet className="h-4 w-4" />
                 Import Excel
               </Button>
             </Link>
-            <Link href="/personnel-certifications/new">
-              <Button>
+            <Link href="/personnel-certifications/new" className="flex-1 lg:flex-none">
+              <Button className="whitespace-nowrap w-full">
                 <Plus className="h-4 w-4" />
                 Tambah Sertifikasi
               </Button>
@@ -108,11 +177,39 @@ export function PersonnelCertificationListClient({
         )}
       </div>
 
+      {canManage && selectedIds.size > 0 && (
+        <div className="flex items-center justify-between rounded-md border border-accent/30 bg-accent/5 px-4 py-2.5">
+          <span className="text-sm text-ink">
+            <strong>{selectedIds.size}</strong> sertifikasi dipilih
+          </span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setSelectedIds(new Set())}>
+              <X className="h-3.5 w-3.5" />
+              Batal
+            </Button>
+            <Button variant="danger" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+              <Trash2 className="h-3.5 w-3.5" />
+              Hapus Terpilih
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-slate-500 border-b border-slate-100 bg-slate-50/60">
+                {canManage && (
+                  <th className="px-4 py-3 font-medium w-10">
+                    <input
+                      type="checkbox"
+                      checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                      onChange={toggleSelectAll}
+                      className="rounded border-slate-300"
+                    />
+                  </th>
+                )}
                 <th className="px-4 py-3 font-medium">Sertifikasi</th>
                 <th className="px-4 py-3 font-medium">Personil</th>
                 <th className="px-4 py-3 font-medium">Kategori</th>
@@ -124,7 +221,7 @@ export function PersonnelCertificationListClient({
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={canManage ? 7 : 6} className="px-4 py-10 text-center text-slate-400">
                     Belum ada sertifikasi personil yang cocok.
                   </td>
                 </tr>
@@ -134,6 +231,16 @@ export function PersonnelCertificationListClient({
                   const days = getDaysRemaining(c.expiryDate);
                   return (
                     <tr key={c.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/60">
+                      {canManage && (
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(c.id)}
+                            onChange={() => toggleSelect(c.id)}
+                            className="rounded border-slate-300"
+                          />
+                        </td>
+                      )}
                       <td className="px-4 py-3">
                         <p className="font-medium text-ink">{c.certificationName}</p>
                         {c.certificationNumber && (
@@ -205,6 +312,21 @@ export function PersonnelCertificationListClient({
           </Button>
           <Button variant="danger" isLoading={deleting} onClick={confirmDelete}>
             Hapus
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={bulkDeleteOpen} onClose={() => setBulkDeleteOpen(false)} title="Hapus Sertifikasi Terpilih">
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          Akan memindahkan <strong>{selectedIds.size}</strong> sertifikasi ke Trash. Data bisa dipulihkan
+          nanti dari halaman Trash. Lanjutkan?
+        </p>
+        <div className="flex justify-end gap-2 mt-5">
+          <Button variant="outline" onClick={() => setBulkDeleteOpen(false)}>
+            Batal
+          </Button>
+          <Button variant="danger" isLoading={bulkDeleting} onClick={confirmBulkDelete}>
+            Hapus {selectedIds.size} Sertifikasi
           </Button>
         </div>
       </Modal>

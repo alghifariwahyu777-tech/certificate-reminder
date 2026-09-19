@@ -5,11 +5,14 @@ import { PersonnelCertificationListClient } from "@/components/personnel/Personn
 
 export default async function PersonnelCertificationsPage() {
   const session = await getSession();
-  const certifications = await prisma.personnelCertification.findMany({
-    where: { deletedAt: null },
-    include: { employee: { include: { department: true } }, category: true },
-    orderBy: { expiryDate: "asc" },
-  });
+  const [certifications, categories] = await Promise.all([
+    prisma.personnelCertification.findMany({
+      where: { deletedAt: null },
+      include: { employee: { include: { department: true } }, category: true },
+      orderBy: { expiryDate: "asc" },
+    }),
+    prisma.personnelCertificationCategory.findMany({ orderBy: { name: "asc" } }),
+  ]);
 
   return (
     <>
@@ -22,10 +25,12 @@ export default async function PersonnelCertificationsPage() {
       <div className="p-5 md:p-8">
         <PersonnelCertificationListClient
           canManage={session?.role === "ADMIN"}
+          categories={categories.map((c) => ({ id: c.id, name: c.name }))}
           initialCertifications={certifications.map((c) => ({
             id: c.id,
             certificationName: c.certificationName,
             certificationNumber: c.certificationNumber,
+            categoryId: c.categoryId,
             categoryName: c.category.name,
             employeeName: c.employee.name,
             departmentName: c.employee.department?.name || null,
