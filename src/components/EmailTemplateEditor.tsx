@@ -53,10 +53,11 @@ export function EmailTemplateEditor({
   }
 
   const previewHtml = useMemo(() => {
+    const browserOrigin = typeof window !== "undefined" ? window.location.origin : undefined;
     try {
       return mode === "SIMPLE"
-        ? buildSimpleTemplateHtml(fields, SAMPLE_DATA)
-        : substitutePlaceholders(bodyHtml, SAMPLE_DATA);
+        ? buildSimpleTemplateHtml(fields, SAMPLE_DATA, browserOrigin)
+        : substitutePlaceholders(bodyHtml, SAMPLE_DATA, browserOrigin);
     } catch {
       return "<p style='padding:20px;font-family:sans-serif;color:#b91c1c;'>Terjadi kesalahan saat menampilkan preview.</p>";
     }

@@ -54,23 +54,17 @@ async function runCertificateReminders(summary: ReminderRunSummary): Promise<voi
     });
     if (alreadySent) continue;
 
-    // Certificates issued through the Application flow carry a verified PIC
-    // email (the applicant's own email from their portal submission), so
-    // both the PIC and the client's general company email get reminded.
-    // Certificates entered directly by Admin (applicationId is null — either
-    // legacy data from before the Application flow existed, or a manual
-    // entry bypassing the portal) only have an admin-typed PIC email with no
-    // such verification, so those go to the company email alone.
-    const recipients = cert.applicationId
-      ? Array.from(new Set([cert.picEmail, cert.client.email].filter((e): e is string => !!e)))
-      : cert.client.email
-        ? [cert.client.email]
-        : [];
+    // Send to whichever of Email PIC / company email is actually filled in
+    // — both if both are present. Previously this depended on whether the
+    // certificate came from the Application flow (assuming a manually
+    // entered PIC email couldn't be trusted), but an Admin editing PIC
+    // Email by hand is just as much a deliberate, verified entry as one
+    // that arrived via a client's own portal submission — the field being
+    // filled in is what matters, not how the certificate was created.
+    const recipients = Array.from(new Set([cert.picEmail, cert.client.email].filter((e): e is string => !!e)));
 
     if (recipients.length === 0) {
-      const reason = cert.applicationId
-        ? "Email PIC dan email perusahaan klien belum diisi."
-        : "Email perusahaan klien belum diisi (sertifikat lama, tidak memakai email PIC).";
+      const reason = "Email PIC dan email perusahaan klien belum diisi.";
       await prisma.emailLog.create({
         data: {
           certificateId: cert.id,

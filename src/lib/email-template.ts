@@ -140,8 +140,8 @@ function daysRemainingText(daysRemaining: number): string {
   return `${daysRemaining} hari lagi`;
 }
 
-function tokenValues(data: ReminderEmailData): Record<string, string> {
-  const appUrl = process.env.APP_URL || "http://localhost:3000";
+function tokenValues(data: ReminderEmailData, appUrlOverride?: string): Record<string, string> {
+  const appUrl = appUrlOverride || process.env.APP_URL || "http://localhost:3000";
   return {
     certificateName: escapeHtml(data.certificateName),
     certificateNumber: escapeHtml(data.certificateNumber),
@@ -155,8 +155,8 @@ function tokenValues(data: ReminderEmailData): Record<string, string> {
 }
 
 /** Replaces every {{token}} in a template string with its real value. Used by Advanced mode. */
-export function substitutePlaceholders(template: string, data: ReminderEmailData): string {
-  const values = tokenValues(data);
+export function substitutePlaceholders(template: string, data: ReminderEmailData, appUrlOverride?: string): string {
+  const values = tokenValues(data, appUrlOverride);
   return template.replace(/\{\{(\w+)\}\}/g, (match, key: string) => (key in values ? values[key] : match));
 }
 
@@ -165,10 +165,21 @@ export function substitutePlaceholders(template: string, data: ReminderEmailData
  * text fields may themselves contain {{tokens}} (e.g. "Halo tim
  * {{clientName}},") — those get substituted too, so the simple editor stays
  * flexible without ever showing the admin raw HTML.
+ *
+ * `appUrlOverride`: when this is rendered in a browser (e.g. the live
+ * preview in EmailTemplateEditor, a Client Component), `process.env.APP_URL`
+ * is never available — only server code can read non-NEXT_PUBLIC_ env vars.
+ * The browser caller passes its own `window.location.origin` instead, so
+ * the preview's logo/link resolve against whatever domain is actually
+ * being viewed rather than always falling back to localhost.
  */
-export function buildSimpleTemplateHtml(fields: SimpleTemplateFields, data: ReminderEmailData): string {
-  const values = tokenValues(data);
-  const t = (text: string) => escapeHtml(substitutePlaceholders(text, data)).replace(/\n/g, "<br/>");
+export function buildSimpleTemplateHtml(
+  fields: SimpleTemplateFields,
+  data: ReminderEmailData,
+  appUrlOverride?: string
+): string {
+  const values = tokenValues(data, appUrlOverride);
+  const t = (text: string) => escapeHtml(substitutePlaceholders(text, data, appUrlOverride)).replace(/\n/g, "<br/>");
   const companyName = escapeHtml(fields.companyName || DEFAULT_SIMPLE_FIELDS.companyName);
   const systemName = escapeHtml(fields.systemName || DEFAULT_SIMPLE_FIELDS.systemName);
 
@@ -188,8 +199,8 @@ export function buildSimpleTemplateHtml(fields: SimpleTemplateFields, data: Remi
               <td style="background-color:#0F172A;padding:28px 32px;border-bottom:3px solid #0EA89B;">
                 <table role="presentation" cellpadding="0" cellspacing="0">
                   <tr>
-                    <td style="background-color:#ffffff;border-radius:8px;padding:6px;width:40px;height:40px;">
-                      <img src="${values.appUrl}/brand/logo-sucofindo-icon.png" width="28" height="28" alt="${companyName}" style="display:block;" />
+                    <td style="background-color:#ffffff;border-radius:8px;padding:6px;width:40px;height:40px;text-align:center;vertical-align:middle;">
+                      <img src="${values.appUrl}/brand/logo-sucofindo-icon.png" width="28" height="28" alt="${companyName}" style="display:block;margin:0 auto;" />
                     </td>
                     <td style="padding-left:12px;">
                       <span style="color:#ffffff;font-size:16px;font-weight:bold;letter-spacing:0.02em;">${companyName}</span>

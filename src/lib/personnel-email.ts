@@ -37,8 +37,8 @@ function buildPersonnelReminderHtml(data: PersonnelReminderEmailData): string {
     <div style="background: #0F172A; padding: 20px 24px; border-radius: 8px 8px 0 0; border-bottom: 3px solid #0EA89B;">
       <table role="presentation" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="background-color: #ffffff; border-radius: 8px; padding: 6px; width: 36px; height: 36px;">
-            <img src="${appUrl}/brand/logo-sucofindo-icon.png" width="24" height="24" alt="PT Sucofindo (Persero)" style="display: block;" />
+          <td style="background-color: #ffffff; border-radius: 8px; padding: 6px; width: 36px; height: 36px; text-align: center; vertical-align: middle;">
+            <img src="${appUrl}/brand/logo-sucofindo-icon.png" width="24" height="24" alt="PT Sucofindo (Persero)" style="display: block; margin: 0 auto;" />
           </td>
           <td style="padding-left: 12px;">
             <span style="color: #ffffff; font-size: 14px; font-weight: bold;">PT Sucofindo (Persero)</span><br/>
