@@ -309,11 +309,11 @@ export type PersonnelCertificationInput = z.infer<typeof personnelCertificationS
 
 // --- Client Portal: self-service password management ---
 
-export const changePasswordSchema = z.object({
+export const portalChangePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Password saat ini wajib diisi"),
   newPassword: z.string().min(8, "Password baru minimal 8 karakter"),
 });
-export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type PortalChangePasswordInput = z.infer<typeof portalChangePasswordSchema>;
 
 export const forgotPasswordSchema = z.object({
   email: z.string().min(1, "Email wajib diisi").email("Format email tidak valid"),

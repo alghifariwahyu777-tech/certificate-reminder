@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getClientSession } from "@/lib/client-auth";
 import { hashPassword, verifyPassword } from "@/lib/auth";
-import { changePasswordSchema } from "@/lib/validations";
+import { portalChangePasswordSchema } from "@/lib/validations";
 import { logAudit } from "@/lib/audit";
 
 export async function POST(request: NextRequest) {
@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
   const body = await request.json().catch(() => null);
-  const parsed = changePasswordSchema.safeParse(body);
+  const parsed = portalChangePasswordSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { message: parsed.error.errors[0]?.message || "Data tidak valid." },
