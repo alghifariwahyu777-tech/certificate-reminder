@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_SUBJECT, DEFAULT_BODY_HTML, DEFAULT_SIMPLE_FIELDS } from "@/lib/email-template";
+import {
+  DEFAULT_PERSONNEL_SUBJECT,
+  DEFAULT_PERSONNEL_BODY_HTML,
+  DEFAULT_PERSONNEL_SIMPLE_FIELDS,
+} from "@/lib/personnel-email-template";
 
 /** Fetches the stored template, seeding it with sensible defaults on first use. */
 export async function getEmailTemplate() {
@@ -13,6 +18,27 @@ export async function getEmailTemplate() {
       subject: DEFAULT_SUBJECT,
       bodyHtml: DEFAULT_BODY_HTML,
       ...DEFAULT_SIMPLE_FIELDS,
+    },
+  });
+}
+
+/**
+ * Same EmailTemplate table, separate row (id: "personnel") — a distinct
+ * template for personnel certification reminders, since the tone/fields
+ * differ from the client-facing certificate reminder (no "Klien"/"PIC",
+ * addressed directly to the employee, no Client Portal link).
+ */
+export async function getPersonnelEmailTemplate() {
+  const existing = await prisma.emailTemplate.findUnique({ where: { id: "personnel" } });
+  if (existing) return existing;
+
+  return prisma.emailTemplate.create({
+    data: {
+      id: "personnel",
+      mode: "SIMPLE",
+      subject: DEFAULT_PERSONNEL_SUBJECT,
+      bodyHtml: DEFAULT_PERSONNEL_BODY_HTML,
+      ...DEFAULT_PERSONNEL_SIMPLE_FIELDS,
     },
   });
 }

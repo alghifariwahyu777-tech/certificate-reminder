@@ -23,6 +23,11 @@ export laporan.
 ## Fitur
 
 ### Penyempurnaan Terbaru
+- **Personnel Email Template** (`/personnel-email-template`, Admin): template email reminder
+  sertifikasi personil sekarang bisa diedit lewat UI — mode Sederhana (isi teks, tabel detail
+  otomatis) atau Lanjutan (HTML penuh), sama seperti Email Template sertifikat klien tapi
+  dengan field & placeholder khusus personil (`{{employeeName}}`, `{{position}}`, dll.), tanpa
+  tautan Client Portal. Sebelumnya wording ini hardcode di kode, tidak bisa diubah tanpa deploy.
 - **Import Excel & Trash untuk Sertifikasi Personil**: sekarang bisa tambah banyak data
   sekaligus lewat Excel (`/personnel-certifications/import`, format sama dengan import
   sertifikat klien — Personil & Kategori otomatis dibuat jika belum ada). Halaman **Trash**

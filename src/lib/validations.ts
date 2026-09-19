@@ -118,6 +118,23 @@ const advancedTemplateSchema = z.object({
 export const emailTemplateSchema = z.discriminatedUnion("mode", [simpleTemplateSchema, advancedTemplateSchema]);
 export type EmailTemplateInput = z.infer<typeof emailTemplateSchema>;
 
+const simplePersonnelTemplateSchema = z.object({
+  mode: z.literal("SIMPLE"),
+  subject: z.string().min(1, "Subjek wajib diisi").max(200, "Maksimal 200 karakter"),
+  companyName: z.string().min(1, "Nama perusahaan wajib diisi"),
+  systemName: z.string().min(1, "Nama sistem wajib diisi"),
+  greeting: z.string().min(1, "Salam pembuka wajib diisi"),
+  introText: z.string().min(1, "Paragraf pembuka wajib diisi"),
+  closingText: z.string().min(1, "Paragraf penutup wajib diisi"),
+  footerText: z.string().min(1, "Teks footer wajib diisi"),
+});
+
+export const personnelEmailTemplateSchema = z.discriminatedUnion("mode", [
+  simplePersonnelTemplateSchema,
+  advancedTemplateSchema,
+]);
+export type PersonnelEmailTemplateInput = z.infer<typeof personnelEmailTemplateSchema>;
+
 export const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
 export const ACCEPTED_FILE_TYPES = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
 

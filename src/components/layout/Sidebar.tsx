@@ -64,6 +64,7 @@ const NAV_GROUPS = [
       { href: "/users", label: "Users", icon: Users, adminOnly: true },
       { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
       { href: "/email-template", label: "Email Template", icon: Mail, adminOnly: true },
+      { href: "/personnel-email-template", label: "Personnel Email Template", icon: Mail, adminOnly: true },
       { href: "/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true },
       { href: "/trash", label: "Trash", icon: Trash2, adminOnly: true },
       { href: "/profile", label: "Profile", icon: UserCircle, adminOnly: false },
