@@ -134,9 +134,38 @@ export default async function DashboardPage() {
       select: { certificateId: true, milestoneDays: true },
     });
     const loggedSet = new Set(alreadyLogged.map((l) => `${l.certificateId}:${l.milestoneDays}`));
-    pendingReminderCount = milestoneMatches.filter(
+    const pendingCertificates = milestoneMatches.filter(
       (c) => !loggedSet.has(`${c.id}:${getDaysRemaining(c.expiryDate)}`)
     ).length;
+
+    // Same check for personnel certifications — this dashboard widget was
+    // originally certificate-only and missed this when that feature was
+    // added, so "0 pending" could be wrong whenever the only thing due was
+    // a personnel certification, not a client certificate.
+    const personnelMilestoneMatches = await prisma.personnelCertification.findMany({
+      where: {
+        deletedAt: null,
+        OR: (REMINDER_MILESTONES as readonly number[]).map((days) => {
+          const target = new Date(today);
+          target.setDate(target.getDate() + days);
+          return { expiryDate: { gte: target, lt: new Date(target.getTime() + 24 * 60 * 60 * 1000) } };
+        }),
+      },
+      select: { id: true, expiryDate: true },
+    });
+
+    const personnelAlreadyLogged = await prisma.emailLog.findMany({
+      where: { personnelCertificationId: { in: personnelMilestoneMatches.map((c) => c.id) } },
+      select: { personnelCertificationId: true, milestoneDays: true },
+    });
+    const personnelLoggedSet = new Set(
+      personnelAlreadyLogged.map((l) => `${l.personnelCertificationId}:${l.milestoneDays}`)
+    );
+    const pendingPersonnel = personnelMilestoneMatches.filter(
+      (c) => !personnelLoggedSet.has(`${c.id}:${getDaysRemaining(c.expiryDate)}`)
+    ).length;
+
+    pendingReminderCount = pendingCertificates + pendingPersonnel;
 
     const [logs, auditEntries] = await Promise.all([
       prisma.emailLog.findMany({

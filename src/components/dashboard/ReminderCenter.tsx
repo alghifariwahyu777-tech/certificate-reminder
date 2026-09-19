@@ -110,8 +110,8 @@ export function ReminderCenter({
         )}
 
         <p className="text-sm text-slate-600">
-          <strong className="text-ink font-mono">{pendingCount}</strong> sertifikat sedang berada tepat
-          pada milestone reminder (90/60/30/14/7/3/1/0 hari) dan belum dikirimi email hari ini.
+          <strong className="text-ink font-mono">{pendingCount}</strong> sertifikat/sertifikasi sedang berada
+          tepat pada milestone reminder (90/60/30/14/7/3/1/0 hari) dan belum dikirimi email hari ini.
         </p>
 
         {lastRun && (
