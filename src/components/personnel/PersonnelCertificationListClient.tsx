@@ -1,11 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, Plus, FileText, Eye, FileSpreadsheet } from "lucide-react";
+import { Search, Plus, Eye, Pencil, Trash2, FileSpreadsheet } from "lucide-react";
 import { Input, Select } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { useToast } from "@/components/ui/Toast";
 import { getCertificateStatus, STATUS_LABEL, STATUS_CLASSES, getDaysRemaining } from "@/lib/status";
 import { formatDate } from "@/lib/utils";
 
@@ -27,12 +30,17 @@ export function PersonnelCertificationListClient({
   initialCertifications: CertItem[];
   canManage?: boolean;
 }) {
+  const router = useRouter();
+  const { showToast } = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [items, setItems] = useState(initialCertifications);
+  const [deleteTarget, setDeleteTarget] = useState<CertItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return initialCertifications.filter((c) => {
+    return items.filter((c) => {
       const matchesSearch =
         !q ||
         c.certificationName.toLowerCase().includes(q) ||
@@ -41,7 +49,26 @@ export function PersonnelCertificationListClient({
       const matchesStatus = !statusFilter || getCertificateStatus(c.expiryDate) === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [initialCertifications, search, statusFilter]);
+  }, [items, search, statusFilter]);
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/personnel-certifications/${deleteTarget.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        showToast(body.message || "Gagal menghapus sertifikasi.", "error");
+        return;
+      }
+      setItems((prev) => prev.filter((i) => i.id !== deleteTarget.id));
+      showToast("Sertifikasi berhasil dihapus.");
+      setDeleteTarget(null);
+      router.refresh();
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -128,26 +155,31 @@ export function PersonnelCertificationListClient({
                         <span className={`stamp-badge ${STATUS_CLASSES[status]}`}>{STATUS_LABEL[status]}</span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {c.fileUrl && (
-                            <a
-                              href={c.fileUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
-                              aria-label="Lihat dokumen"
-                            >
-                              <FileText className="h-4 w-4" />
-                            </a>
-                          )}
+                        <div className="flex items-center justify-end gap-1">
+                          <Link
+                            href={`/personnel-certifications/${c.id}`}
+                            className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
+                            aria-label="Lihat detail"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Link>
                           {canManage && (
-                            <Link
-                              href={`/personnel-certifications/${c.id}/edit`}
-                              className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
-                              aria-label="Edit"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Link>
+                            <>
+                              <Link
+                                href={`/personnel-certifications/${c.id}/edit`}
+                                className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
+                                aria-label="Edit"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Link>
+                              <button
+                                onClick={() => setDeleteTarget(c)}
+                                className="p-1.5 rounded hover:bg-signal-expiredBg text-slate-500 hover:text-signal-expired"
+                                aria-label="Hapus"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </>
                           )}
                         </div>
                       </td>
@@ -159,6 +191,23 @@ export function PersonnelCertificationListClient({
           </table>
         </div>
       </Card>
+
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus Sertifikasi">
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          Apakah Anda yakin ingin menghapus sertifikasi{" "}
+          <strong className="text-ink dark:text-slate-100">{deleteTarget?.certificationName}</strong> milik{" "}
+          <strong className="text-ink dark:text-slate-100">{deleteTarget?.employeeName}</strong>? Data akan
+          dipindahkan ke Trash dan bisa dipulihkan.
+        </p>
+        <div className="flex justify-end gap-2 mt-5">
+          <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+            Batal
+          </Button>
+          <Button variant="danger" isLoading={deleting} onClick={confirmDelete}>
+            Hapus
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
