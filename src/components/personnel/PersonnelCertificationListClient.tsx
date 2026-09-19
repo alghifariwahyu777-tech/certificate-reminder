@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, Plus, FileText, Eye } from "lucide-react";
+import { Search, Plus, FileText, Eye, FileSpreadsheet } from "lucide-react";
 import { Input, Select } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -64,12 +64,20 @@ export function PersonnelCertificationListClient({
           </Select>
         </div>
         {canManage && (
-          <Link href="/personnel-certifications/new">
-            <Button>
-              <Plus className="h-4 w-4" />
-              Tambah Sertifikasi
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/personnel-certifications/import">
+              <Button variant="outline">
+                <FileSpreadsheet className="h-4 w-4" />
+                Import Excel
+              </Button>
+            </Link>
+            <Link href="/personnel-certifications/new">
+              <Button>
+                <Plus className="h-4 w-4" />
+                Tambah Sertifikasi
+              </Button>
+            </Link>
+          </div>
         )}
       </div>
 

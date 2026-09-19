@@ -23,6 +23,14 @@ export laporan.
 ## Fitur
 
 ### Penyempurnaan Terbaru
+- **Import Excel & Trash untuk Sertifikasi Personil**: sekarang bisa tambah banyak data
+  sekaligus lewat Excel (`/personnel-certifications/import`, format sama dengan import
+  sertifikat klien — Personil & Kategori otomatis dibuat jika belum ada). Halaman **Trash**
+  diperluas untuk menampilkan sertifikasi personil yang dihapus (soft-delete), bisa dipulihkan
+  atau dihapus permanen dari tempat yang sama dengan sertifikat klien.
+- **Pengelompokan menu Sidebar**: menu Personnel/Personnel Certifications/Certification
+  Categories sekarang dikelompokkan dalam 1 bagian dengan label & garis pembatas, memisahkan
+  jelas dari menu terkait klien.
 - **UX & branding batch**: hapus efek garis di halaman login, konsistensi bahasa Inggris untuk
   label menu Personnel/Personnel Certifications/Certification Categories, logo Sucofindo
   ditambahkan ke template email reminder (sertifikat klien & personil), keterangan tujuan

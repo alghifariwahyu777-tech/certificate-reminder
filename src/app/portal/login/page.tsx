@@ -1,5 +1,7 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { PortalLoginForm } from "@/components/portal/PortalLoginForm";
+import { PortalWhatsAppButton } from "@/components/portal/PortalWhatsAppButton";
 import { SucofindoLogo, SucofindoMark } from "@/components/brand/SucofindoLogo";
 
 export default function PortalLoginPage() {
@@ -55,8 +57,16 @@ export default function PortalLoginPage() {
           <Suspense fallback={null}>
             <PortalLoginForm />
           </Suspense>
+
+          <p className="text-center text-sm text-slate-400 mt-6">
+            Anda staf internal Sucofindo?{" "}
+            <Link href="/login" className="text-accent hover:text-accent-light font-medium">
+              Masuk ke Admin Panel
+            </Link>
+          </p>
         </div>
       </div>
+      <PortalWhatsAppButton context="login" />
     </div>
   );
 }

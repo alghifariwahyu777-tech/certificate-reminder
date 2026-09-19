@@ -6,7 +6,7 @@ import { deleteFile } from "@/lib/storage";
 
 export const runtime = "nodejs";
 
-/** Permanently deletes a certificate that is already in Trash — this cannot be undone. */
+/** Permanently deletes a certificate or personnel certification already in Trash — cannot be undone. */
 export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
   const auth = await requireAdmin();
@@ -15,28 +15,55 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
   const certificate = await prisma.certificate.findFirst({
     where: { id: params.id, deletedAt: { not: null } },
   });
-  if (!certificate) {
-    return NextResponse.json({ message: "Sertifikat tidak ditemukan di Trash." }, { status: 404 });
-  }
 
-  if (certificate.driveFileId) {
-    await deleteFile(certificate.driveFileId).catch((err) => {
-      // Log but don't block the certificate deletion on a storage hiccup —
-      // an orphaned file is recoverable manually; a stuck Trash entry is worse.
-      console.error("Failed to delete file from Supabase Storage:", err);
+  if (certificate) {
+    if (certificate.driveFileId) {
+      await deleteFile(certificate.driveFileId).catch((err) => {
+        // Log but don't block deletion on a storage hiccup — an orphaned
+        // file is recoverable manually; a stuck Trash entry is worse.
+        console.error("Failed to delete file from Supabase Storage:", err);
+      });
+    }
+
+    await prisma.certificate.delete({ where: { id: params.id } });
+
+    await logAudit({
+      userId: auth.session.userId,
+      userName: auth.session.name,
+      action: "PERMANENT_DELETE",
+      entityType: "Certificate",
+      entityId: certificate.id,
+      description: `Menghapus permanen sertifikat "${certificate.certificateName}" (${certificate.certificateNumber}).`,
     });
+
+    return NextResponse.json({ success: true });
   }
 
-  await prisma.certificate.delete({ where: { id: params.id } });
-
-  await logAudit({
-    userId: auth.session.userId,
-    userName: auth.session.name,
-    action: "PERMANENT_DELETE",
-    entityType: "Certificate",
-    entityId: certificate.id,
-    description: `Menghapus permanen sertifikat "${certificate.certificateName}" (${certificate.certificateNumber}).`,
+  const personnelCertification = await prisma.personnelCertification.findFirst({
+    where: { id: params.id, deletedAt: { not: null } },
+    include: { employee: true },
   });
 
-  return NextResponse.json({ success: true });
+  if (personnelCertification) {
+    if (personnelCertification.driveFileId) {
+      await deleteFile(personnelCertification.driveFileId).catch((err) => {
+        console.error("Failed to delete file from Supabase Storage:", err);
+      });
+    }
+
+    await prisma.personnelCertification.delete({ where: { id: params.id } });
+
+    await logAudit({
+      userId: auth.session.userId,
+      userName: auth.session.name,
+      action: "PERMANENT_DELETE",
+      entityType: "PersonnelCertification",
+      entityId: personnelCertification.id,
+      description: `Menghapus permanen sertifikasi "${personnelCertification.certificationName}" milik ${personnelCertification.employee.name}.`,
+    });
+
+    return NextResponse.json({ success: true });
+  }
+
+  return NextResponse.json({ message: "Data tidak ditemukan di Trash." }, { status: 404 });
 }

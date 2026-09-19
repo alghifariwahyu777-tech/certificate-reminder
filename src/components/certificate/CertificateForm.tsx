@@ -157,7 +157,7 @@ export function CertificateForm({
       <Card>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
-            <Label htmlFor="certificateNumber">Certificate Number</Label>
+            <Label htmlFor="certificateNumber">Nomor Sertifikat</Label>
             <Input
               id="certificateNumber"
               placeholder="CERT-2026-001"
@@ -167,7 +167,7 @@ export function CertificateForm({
           </div>
 
           <div>
-            <Label htmlFor="certificateName">Certificate Name</Label>
+            <Label htmlFor="certificateName">Nama Sertifikat</Label>
             <Input
               id="certificateName"
               placeholder="ISO 9001:2015 Quality Management"
@@ -177,7 +177,7 @@ export function CertificateForm({
           </div>
 
           <div>
-            <Label htmlFor="clientId">Client / Perusahaan</Label>
+            <Label htmlFor="clientId">Klien / Perusahaan</Label>
             <Select id="clientId" error={errors.clientId?.message} {...register("clientId")}>
               <option value="">Pilih klien</option>
               {clients.map((c) => (
@@ -189,7 +189,7 @@ export function CertificateForm({
           </div>
 
           <div>
-            <Label htmlFor="categoryId">Category</Label>
+            <Label htmlFor="categoryId">Kategori</Label>
             <Select id="categoryId" error={errors.categoryId?.message} {...register("categoryId")}>
               <option value="">Pilih kategori</option>
               {categories.map((c) => (
@@ -240,7 +240,7 @@ export function CertificateForm({
           </div>
 
           <div>
-            <Label htmlFor="ccEmail">CC Email (Atasan/Manager)</Label>
+            <Label htmlFor="ccEmail">Email CC (Atasan/HR)</Label>
             <Input
               id="ccEmail"
               type="email"
@@ -251,17 +251,17 @@ export function CertificateForm({
           </div>
 
           <div>
-            <Label htmlFor="issueDate">Issue Date</Label>
+            <Label htmlFor="issueDate">Tanggal Terbit</Label>
             <Input id="issueDate" type="date" error={errors.issueDate?.message} {...register("issueDate")} />
           </div>
 
           <div>
-            <Label htmlFor="validFrom">Tanggal Berlaku</Label>
+            <Label htmlFor="validFrom">Berlaku Sejak</Label>
             <Input id="validFrom" type="date" error={errors.validFrom?.message} {...register("validFrom")} />
           </div>
 
           <div>
-            <Label htmlFor="expiryDate">Expiry Date</Label>
+            <Label htmlFor="expiryDate">Tanggal Berakhir</Label>
             <Input id="expiryDate" type="date" error={errors.expiryDate?.message} {...register("expiryDate")} />
           </div>
 
@@ -276,17 +276,17 @@ export function CertificateForm({
           </div>
 
           <div className="md:col-span-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Deskripsi</Label>
             <Textarea id="description" rows={3} placeholder="Deskripsi singkat sertifikat" {...register("description")} />
           </div>
 
           <div className="md:col-span-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">Catatan</Label>
             <Textarea id="notes" rows={2} placeholder="Catatan tambahan (opsional)" {...register("notes")} />
           </div>
 
           <div className="md:col-span-2">
-            <Label>Upload Dokumen</Label>
+            <Label>Dokumen Sertifikat</Label>
             {!fileUrl ? (
               <label
                 htmlFor="doc-upload"

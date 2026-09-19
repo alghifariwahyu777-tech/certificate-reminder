@@ -187,7 +187,7 @@ export function PersonnelCertificationForm({
           </div>
 
           <div>
-            <Label htmlFor="pc-cc">Email HR/Atasan (CC)</Label>
+            <Label htmlFor="pc-cc">Email CC (Atasan/HR)</Label>
             <Input
               id="pc-cc"
               type="email"

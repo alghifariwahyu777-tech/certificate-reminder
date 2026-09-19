@@ -31,33 +31,51 @@ import {
 import { cn } from "@/lib/utils";
 import { SucofindoMark } from "@/components/brand/SucofindoLogo";
 
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false },
-  { href: "/certificate", label: "Certificate", icon: FileBadge2, adminOnly: false },
-  { href: "/applications", label: "Applications", icon: ClipboardList, adminOnly: false },
-  { href: "/monitoring", label: "Monitoring", icon: Gauge, adminOnly: false },
-  { href: "/employees", label: "Personnel", icon: UserSquare2, adminOnly: false },
-  { href: "/personnel-certifications", label: "Personnel Certifications", icon: Award, adminOnly: false },
-  { href: "/personnel-categories", label: "Certification Categories", icon: Tags, adminOnly: false },
-  { href: "/services", label: "Services", icon: Layers, adminOnly: false },
-  { href: "/document-types", label: "Document Types", icon: FileType, adminOnly: false },
-  { href: "/notifications", label: "Notifications", icon: Bell, adminOnly: false },
-  { href: "/reports", label: "Reports", icon: FileBarChart, adminOnly: false },
-  { href: "/clients", label: "Clients", icon: Building2, adminOnly: false },
-  { href: "/category", label: "Category", icon: FolderKanban, adminOnly: false },
-  { href: "/departments", label: "Departments", icon: Building, adminOnly: false },
-  { href: "/users", label: "Users", icon: Users, adminOnly: true },
-  { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
-  { href: "/email-template", label: "Email Template", icon: Mail, adminOnly: true },
-  { href: "/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true },
-  { href: "/trash", label: "Trash", icon: Trash2, adminOnly: true },
-  { href: "/profile", label: "Profile", icon: UserCircle, adminOnly: false },
+const NAV_GROUPS = [
+  {
+    label: null,
+    items: [
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false },
+      { href: "/certificate", label: "Certificate", icon: FileBadge2, adminOnly: false },
+      { href: "/applications", label: "Applications", icon: ClipboardList, adminOnly: false },
+      { href: "/monitoring", label: "Monitoring", icon: Gauge, adminOnly: false },
+    ],
+  },
+  {
+    label: "Personnel",
+    items: [
+      { href: "/employees", label: "Personnel", icon: UserSquare2, adminOnly: false },
+      { href: "/personnel-certifications", label: "Personnel Certifications", icon: Award, adminOnly: false },
+      { href: "/personnel-categories", label: "Certification Categories", icon: Tags, adminOnly: false },
+    ],
+  },
+  {
+    label: null,
+    items: [
+      { href: "/services", label: "Services", icon: Layers, adminOnly: false },
+      { href: "/document-types", label: "Document Types", icon: FileType, adminOnly: false },
+      { href: "/notifications", label: "Notifications", icon: Bell, adminOnly: false },
+      { href: "/reports", label: "Reports", icon: FileBarChart, adminOnly: false },
+      { href: "/clients", label: "Clients", icon: Building2, adminOnly: false },
+      { href: "/category", label: "Category", icon: FolderKanban, adminOnly: false },
+      { href: "/departments", label: "Departments", icon: Building, adminOnly: false },
+      { href: "/users", label: "Users", icon: Users, adminOnly: true },
+      { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
+      { href: "/email-template", label: "Email Template", icon: Mail, adminOnly: true },
+      { href: "/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true },
+      { href: "/trash", label: "Trash", icon: Trash2, adminOnly: true },
+      { href: "/profile", label: "Profile", icon: UserCircle, adminOnly: false },
+    ],
+  },
 ];
 
 export function MobileNav({ role }: { role: "ADMIN" | "VIEWER" }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const items = NAV_ITEMS.filter((item) => !item.adminOnly || role === "ADMIN");
+  const groups = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => !item.adminOnly || role === "ADMIN"),
+  })).filter((group) => group.items.length > 0);
 
   return (
     <div className="md:hidden">
@@ -88,25 +106,34 @@ export function MobileNav({ role }: { role: "ADMIN" | "VIEWER" }) {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <nav className="flex-1 px-3 py-4 space-y-0.5">
-              {items.map((item) => {
-                const active = pathname === item.href || pathname.startsWith(item.href + "/");
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 rounded px-3 py-2.5 text-sm",
-                      active ? "bg-white/10 text-white font-medium" : "text-slate-400"
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                );
-              })}
+            <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+              {groups.map((group, groupIndex) => (
+                <div key={group.label || `group-${groupIndex}`} className={groupIndex > 0 ? "pt-3 mt-3 border-t border-white/10" : ""}>
+                  {group.label && (
+                    <p className="px-3 pb-1.5 text-[10px] font-mono uppercase tracking-[0.12em] text-slate-500">
+                      {group.label}
+                    </p>
+                  )}
+                  {group.items.map((item) => {
+                    const active = pathname === item.href || pathname.startsWith(item.href + "/");
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 rounded px-3 py-2.5 text-sm",
+                          active ? "bg-white/10 text-white font-medium" : "text-slate-400"
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ))}
             </nav>
             <form action="/api/auth/logout" method="POST" className="px-3 py-4 border-t border-white/10">
               <button

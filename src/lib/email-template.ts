@@ -241,7 +241,7 @@ export function buildSimpleTemplateHtml(fields: SimpleTemplateFields, data: Remi
                 <table role="presentation" cellpadding="0" cellspacing="0">
                   <tr>
                     <td style="border-radius:6px;background-color:#0EA89B;">
-                      <a href="${values.appUrl}/certificate" style="display:inline-block;padding:12px 24px;color:#ffffff;font-size:13px;font-weight:bold;text-decoration:none;">
+                      <a href="${values.appUrl}/portal" style="display:inline-block;padding:12px 24px;color:#ffffff;font-size:13px;font-weight:bold;text-decoration:none;">
                         ${escapeHtml(fields.buttonText || DEFAULT_SIMPLE_FIELDS.buttonText)}
                       </a>
                     </td>

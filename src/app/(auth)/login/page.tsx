@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { LoginForm } from "@/components/LoginForm";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SucofindoLogo, SucofindoMark } from "@/components/brand/SucofindoLogo";
@@ -60,6 +61,13 @@ export default function LoginPage() {
           <Suspense fallback={null}>
             <LoginForm />
           </Suspense>
+
+          <p className="text-center text-sm text-slate-400 mt-6">
+            Anda klien Sucofindo?{" "}
+            <Link href="/portal/login" className="text-accent hover:text-accent-light font-medium">
+              Masuk ke Client Portal
+            </Link>
+          </p>
         </div>
       </div>
     </div>
