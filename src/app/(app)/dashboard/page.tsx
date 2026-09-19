@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { getDaysRemaining } from "@/lib/status";
+import { getDaysRemaining, getJakartaToday } from "@/lib/status";
 import { REMINDER_MILESTONES } from "@/lib/reminder";
 import { Navbar } from "@/components/layout/Navbar";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -27,8 +27,7 @@ export default async function DashboardPage() {
   // so status ("Active"/"Expiring Soon"/"Expired") stays consistent with
   // lib/status.ts without having to load every row into Node just to filter
   // in JavaScript — each number here is a single COUNT() at the database.
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getJakartaToday();
   const in30 = new Date(today);
   in30.setDate(in30.getDate() + 30);
   const in60 = new Date(today);

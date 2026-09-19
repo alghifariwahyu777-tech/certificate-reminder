@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession, requireAdmin } from "@/lib/auth";
 import { certificateSchema } from "@/lib/validations";
+import { getJakartaToday } from "@/lib/status";
 import { normalizeCertificatePayload } from "@/lib/certificate-payload";
 import { logAudit } from "@/lib/audit";
 
@@ -45,8 +46,7 @@ export async function GET(request: NextRequest) {
 
   // Status is computed, not stored — translate to date ranges.
   if (status) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = getJakartaToday();
     const in30 = new Date(today);
     in30.setDate(in30.getDate() + 30);
 

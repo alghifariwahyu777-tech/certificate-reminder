@@ -2,6 +2,34 @@ export type CertificateStatus = "ACTIVE" | "EXPIRING_SOON" | "EXPIRED";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const REMINDER_WINDOW_DAYS = 30;
+const JAKARTA_OFFSET_MS = 7 * 60 * 60 * 1000; // WIB = UTC+7, no daylight saving
+
+/**
+ * Returns the UTC-midnight instant for the calendar date this instant
+ * would show on a wall clock in Jakarta — independent of what timezone the
+ * *runtime* happens to be in. This matters because these functions run in
+ * two different places: Server Components (Vercel's server clock, normally
+ * UTC) and Client Components (whatever timezone the visitor's own browser
+ * is set to). Without pinning to one fixed timezone, `new Date().setHours(0,0,0,0)`
+ * uses the *ambient* local timezone of wherever the code executes, so the
+ * same certificate could compute a different "today" — and therefore a
+ * different days-remaining — depending on which of the two rendered it.
+ */
+function toJakartaDateOnly(date: Date): Date {
+  const shifted = new Date(date.getTime() + JAKARTA_OFFSET_MS);
+  return new Date(Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate()));
+}
+
+/**
+ * "Today" as a UTC-midnight Date, pinned to Jakarta's calendar day —
+ * the one function every date-boundary query in the app (Dashboard KPI
+ * counts, list filtering by status, the reminder cron) should call instead
+ * of building `new Date()` + `setHours(0,0,0,0)` locally, since that
+ * pattern silently uses whatever timezone the *runtime* happens to be in.
+ */
+export function getJakartaToday(): Date {
+  return toJakartaDateOnly(new Date());
+}
 
 /**
  * Status is always derived from expiryDate — never persisted.
@@ -10,10 +38,8 @@ const REMINDER_WINDOW_DAYS = 30;
  * - EXPIRED: expiry date has passed
  */
 export function getCertificateStatus(expiryDate: Date | string): CertificateStatus {
-  const expiry = new Date(expiryDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  expiry.setHours(0, 0, 0, 0);
+  const expiry = toJakartaDateOnly(new Date(expiryDate));
+  const today = toJakartaDateOnly(new Date());
 
   const diffDays = Math.round((expiry.getTime() - today.getTime()) / DAY_MS);
 
@@ -23,10 +49,8 @@ export function getCertificateStatus(expiryDate: Date | string): CertificateStat
 }
 
 export function getDaysRemaining(expiryDate: Date | string): number {
-  const expiry = new Date(expiryDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  expiry.setHours(0, 0, 0, 0);
+  const expiry = toJakartaDateOnly(new Date(expiryDate));
+  const today = toJakartaDateOnly(new Date());
   return Math.round((expiry.getTime() - today.getTime()) / DAY_MS);
 }
 
