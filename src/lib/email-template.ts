@@ -72,32 +72,32 @@ export const DEFAULT_BODY_HTML = `<!DOCTYPE html>
                 </p>
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E2E8F0;border-radius:6px;margin-bottom:20px;">
                   <tr>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:12px;width:40%;">Nama Sertifikat</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:12px;font-weight:bold;">{{certificateName}}</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;width:40%;">Nama Sertifikat</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;">{{certificateName}}</td>
                   </tr>
                   <tr>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:12px;">Nomor Sertifikat</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:12px;font-weight:bold;">{{certificateNumber}}</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;">Nomor Sertifikat</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;">{{certificateNumber}}</td>
                   </tr>
                   <tr>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:12px;">Kategori</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:12px;font-weight:bold;">{{categoryName}}</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;">Kategori</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;">{{categoryName}}</td>
                   </tr>
                   <tr>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:12px;">Klien</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:12px;font-weight:bold;">{{clientName}}</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;">Klien</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;">{{clientName}}</td>
                   </tr>
                   <tr>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:12px;">PIC</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:12px;font-weight:bold;">{{pic}}</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;">PIC</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;">{{pic}}</td>
                   </tr>
                   <tr>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:12px;">Tanggal Berakhir</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:12px;font-weight:bold;">{{expiryDate}}</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;">Tanggal Berakhir</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;">{{expiryDate}}</td>
                   </tr>
                   <tr>
-                    <td style="padding:10px 16px;color:#64748B;font-size:12px;">Sisa Hari</td>
-                    <td style="padding:10px 16px;color:#0F172A;font-size:12px;font-weight:bold;">{{daysRemainingText}}</td>
+                    <td style="padding:10px 16px;color:#64748B;font-size:13px;">Sisa Hari</td>
+                    <td style="padding:10px 16px;color:#0F172A;font-size:13px;font-weight:bold;">{{daysRemainingText}}</td>
                   </tr>
                 </table>
                 <p style="margin:0 0 24px 0;color:#334155;font-size:14px;line-height:1.6;">
@@ -182,6 +182,8 @@ export function buildSimpleTemplateHtml(
   const t = (text: string) => escapeHtml(substitutePlaceholders(text, data, appUrlOverride)).replace(/\n/g, "<br/>");
   const companyName = escapeHtml(fields.companyName || DEFAULT_SIMPLE_FIELDS.companyName);
   const systemName = escapeHtml(fields.systemName || DEFAULT_SIMPLE_FIELDS.systemName);
+  const isExpired = data.daysRemaining < 0;
+  const statusColor = isExpired ? "#DC2626" : data.daysRemaining <= 7 ? "#D97706" : "#0EA89B";
 
   return `<!DOCTYPE html>
 <html lang="id">
@@ -218,32 +220,32 @@ export function buildSimpleTemplateHtml(
 
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E2E8F0;border-radius:6px;margin-bottom:20px;">
                   <tr>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:12px;width:40%;">Nama Sertifikat</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:12px;font-weight:bold;">${values.certificateName}</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;width:40%;">Nama Sertifikat</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;">${values.certificateName}</td>
                   </tr>
                   <tr>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:12px;">Nomor Sertifikat</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:12px;font-weight:bold;">${values.certificateNumber}</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;">Nomor Sertifikat</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;">${values.certificateNumber}</td>
                   </tr>
                   <tr>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:12px;">Kategori</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:12px;font-weight:bold;">${values.categoryName}</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;">Kategori</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;">${values.categoryName}</td>
                   </tr>
                   <tr>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:12px;">Klien</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:12px;font-weight:bold;">${values.clientName}</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;">Klien</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;">${values.clientName}</td>
                   </tr>
                   <tr>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:12px;">PIC</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:12px;font-weight:bold;">${values.pic}</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;">PIC</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;">${values.pic}</td>
                   </tr>
                   <tr>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:12px;">Tanggal Berakhir</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:12px;font-weight:bold;">${values.expiryDate}</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;">Tanggal Berakhir</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:${statusColor};font-size:13px;font-weight:bold;">${values.expiryDate}</td>
                   </tr>
                   <tr>
-                    <td style="padding:10px 16px;color:#64748B;font-size:12px;">Sisa Hari</td>
-                    <td style="padding:10px 16px;color:#0F172A;font-size:12px;font-weight:bold;">${values.daysRemainingText}</td>
+                    <td style="padding:10px 16px;color:#64748B;font-size:13px;">Sisa Hari</td>
+                    <td style="padding:10px 16px;color:${statusColor};font-size:13px;font-weight:bold;">${values.daysRemainingText}</td>
                   </tr>
                 </table>
 

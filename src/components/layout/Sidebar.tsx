@@ -44,6 +44,7 @@ const NAV_GROUPS = [
       { href: "/employees", label: "Personnel", icon: UserSquare2, adminOnly: false },
       { href: "/personnel-certifications", label: "Personnel Certifications", icon: Award, adminOnly: false },
       { href: "/personnel-categories", label: "Certification Categories", icon: Tags, adminOnly: false },
+      { href: "/personnel-email-template", label: "Personnel Email Template", icon: Mail, adminOnly: true },
     ],
   },
   {
@@ -54,6 +55,7 @@ const NAV_GROUPS = [
       { href: "/clients", label: "Clients", icon: Building2, adminOnly: false },
       { href: "/category", label: "Category", icon: FolderKanban, adminOnly: false },
       { href: "/departments", label: "Departments", icon: Building, adminOnly: false },
+      { href: "/email-template", label: "Email Template", icon: Mail, adminOnly: true },
     ],
   },
   {
@@ -63,8 +65,6 @@ const NAV_GROUPS = [
       { href: "/reports", label: "Reports", icon: FileBarChart, adminOnly: false },
       { href: "/users", label: "Users", icon: Users, adminOnly: true },
       { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
-      { href: "/email-template", label: "Email Template", icon: Mail, adminOnly: true },
-      { href: "/personnel-email-template", label: "Personnel Email Template", icon: Mail, adminOnly: true },
       { href: "/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true },
       { href: "/trash", label: "Trash", icon: Trash2, adminOnly: true },
       { href: "/profile", label: "Profile", icon: UserCircle, adminOnly: false },
