@@ -47,15 +47,20 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: null,
+    label: "Client",
     items: [
       { href: "/services", label: "Services", icon: Layers, adminOnly: false },
       { href: "/document-types", label: "Document Types", icon: FileType, adminOnly: false },
-      { href: "/notifications", label: "Notifications", icon: Bell, adminOnly: false },
-      { href: "/reports", label: "Reports", icon: FileBarChart, adminOnly: false },
       { href: "/clients", label: "Clients", icon: Building2, adminOnly: false },
       { href: "/category", label: "Category", icon: FolderKanban, adminOnly: false },
       { href: "/departments", label: "Departments", icon: Building, adminOnly: false },
+    ],
+  },
+  {
+    label: null,
+    items: [
+      { href: "/notifications", label: "Notifications", icon: Bell, adminOnly: false },
+      { href: "/reports", label: "Reports", icon: FileBarChart, adminOnly: false },
       { href: "/users", label: "Users", icon: Users, adminOnly: true },
       { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
       { href: "/email-template", label: "Email Template", icon: Mail, adminOnly: true },

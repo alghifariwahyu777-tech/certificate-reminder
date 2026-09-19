@@ -28,7 +28,8 @@ export default function PortalLoginPage() {
             Your Certifications, Always in Control.
           </h2>
           <p className="text-slate-400 mt-4 max-w-sm text-sm">
-            Monitor your certification status, validity, and supporting documents in one easy-to-access portal.
+            Monitor your certification status, validity, and supporting documents in one
+            easy-to-access portal.
           </p>
         </div>
 
