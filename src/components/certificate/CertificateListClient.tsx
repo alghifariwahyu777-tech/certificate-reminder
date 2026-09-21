@@ -234,12 +234,6 @@ export function CertificateListClient({
                 Import Excel
               </Button>
             </Link>
-            <Link href="/trash" className="flex-1 lg:flex-none">
-              <Button variant="outline" className="whitespace-nowrap w-full">
-                <Trash2 className="h-4 w-4" />
-                Trash
-              </Button>
-            </Link>
             <Link href="/certificate/add" className="flex-1 lg:flex-none">
               <Button className="whitespace-nowrap w-full">
                 <Plus className="h-4 w-4" />
