@@ -13,7 +13,7 @@ export default async function AddCertificatePage() {
 
   return (
     <>
-      <Navbar title="Tambah Sertifikat" subtitle="Daftarkan sertifikat baru ke registry" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
+      <Navbar title="Add Certificate" subtitle="Daftarkan sertifikat baru ke registry" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
       <div className="p-5 md:p-8 max-w-3xl">
         {clients.length === 0 && (
           <div className="mb-5 rounded border border-signal-soonBorder bg-signal-soonBg px-4 py-3 text-sm text-signal-soon">

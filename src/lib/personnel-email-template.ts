@@ -28,6 +28,7 @@ export const PERSONNEL_PLACEHOLDER_TOKENS: { token: string; label: string }[] = 
   { token: "{{expiryDate}}", label: "Tanggal Berakhir" },
   { token: "{{daysRemainingText}}", label: "Sisa Hari (mis. '14 hari lagi')" },
   { token: "{{appUrl}}", label: "URL aplikasi (dari APP_URL di .env)" },
+  { token: "{{statusColor}}", label: "Warna sesuai urgensi (merah/oranye/teal) — pakai di style color:" },
 ];
 
 export const DEFAULT_PERSONNEL_SUBJECT = "[Certificate Reminder] Sertifikasi Personil Akan Berakhir";
@@ -54,6 +55,8 @@ function escapeHtml(text: string): string {
 
 function tokenValues(data: PersonnelReminderEmailData, appUrlOverride?: string): Record<string, string> {
   const appUrl = appUrlOverride || process.env.APP_URL || "http://localhost:3000";
+  const isExpired = data.daysRemaining < 0;
+  const statusColor = isExpired ? "#DC2626" : data.daysRemaining <= 7 ? "#D97706" : "#0EA89B";
   return {
     employeeName: escapeHtml(data.employeeName),
     position: escapeHtml(data.position || "-"),
@@ -63,6 +66,7 @@ function tokenValues(data: PersonnelReminderEmailData, appUrlOverride?: string):
     categoryName: escapeHtml(data.categoryName),
     expiryDate: formatDate(data.expiryDate),
     daysRemainingText: daysRemainingText(data.daysRemaining),
+    statusColor,
     appUrl,
   };
 }
@@ -93,8 +97,6 @@ export function buildPersonnelSimpleTemplateHtml(
     escapeHtml(substitutePersonnelPlaceholders(text, data, appUrlOverride)).replace(/\n/g, "<br/>");
   const companyName = escapeHtml(fields.companyName || DEFAULT_PERSONNEL_SIMPLE_FIELDS.companyName);
   const systemName = escapeHtml(fields.systemName || DEFAULT_PERSONNEL_SIMPLE_FIELDS.systemName);
-  const isExpired = data.daysRemaining < 0;
-  const statusColor = isExpired ? "#DC2626" : data.daysRemaining <= 7 ? "#D97706" : "#0EA89B";
 
   return `<!DOCTYPE html>
 <html lang="id">
@@ -116,9 +118,9 @@ export function buildPersonnelSimpleTemplateHtml(
                       <img src="${values.appUrl}/brand/logo-sucofindo-icon.png" width="28" height="28" alt="${companyName}" style="display:block;margin:0 auto;" />
                     </td>
                     <td style="padding-left:12px;">
-                      <span style="color:#ffffff;font-size:16px;font-weight:bold;letter-spacing:0.02em;">${companyName}</span>
+                      <span style="color:#ffffff;font-size:19px;font-weight:bold;letter-spacing:0.02em;">${companyName}</span>
                       <br />
-                      <span style="color:#0EA89B;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;">${systemName}</span>
+                      <span style="color:#0EA89B;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;">${systemName}</span>
                     </td>
                   </tr>
                 </table>
@@ -152,11 +154,11 @@ export function buildPersonnelSimpleTemplateHtml(
                   </tr>
                   <tr>
                     <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;">Tanggal Berakhir</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:${statusColor};font-size:13px;font-weight:bold;">${values.expiryDate}</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:${values.statusColor};font-size:13px;font-weight:bold;">${values.expiryDate}</td>
                   </tr>
                   <tr>
                     <td style="padding:10px 16px;color:#64748B;font-size:13px;">Sisa Hari</td>
-                    <td style="padding:10px 16px;color:${statusColor};font-size:13px;font-weight:bold;">${values.daysRemainingText}</td>
+                    <td style="padding:10px 16px;color:${values.statusColor};font-size:13px;font-weight:bold;">${values.daysRemainingText}</td>
                   </tr>
                 </table>
 
@@ -203,9 +205,9 @@ export const DEFAULT_PERSONNEL_BODY_HTML = `<!DOCTYPE html>
                       <img src="{{appUrl}}/brand/logo-sucofindo-icon.png" width="28" height="28" alt="PT Sucofindo (Persero)" style="display:block;margin:0 auto;" />
                     </td>
                     <td style="padding-left:12px;">
-                      <span style="color:#ffffff;font-size:16px;font-weight:bold;letter-spacing:0.02em;">PT SUCOFINDO (Persero)</span>
+                      <span style="color:#ffffff;font-size:19px;font-weight:bold;letter-spacing:0.02em;">PT SUCOFINDO (Persero)</span>
                       <br />
-                      <span style="color:#0EA89B;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;">Personnel Certification Reminder</span>
+                      <span style="color:#0EA89B;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;">Personnel Certification Reminder</span>
                     </td>
                   </tr>
                 </table>
@@ -239,11 +241,11 @@ export const DEFAULT_PERSONNEL_BODY_HTML = `<!DOCTYPE html>
                   </tr>
                   <tr>
                     <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;">Tanggal Berakhir</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;">{{expiryDate}}</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:{{statusColor}};font-size:13px;font-weight:bold;">{{expiryDate}}</td>
                   </tr>
                   <tr>
                     <td style="padding:10px 16px;color:#64748B;font-size:13px;">Sisa Hari</td>
-                    <td style="padding:10px 16px;color:#0F172A;font-size:13px;font-weight:bold;">{{daysRemainingText}}</td>
+                    <td style="padding:10px 16px;color:{{statusColor}};font-size:13px;font-weight:bold;">{{daysRemainingText}}</td>
                   </tr>
                 </table>
 

@@ -4,7 +4,7 @@ import { checkRequiredEnv } from "@/lib/env";
 
 const SESSION_COOKIE = "cert_reminder_session";
 const PORTAL_SESSION_COOKIE = "cert_reminder_portal_session";
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = ["/login", "/forgot-password", "/reset-password"];
 
 // Pages that a Viewer is not allowed to open (create/manage-only screens).
 // Prefix-matched, so "/certificate/edit" also covers "/certificate/edit/abc123".
@@ -84,6 +84,8 @@ export async function middleware(request: NextRequest) {
   const isPublic =
     PUBLIC_PATHS.includes(pathname) ||
     pathname.startsWith("/api/auth/login") ||
+    pathname.startsWith("/api/auth/forgot-password") ||
+    pathname.startsWith("/api/auth/reset-password") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/uploads");
 

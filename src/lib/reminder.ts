@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { getDaysRemaining } from "@/lib/status";
 import { sendReminderEmail } from "@/lib/email";
 import { sendPersonnelReminderEmail } from "@/lib/personnel-email";
+import { sendProjectReminderEmail } from "@/lib/project-email";
+import { sendEquipmentReminderEmail } from "@/lib/equipment-email";
 
 /** Reminder milestones per spec: days remaining before expiry (0 = expiry day itself). */
 export const REMINDER_MILESTONES = [90, 60, 30, 14, 7, 3, 1, 0] as const;
@@ -32,6 +34,8 @@ export async function runReminderCheck(): Promise<ReminderRunSummary> {
 
   await runCertificateReminders(summary);
   await runPersonnelReminders(summary);
+  await runProjectReminders(summary);
+  await runEquipmentReminders(summary);
 
   return summary;
 }
@@ -201,6 +205,165 @@ async function runPersonnelReminders(summary: ReminderRunSummary): Promise<void>
     summary.details.push({
       certificateNumber: cert.certificationNumber || "-",
       certificateName: `${cert.certificationName} (${cert.employee.name})`,
+      milestoneDays: milestone,
+      status: result.status,
+      errorMessage: "errorMessage" in result ? result.errorMessage : undefined,
+    });
+  }
+}
+
+async function runProjectReminders(summary: ReminderRunSummary): Promise<void> {
+  const projects = await prisma.project.findMany({
+    where: { deletedAt: null, status: "ONGOING" }, // only chase reminders for projects still in progress
+    include: { category: true },
+  });
+
+  for (const project of projects) {
+    const daysRemaining = getDaysRemaining(project.targetEndDate);
+    const milestone = REMINDER_MILESTONES.find((m) => m === daysRemaining);
+    if (milestone === undefined) continue;
+
+    summary.checked += 1;
+
+    const alreadySent = await prisma.emailLog.findUnique({
+      where: { projectId_milestoneDays: { projectId: project.id, milestoneDays: milestone } },
+    });
+    if (alreadySent) continue;
+
+    if (!project.picEmail) {
+      await prisma.emailLog.create({
+        data: {
+          projectId: project.id,
+          milestoneDays: milestone,
+          recipient: "-",
+          status: "SKIPPED",
+          errorMessage: "Email PIC belum diisi untuk project ini.",
+        },
+      });
+      summary.skipped += 1;
+      summary.details.push({
+        certificateNumber: project.projectNumber,
+        certificateName: project.projectName,
+        milestoneDays: milestone,
+        status: "SKIPPED",
+        errorMessage: "Email PIC belum diisi.",
+      });
+      continue;
+    }
+
+    const result = await sendProjectReminderEmail({
+      to: project.picEmail,
+      cc: project.ccEmail,
+      data: {
+        projectNumber: project.projectNumber,
+        projectName: project.projectName,
+        categoryName: project.category.name,
+        clientName: project.clientName,
+        pic: project.pic,
+        targetEndDate: project.targetEndDate,
+        daysRemaining,
+      },
+    });
+
+    await prisma.emailLog.create({
+      data: {
+        projectId: project.id,
+        milestoneDays: milestone,
+        recipient: project.picEmail,
+        cc: project.ccEmail,
+        status: result.status,
+        errorMessage: "errorMessage" in result ? result.errorMessage : null,
+      },
+    });
+
+    if (result.status === "SENT") summary.sent += 1;
+    else if (result.status === "FAILED") summary.failed += 1;
+    else summary.skipped += 1;
+
+    summary.details.push({
+      certificateNumber: project.projectNumber,
+      certificateName: project.projectName,
+      milestoneDays: milestone,
+      status: result.status,
+      errorMessage: "errorMessage" in result ? result.errorMessage : undefined,
+    });
+  }
+}
+
+async function runEquipmentReminders(summary: ReminderRunSummary): Promise<void> {
+  const equipmentList = await prisma.equipment.findMany({
+    where: { deletedAt: null },
+    include: { category: true, pic: true },
+  });
+
+  for (const equipment of equipmentList) {
+    if (!equipment.pic.isActive) continue; // don't chase reminders for staff no longer active
+
+    const daysRemaining = getDaysRemaining(equipment.nextCalibrationDate);
+    const milestone = REMINDER_MILESTONES.find((m) => m === daysRemaining);
+    if (milestone === undefined) continue;
+
+    summary.checked += 1;
+
+    const alreadySent = await prisma.emailLog.findUnique({
+      where: { equipmentId_milestoneDays: { equipmentId: equipment.id, milestoneDays: milestone } },
+    });
+    if (alreadySent) continue;
+
+    if (!equipment.pic.email) {
+      await prisma.emailLog.create({
+        data: {
+          equipmentId: equipment.id,
+          milestoneDays: milestone,
+          recipient: "-",
+          status: "SKIPPED",
+          errorMessage: "Email PIC belum diisi.",
+        },
+      });
+      summary.skipped += 1;
+      summary.details.push({
+        certificateNumber: equipment.assetNumber || "-",
+        certificateName: `${equipment.name} (${equipment.pic.name})`,
+        milestoneDays: milestone,
+        status: "SKIPPED",
+        errorMessage: "Email PIC belum diisi.",
+      });
+      continue;
+    }
+
+    const result = await sendEquipmentReminderEmail({
+      to: equipment.pic.email,
+      cc: equipment.ccEmail,
+      data: {
+        name: equipment.name,
+        assetNumber: equipment.assetNumber,
+        categoryName: equipment.category.name,
+        brand: equipment.brand,
+        model: equipment.model,
+        picName: equipment.pic.name,
+        nextCalibrationDate: equipment.nextCalibrationDate,
+        daysRemaining,
+      },
+    });
+
+    await prisma.emailLog.create({
+      data: {
+        equipmentId: equipment.id,
+        milestoneDays: milestone,
+        recipient: equipment.pic.email,
+        cc: equipment.ccEmail,
+        status: result.status,
+        errorMessage: "errorMessage" in result ? result.errorMessage : null,
+      },
+    });
+
+    if (result.status === "SENT") summary.sent += 1;
+    else if (result.status === "FAILED") summary.failed += 1;
+    else summary.skipped += 1;
+
+    summary.details.push({
+      certificateNumber: equipment.assetNumber || "-",
+      certificateName: `${equipment.name} (${equipment.pic.name})`,
       milestoneDays: milestone,
       status: result.status,
       errorMessage: "errorMessage" in result ? result.errorMessage : undefined,

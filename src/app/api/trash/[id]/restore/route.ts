@@ -47,5 +47,43 @@ export async function POST(_request: NextRequest, context: { params: Promise<{ i
     return NextResponse.json({ success: true });
   }
 
+  const project = await prisma.project.findFirst({
+    where: { id: params.id, deletedAt: { not: null } },
+  });
+
+  if (project) {
+    await prisma.project.update({ where: { id: params.id }, data: { deletedAt: null } });
+
+    await logAudit({
+      userId: auth.session.userId,
+      userName: auth.session.name,
+      action: "RESTORE",
+      entityType: "Project",
+      entityId: project.id,
+      description: `Memulihkan project "${project.projectName}" (${project.projectNumber}) dari Trash.`,
+    });
+
+    return NextResponse.json({ success: true });
+  }
+
+  const equipment = await prisma.equipment.findFirst({
+    where: { id: params.id, deletedAt: { not: null } },
+  });
+
+  if (equipment) {
+    await prisma.equipment.update({ where: { id: params.id }, data: { deletedAt: null } });
+
+    await logAudit({
+      userId: auth.session.userId,
+      userName: auth.session.name,
+      action: "RESTORE",
+      entityType: "Equipment",
+      entityId: equipment.id,
+      description: `Memulihkan alat "${equipment.name}" dari Trash.`,
+    });
+
+    return NextResponse.json({ success: true });
+  }
+
   return NextResponse.json({ message: "Data tidak ditemukan di Trash." }, { status: 404 });
 }

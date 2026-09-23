@@ -23,6 +23,41 @@ export laporan.
 ## Fitur
 
 ### Penyempurnaan Terbaru
+- **Project Email Template** dan **Equipment Email Template** — wording email reminder untuk
+  kedua fitur baru ini sekarang bisa diedit lewat UI (mode Sederhana/Lanjutan + preview
+  langsung), persis seperti Email Template klien & personil. Sebelumnya hardcode di kode.
+- Widget "pending reminder" di Dashboard sekarang ikut menghitung **Project Monitoring** dan
+  **Equipment Calibration**, tidak cuma sertifikat klien & personil.
+- **Trash** diperluas mencakup Project dan Equipment yang dihapus — bisa dipulihkan atau
+  dihapus permanen dari tempat yang sama seperti sertifikat/sertifikasi personil.
+- **Project Monitoring (baru)** — fitur pengembangan dari Certificate Reminder untuk memantau
+  kontrak/pekerjaan internal perusahaan: nomor & nama project, kategori/portofolio (PIK, Serco,
+  dll.), klien, PIC, nilai kontrak, tanggal mulai & target selesai, status (Berjalan/
+  Selesai/Dibatalkan). Reminder otomatis ke PIC + CC atasan mengikuti milestone yang sama
+  (90/60/30/14/7/3/1/0 hari) selama status masih "Berjalan". Mendukung **riwayat Addendum**
+  (perpanjangan/perubahan kontrak) — menambah addendum otomatis memperbarui target selesai
+  project dan tercatat sebagai riwayat permanen. Menu: **Project Monitoring**,
+  **Project Categories**.
+- **Equipment Calibration (baru)** — pengingat kalibrasi alat milik internal Sucofindo: nama,
+  merk, tipe, warna, nomor aset, kategori, PIC (terhubung ke data Personil yang sudah ada, NIP
+  otomatis ikut), tanggal kalibrasi terakhir & berikutnya. Reminder otomatis ke PIC + CC atasan,
+  milestone sama seperti fitur lain. Menu: **Equipment Calibration**, **Equipment Categories**.
+- Kedua fitur baru ini pakai template email standar (belum bisa diedit lewat UI seperti Email
+  Template klien/personil — menyusul).
+- **Bug fix**: angka "belum direminder" di Dashboard tidak lagi nyangkut setelah kirim reminder
+  manual — halaman sekarang otomatis refresh datanya.
+- **Bug fix**: konsistensi judul halaman vs nama menu di Sidebar, diperbaiki di 11 halaman
+  (Certificate, Personnel, dst).
+- **Bug fix**: mode "Lanjutan (HTML)" pada Email Template (klien & personil) sekarang selalu
+  sinkron dengan mode "Sederhana" — warna Tanggal Berakhir/Sisa Hari otomatis menyesuaikan
+  urgensi lewat token baru `{{statusColor}}`, dan header sudah pakai logo di kedua mode.
+- Font header email ("PT SUCOFINDO (Persero)", "Certificate/Personnel Reminder System")
+  diperbesar +3pt.
+- **Lupa Password untuk login Admin internal** (`/forgot-password`, `/reset-password`) — sama
+  seperti yang sudah ada di Client Portal.
+- **Sidebar bisa diminimalkan** (ikon panah di tepi kanan sidebar), preferensinya tersimpan di
+  browser. Scroll konten utama sekarang independen dari sidebar (sidebar tidak lagi ikut
+  ter-scroll saat isi halaman panjang).
 - **Personnel Email Template** (`/personnel-email-template`, Admin): template email reminder
   sertifikasi personil sekarang bisa diedit lewat UI — mode Sederhana (isi teks, tabel detail
   otomatis) atau Lanjutan (HTML penuh), sama seperti Email Template sertifikat klien tapi

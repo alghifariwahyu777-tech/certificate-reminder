@@ -135,6 +135,40 @@ export const personnelEmailTemplateSchema = z.discriminatedUnion("mode", [
 ]);
 export type PersonnelEmailTemplateInput = z.infer<typeof personnelEmailTemplateSchema>;
 
+const simpleProjectTemplateSchema = z.object({
+  mode: z.literal("SIMPLE"),
+  subject: z.string().min(1, "Subjek wajib diisi").max(200, "Maksimal 200 karakter"),
+  companyName: z.string().min(1, "Nama perusahaan wajib diisi"),
+  systemName: z.string().min(1, "Nama sistem wajib diisi"),
+  greeting: z.string().min(1, "Salam pembuka wajib diisi"),
+  introText: z.string().min(1, "Paragraf pembuka wajib diisi"),
+  closingText: z.string().min(1, "Paragraf penutup wajib diisi"),
+  footerText: z.string().min(1, "Teks footer wajib diisi"),
+});
+
+export const projectEmailTemplateSchema = z.discriminatedUnion("mode", [
+  simpleProjectTemplateSchema,
+  advancedTemplateSchema,
+]);
+export type ProjectEmailTemplateInput = z.infer<typeof projectEmailTemplateSchema>;
+
+const simpleEquipmentTemplateSchema = z.object({
+  mode: z.literal("SIMPLE"),
+  subject: z.string().min(1, "Subjek wajib diisi").max(200, "Maksimal 200 karakter"),
+  companyName: z.string().min(1, "Nama perusahaan wajib diisi"),
+  systemName: z.string().min(1, "Nama sistem wajib diisi"),
+  greeting: z.string().min(1, "Salam pembuka wajib diisi"),
+  introText: z.string().min(1, "Paragraf pembuka wajib diisi"),
+  closingText: z.string().min(1, "Paragraf penutup wajib diisi"),
+  footerText: z.string().min(1, "Teks footer wajib diisi"),
+});
+
+export const equipmentEmailTemplateSchema = z.discriminatedUnion("mode", [
+  simpleEquipmentTemplateSchema,
+  advancedTemplateSchema,
+]);
+export type EquipmentEmailTemplateInput = z.infer<typeof equipmentEmailTemplateSchema>;
+
 export const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
 export const ACCEPTED_FILE_TYPES = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
 
@@ -342,3 +376,69 @@ export const resetPasswordSchema = z.object({
   newPassword: z.string().min(8, "Password baru minimal 8 karakter"),
 });
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+// --- Project Monitoring ---
+
+export const projectCategorySchema = z.object({
+  name: z.string().min(1, "Nama kategori wajib diisi").max(100, "Maksimal 100 karakter"),
+});
+export type ProjectCategoryInput = z.infer<typeof projectCategorySchema>;
+
+export const projectSchema = z.object({
+  projectNumber: z.string().min(1, "Nomor project wajib diisi").max(100, "Maksimal 100 karakter"),
+  projectName: z.string().min(1, "Nama project wajib diisi").max(300, "Maksimal 300 karakter"),
+  categoryId: z.string().min(1, "Kategori wajib dipilih"),
+  clientName: z.string().min(1, "Nama klien/pemberi kerja wajib diisi").max(200, "Maksimal 200 karakter"),
+  pic: z.string().min(1, "PIC wajib diisi").max(120, "Maksimal 120 karakter"),
+  picEmail: z.string().email("Format email tidak valid").optional().or(z.literal("")),
+  ccEmail: z.string().email("Format email tidak valid").optional().or(z.literal("")),
+  contractValue: z.string().optional().or(z.literal("")),
+  startDate: z.string().optional().or(z.literal("")),
+  targetEndDate: z.string().min(1, "Target selesai wajib diisi"),
+  actualEndDate: z.string().optional().or(z.literal("")),
+  status: z.enum(["ONGOING", "COMPLETED", "CANCELLED"]).default("ONGOING"),
+  description: z.string().optional(),
+  notes: z.string().optional(),
+  fileUrl: z.string().nullable().optional(),
+  driveFileId: z.string().nullable().optional(),
+  fileMimeType: z.string().nullable().optional(),
+});
+export type ProjectInput = z.infer<typeof projectSchema>;
+
+export const projectAddendumSchema = z.object({
+  addendumNumber: z.string().min(1, "Nomor/nama addendum wajib diisi").max(100, "Maksimal 100 karakter"),
+  description: z.string().optional(),
+  newTargetEndDate: z.string().min(1, "Target selesai baru wajib diisi"),
+  newContractValue: z.string().optional().or(z.literal("")),
+  fileUrl: z.string().nullable().optional(),
+  driveFileId: z.string().nullable().optional(),
+  fileMimeType: z.string().nullable().optional(),
+});
+export type ProjectAddendumInput = z.infer<typeof projectAddendumSchema>;
+
+// --- Equipment Calibration ---
+
+export const equipmentCategorySchema = z.object({
+  name: z.string().min(1, "Nama kategori wajib diisi").max(100, "Maksimal 100 karakter"),
+});
+export type EquipmentCategoryInput = z.infer<typeof equipmentCategorySchema>;
+
+export const equipmentSchema = z.object({
+  name: z.string().min(1, "Nama alat wajib diisi").max(200, "Maksimal 200 karakter"),
+  assetNumber: z.string().max(100, "Maksimal 100 karakter").optional(),
+  brand: z.string().max(100, "Maksimal 100 karakter").optional(),
+  model: z.string().max(100, "Maksimal 100 karakter").optional(),
+  color: z.string().max(50, "Maksimal 50 karakter").optional(),
+  categoryId: z.string().min(1, "Kategori wajib dipilih"),
+  picId: z.string().min(1, "PIC wajib dipilih"),
+  ccEmail: z.string().email("Format email tidak valid").optional().or(z.literal("")),
+  calibrationNumber: z.string().max(100, "Maksimal 100 karakter").optional(),
+  calibratedBy: z.string().max(200, "Maksimal 200 karakter").optional(),
+  lastCalibrationDate: z.string().optional().or(z.literal("")),
+  nextCalibrationDate: z.string().min(1, "Tanggal kalibrasi berikutnya wajib diisi"),
+  notes: z.string().optional(),
+  fileUrl: z.string().nullable().optional(),
+  driveFileId: z.string().nullable().optional(),
+  fileMimeType: z.string().nullable().optional(),
+});
+export type EquipmentInput = z.infer<typeof equipmentSchema>;

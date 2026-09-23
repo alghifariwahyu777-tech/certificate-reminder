@@ -24,7 +24,10 @@ export type AuditEntityType =
   | "Service"
   | "Application"
   | "Employee"
-  | "PersonnelCertification";
+  | "PersonnelCertification"
+  | "Project"
+  | "ProjectAddendum"
+  | "Equipment";
 
 /**
  * Fire-and-forget audit trail write. Never throws — a logging failure

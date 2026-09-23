@@ -27,7 +27,7 @@ export type StorageUploadResult = {
   fileUrl: string; // app-internal proxy URL, e.g. /api/files/{encoded path}
 };
 
-export type StorageFolder = "certificates" | "renewals" | "applications" | "personnel" | "misc";
+export type StorageFolder = "certificates" | "renewals" | "applications" | "personnel" | "projects" | "equipment" | "misc";
 
 /**
  * Uploads a file buffer to the private "documents" bucket, under a folder

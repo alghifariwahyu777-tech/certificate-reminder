@@ -42,7 +42,7 @@ export default async function PersonnelCertificationDetailPage(context: { params
   return (
     <>
       <Navbar
-        title="Detail Sertifikasi Personil"
+        title="Personnel Certification Detail"
         subtitle={certification.certificationNumber || certification.certificationName}
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}

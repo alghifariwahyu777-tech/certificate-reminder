@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { RotateCcw, Trash2, FileBadge2, Award } from "lucide-react";
+import { RotateCcw, Trash2, FileBadge2, Award, FolderClock, Wrench } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -28,14 +28,46 @@ type TrashedPersonnelCertification = {
   employee: { name: string };
 };
 
-/** Normalized shape so both types render through the same list/restore/delete logic. */
+type TrashedProject = {
+  id: string;
+  projectNumber: string;
+  projectName: string;
+  deletedAt: string;
+  category: { name: string };
+  clientName: string;
+};
+
+type TrashedEquipment = {
+  id: string;
+  name: string;
+  assetNumber: string | null;
+  deletedAt: string;
+  category: { name: string };
+  pic: { name: string };
+};
+
+/** Normalized shape so all four types render through the same list/restore/delete logic. */
 type TrashItem = {
   id: string;
-  kind: "CERTIFICATE" | "PERSONNEL_CERTIFICATION";
+  kind: "CERTIFICATE" | "PERSONNEL_CERTIFICATION" | "PROJECT" | "EQUIPMENT";
   title: string;
   subtitle: string;
   deletedAt: string;
   detailHref: string | null;
+};
+
+const KIND_LABEL: Record<TrashItem["kind"], string> = {
+  CERTIFICATE: "Sertifikat Klien",
+  PERSONNEL_CERTIFICATION: "Sertifikasi Personil",
+  PROJECT: "Project",
+  EQUIPMENT: "Equipment",
+};
+
+const KIND_ICON: Record<TrashItem["kind"], typeof FileBadge2> = {
+  CERTIFICATE: FileBadge2,
+  PERSONNEL_CERTIFICATION: Award,
+  PROJECT: FolderClock,
+  EQUIPMENT: Wrench,
 };
 
 export function TrashViewer() {
@@ -68,12 +100,30 @@ export function TrashViewer() {
           title: p.certificationName,
           subtitle: `${p.certificationNumber || "-"} · ${p.employee.name} · ${p.category.name}`,
           deletedAt: p.deletedAt,
-          detailHref: null, // no standalone detail page for personnel certifications yet
+          detailHref: `/personnel-certifications/${p.id}`,
         })
       );
 
+      const projectItems: TrashItem[] = (data.projects || []).map((p: TrashedProject) => ({
+        id: p.id,
+        kind: "PROJECT" as const,
+        title: p.projectName,
+        subtitle: `${p.projectNumber} · ${p.clientName} · ${p.category.name}`,
+        deletedAt: p.deletedAt,
+        detailHref: `/projects/${p.id}`,
+      }));
+
+      const equipmentItems: TrashItem[] = (data.equipment || []).map((e: TrashedEquipment) => ({
+        id: e.id,
+        kind: "EQUIPMENT" as const,
+        title: e.name,
+        subtitle: `${e.assetNumber || "-"} · ${e.pic.name} · ${e.category.name}`,
+        deletedAt: e.deletedAt,
+        detailHref: `/equipment/${e.id}`,
+      }));
+
       setItems(
-        [...certificateItems, ...personnelItems].sort(
+        [...certificateItems, ...personnelItems, ...projectItems, ...equipmentItems].sort(
           (a, b) => new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime()
         )
       );
@@ -126,7 +176,7 @@ export function TrashViewer() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-slate-500">
-        {loading ? "Memuat…" : `${items.length} item di Trash (sertifikat klien & sertifikasi personil)`}
+        {loading ? "Memuat…" : `${items.length} item di Trash (sertifikat, sertifikasi personil, project, & alat)`}
       </p>
 
       <Card>
@@ -140,14 +190,14 @@ export function TrashViewer() {
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {items.map((item) => {
-              const Icon = item.kind === "CERTIFICATE" ? FileBadge2 : Award;
+              const Icon = KIND_ICON[item.kind];
               return (
                 <div key={item.id} className="flex items-center justify-between gap-3 px-5 py-3.5">
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <Icon className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                       <span className="text-[10px] font-mono uppercase tracking-wide text-slate-400">
-                        {item.kind === "CERTIFICATE" ? "Sertifikat Klien" : "Sertifikasi Personil"}
+                        {KIND_LABEL[item.kind]}
                       </span>
                     </div>
                     {item.detailHref ? (

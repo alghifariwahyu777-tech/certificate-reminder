@@ -48,7 +48,7 @@ export default async function CertificateDetailPage(context: { params: Promise<{
 
   return (
     <>
-      <Navbar title="Detail Sertifikat" subtitle={certificate.certificateNumber} adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
+      <Navbar title="Certificate Detail" subtitle={certificate.certificateNumber} adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
       <div className="p-5 md:p-8 max-w-4xl space-y-5">
         <div className="flex items-center justify-between">
           <Link href="/certificate" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-ink">

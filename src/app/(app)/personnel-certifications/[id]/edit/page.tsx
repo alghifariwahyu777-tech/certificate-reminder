@@ -19,7 +19,7 @@ export default async function EditPersonnelCertificationPage(context: { params: 
   return (
     <>
       <Navbar
-        title="Edit Sertifikasi Personil"
+        title="Edit Personnel Certification"
         subtitle={certification.certificationName}
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}

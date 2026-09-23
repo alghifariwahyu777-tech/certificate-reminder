@@ -65,5 +65,55 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     return NextResponse.json({ success: true });
   }
 
+  const project = await prisma.project.findFirst({
+    where: { id: params.id, deletedAt: { not: null } },
+  });
+
+  if (project) {
+    if (project.driveFileId) {
+      await deleteFile(project.driveFileId).catch((err) => {
+        console.error("Failed to delete file from Supabase Storage:", err);
+      });
+    }
+
+    await prisma.project.delete({ where: { id: params.id } });
+
+    await logAudit({
+      userId: auth.session.userId,
+      userName: auth.session.name,
+      action: "PERMANENT_DELETE",
+      entityType: "Project",
+      entityId: project.id,
+      description: `Menghapus permanen project "${project.projectName}" (${project.projectNumber}).`,
+    });
+
+    return NextResponse.json({ success: true });
+  }
+
+  const equipment = await prisma.equipment.findFirst({
+    where: { id: params.id, deletedAt: { not: null } },
+  });
+
+  if (equipment) {
+    if (equipment.driveFileId) {
+      await deleteFile(equipment.driveFileId).catch((err) => {
+        console.error("Failed to delete file from Supabase Storage:", err);
+      });
+    }
+
+    await prisma.equipment.delete({ where: { id: params.id } });
+
+    await logAudit({
+      userId: auth.session.userId,
+      userName: auth.session.name,
+      action: "PERMANENT_DELETE",
+      entityType: "Equipment",
+      entityId: equipment.id,
+      description: `Menghapus permanen alat "${equipment.name}".`,
+    });
+
+    return NextResponse.json({ success: true });
+  }
+
   return NextResponse.json({ message: "Data tidak ditemukan di Trash." }, { status: 404 });
 }

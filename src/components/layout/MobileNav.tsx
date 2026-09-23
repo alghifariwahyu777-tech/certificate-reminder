@@ -27,6 +27,8 @@ import {
   Tags,
   Settings,
   LogOut,
+  FolderClock,
+  Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SucofindoMark } from "@/components/brand/SucofindoLogo";
@@ -59,6 +61,22 @@ const NAV_GROUPS = [
       { href: "/category", label: "Category", icon: FolderKanban, adminOnly: false },
       { href: "/departments", label: "Departments", icon: Building, adminOnly: false },
       { href: "/email-template", label: "Email Template", icon: Mail, adminOnly: true },
+    ],
+  },
+  {
+    label: "Project",
+    items: [
+      { href: "/projects", label: "Project Monitoring", icon: FolderClock, adminOnly: false },
+      { href: "/project-categories", label: "Project Categories", icon: Tags, adminOnly: false },
+      { href: "/project-email-template", label: "Project Email Template", icon: Mail, adminOnly: true },
+    ],
+  },
+  {
+    label: "Equipment",
+    items: [
+      { href: "/equipment", label: "Equipment Calibration", icon: Wrench, adminOnly: false },
+      { href: "/equipment-categories", label: "Equipment Categories", icon: Tags, adminOnly: false },
+      { href: "/equipment-email-template", label: "Equipment Email Template", icon: Mail, adminOnly: true },
     ],
   },
   {

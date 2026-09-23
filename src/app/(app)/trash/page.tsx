@@ -12,7 +12,7 @@ export default async function TrashPage() {
     <>
       <Navbar
         title="Trash"
-        subtitle="Sertifikat klien & sertifikasi personil yang telah dihapus — bisa dipulihkan atau dihapus permanen"
+        subtitle="Sertifikat, sertifikasi personil, project, & alat yang telah dihapus — bisa dipulihkan atau dihapus permanen"
         adminName={session.name}
         role={session.role}
       />

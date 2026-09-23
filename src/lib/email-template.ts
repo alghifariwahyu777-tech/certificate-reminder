@@ -29,6 +29,7 @@ export const PLACEHOLDER_TOKENS: { token: string; label: string }[] = [
   { token: "{{expiryDate}}", label: "Tanggal Berakhir" },
   { token: "{{daysRemainingText}}", label: "Sisa Hari (mis. '14 hari lagi')" },
   { token: "{{appUrl}}", label: "URL aplikasi (dari APP_URL di .env)" },
+  { token: "{{statusColor}}", label: "Warna sesuai urgensi (merah/oranye/teal) — pakai di style color:" },
 ];
 
 export const DEFAULT_SUBJECT = "[Certificate Reminder] Sertifikat Akan Berakhir";
@@ -58,10 +59,19 @@ export const DEFAULT_BODY_HTML = `<!DOCTYPE html>
         <td align="center">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#ffffff;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;">
             <tr>
-              <td style="background-color:#0F172A;padding:24px 32px;">
-                <span style="color:#ffffff;font-size:16px;font-weight:bold;letter-spacing:0.02em;">PT SUCOFINDO (Persero)</span>
-                <br />
-                <span style="color:#94A3B8;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;">Certificate Reminder System</span>
+              <td style="background-color:#0F172A;padding:28px 32px;border-bottom:3px solid #0EA89B;">
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="background-color:#ffffff;border-radius:8px;padding:6px;width:40px;height:40px;text-align:center;vertical-align:middle;">
+                      <img src="{{appUrl}}/brand/logo-sucofindo-icon.png" width="28" height="28" alt="PT Sucofindo (Persero)" style="display:block;margin:0 auto;" />
+                    </td>
+                    <td style="padding-left:12px;">
+                      <span style="color:#ffffff;font-size:19px;font-weight:bold;letter-spacing:0.02em;">PT SUCOFINDO (Persero)</span>
+                      <br />
+                      <span style="color:#0EA89B;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;">Certificate Reminder System</span>
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr>
@@ -93,11 +103,11 @@ export const DEFAULT_BODY_HTML = `<!DOCTYPE html>
                   </tr>
                   <tr>
                     <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;">Tanggal Berakhir</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;">{{expiryDate}}</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:{{statusColor}};font-size:13px;font-weight:bold;">{{expiryDate}}</td>
                   </tr>
                   <tr>
                     <td style="padding:10px 16px;color:#64748B;font-size:13px;">Sisa Hari</td>
-                    <td style="padding:10px 16px;color:#0F172A;font-size:13px;font-weight:bold;">{{daysRemainingText}}</td>
+                    <td style="padding:10px 16px;color:{{statusColor}};font-size:13px;font-weight:bold;">{{daysRemainingText}}</td>
                   </tr>
                 </table>
                 <p style="margin:0 0 24px 0;color:#334155;font-size:14px;line-height:1.6;">
@@ -142,6 +152,8 @@ function daysRemainingText(daysRemaining: number): string {
 
 function tokenValues(data: ReminderEmailData, appUrlOverride?: string): Record<string, string> {
   const appUrl = appUrlOverride || process.env.APP_URL || "http://localhost:3000";
+  const isExpired = data.daysRemaining < 0;
+  const statusColor = isExpired ? "#DC2626" : data.daysRemaining <= 7 ? "#D97706" : "#0EA89B";
   return {
     certificateName: escapeHtml(data.certificateName),
     certificateNumber: escapeHtml(data.certificateNumber),
@@ -150,6 +162,7 @@ function tokenValues(data: ReminderEmailData, appUrlOverride?: string): Record<s
     pic: escapeHtml(data.pic),
     expiryDate: formatDate(data.expiryDate),
     daysRemainingText: daysRemainingText(data.daysRemaining),
+    statusColor,
     appUrl,
   };
 }
@@ -182,8 +195,6 @@ export function buildSimpleTemplateHtml(
   const t = (text: string) => escapeHtml(substitutePlaceholders(text, data, appUrlOverride)).replace(/\n/g, "<br/>");
   const companyName = escapeHtml(fields.companyName || DEFAULT_SIMPLE_FIELDS.companyName);
   const systemName = escapeHtml(fields.systemName || DEFAULT_SIMPLE_FIELDS.systemName);
-  const isExpired = data.daysRemaining < 0;
-  const statusColor = isExpired ? "#DC2626" : data.daysRemaining <= 7 ? "#D97706" : "#0EA89B";
 
   return `<!DOCTYPE html>
 <html lang="id">
@@ -205,9 +216,9 @@ export function buildSimpleTemplateHtml(
                       <img src="${values.appUrl}/brand/logo-sucofindo-icon.png" width="28" height="28" alt="${companyName}" style="display:block;margin:0 auto;" />
                     </td>
                     <td style="padding-left:12px;">
-                      <span style="color:#ffffff;font-size:16px;font-weight:bold;letter-spacing:0.02em;">${companyName}</span>
+                      <span style="color:#ffffff;font-size:19px;font-weight:bold;letter-spacing:0.02em;">${companyName}</span>
                       <br />
-                      <span style="color:#0EA89B;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;">${systemName}</span>
+                      <span style="color:#0EA89B;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;">${systemName}</span>
                     </td>
                   </tr>
                 </table>
@@ -241,11 +252,11 @@ export function buildSimpleTemplateHtml(
                   </tr>
                   <tr>
                     <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;">Tanggal Berakhir</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:${statusColor};font-size:13px;font-weight:bold;">${values.expiryDate}</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:${values.statusColor};font-size:13px;font-weight:bold;">${values.expiryDate}</td>
                   </tr>
                   <tr>
                     <td style="padding:10px 16px;color:#64748B;font-size:13px;">Sisa Hari</td>
-                    <td style="padding:10px 16px;color:${statusColor};font-size:13px;font-weight:bold;">${values.daysRemainingText}</td>
+                    <td style="padding:10px 16px;color:${values.statusColor};font-size:13px;font-weight:bold;">${values.daysRemainingText}</td>
                   </tr>
                 </table>
 

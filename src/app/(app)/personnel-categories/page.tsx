@@ -13,7 +13,7 @@ export default async function PersonnelCategoriesPage() {
   return (
     <>
       <Navbar
-        title="Kategori Sertifikasi Personil"
+        title="Certification Categories"
         subtitle="Kelola daftar kategori kompetensi/sertifikasi internal"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}

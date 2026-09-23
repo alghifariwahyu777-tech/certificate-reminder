@@ -11,7 +11,7 @@ export default async function ImportCertificatePage() {
   return (
     <>
       <Navbar
-        title="Import Sertifikat"
+        title="Import Certificate"
         subtitle="Tambahkan banyak sertifikat sekaligus dari file Excel"
         adminName={session.name}
         role={session.role}

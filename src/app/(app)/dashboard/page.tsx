@@ -166,6 +166,53 @@ export default async function DashboardPage() {
 
     pendingReminderCount = pendingCertificates + pendingPersonnel;
 
+    // Same check for ongoing projects (target end date) and equipment
+    // (next calibration date) — the two newest reminder domains.
+    const projectMilestoneMatches = await prisma.project.findMany({
+      where: {
+        deletedAt: null,
+        status: "ONGOING",
+        OR: (REMINDER_MILESTONES as readonly number[]).map((days) => {
+          const target = new Date(today);
+          target.setDate(target.getDate() + days);
+          return { targetEndDate: { gte: target, lt: new Date(target.getTime() + 24 * 60 * 60 * 1000) } };
+        }),
+      },
+      select: { id: true, targetEndDate: true },
+    });
+
+    const projectAlreadyLogged = await prisma.emailLog.findMany({
+      where: { projectId: { in: projectMilestoneMatches.map((p) => p.id) } },
+      select: { projectId: true, milestoneDays: true },
+    });
+    const projectLoggedSet = new Set(projectAlreadyLogged.map((l) => `${l.projectId}:${l.milestoneDays}`));
+    const pendingProjects = projectMilestoneMatches.filter(
+      (p) => !projectLoggedSet.has(`${p.id}:${getDaysRemaining(p.targetEndDate)}`)
+    ).length;
+
+    const equipmentMilestoneMatches = await prisma.equipment.findMany({
+      where: {
+        deletedAt: null,
+        OR: (REMINDER_MILESTONES as readonly number[]).map((days) => {
+          const target = new Date(today);
+          target.setDate(target.getDate() + days);
+          return { nextCalibrationDate: { gte: target, lt: new Date(target.getTime() + 24 * 60 * 60 * 1000) } };
+        }),
+      },
+      select: { id: true, nextCalibrationDate: true },
+    });
+
+    const equipmentAlreadyLogged = await prisma.emailLog.findMany({
+      where: { equipmentId: { in: equipmentMilestoneMatches.map((e) => e.id) } },
+      select: { equipmentId: true, milestoneDays: true },
+    });
+    const equipmentLoggedSet = new Set(equipmentAlreadyLogged.map((l) => `${l.equipmentId}:${l.milestoneDays}`));
+    const pendingEquipment = equipmentMilestoneMatches.filter(
+      (e) => !equipmentLoggedSet.has(`${e.id}:${getDaysRemaining(e.nextCalibrationDate)}`)
+    ).length;
+
+    pendingReminderCount = pendingCertificates + pendingPersonnel + pendingProjects + pendingEquipment;
+
     const [logs, auditEntries] = await Promise.all([
       prisma.emailLog.findMany({
         where: { certificateId: { not: null } },

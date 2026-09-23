@@ -21,7 +21,7 @@ export default async function EditCertificatePage(context: { params: Promise<{ i
 
   return (
     <>
-      <Navbar title="Edit Sertifikat" subtitle={certificate.certificateName} adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
+      <Navbar title="Edit Certificate" subtitle={certificate.certificateName} adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
       <div className="p-5 md:p-8 max-w-3xl">
         <CertificateForm
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}

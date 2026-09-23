@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import Link from "next/link";
 import { LogIn } from "lucide-react";
 import { loginSchema, type LoginInput } from "@/lib/validations";
 import { Input, Label } from "@/components/ui/Input";
@@ -55,7 +56,12 @@ export function LoginForm() {
       </div>
 
       <div>
-        <Label htmlFor="password">Password</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password">Password</Label>
+          <Link href="/forgot-password" className="text-xs text-accent hover:text-accent-light">
+            Lupa password?
+          </Link>
+        </div>
         <Input
           id="password"
           type="password"

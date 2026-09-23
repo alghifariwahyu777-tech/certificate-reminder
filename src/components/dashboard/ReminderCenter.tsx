@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Send, Mail, CheckCircle2, XCircle, MinusCircle, Loader2, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -42,6 +43,7 @@ export function ReminderCenter({
   recentLogs: EmailLogItem[];
 }) {
   const { showToast } = useToast();
+  const router = useRouter();
   const [running, setRunning] = useState(false);
   const [lastRun, setLastRun] = useState<RunDetail[] | null>(null);
   const [lastRunSummary, setLastRunSummary] = useState<{ sent: number; failed: number; skipped: number } | null>(
@@ -64,6 +66,7 @@ export function ReminderCenter({
         failed: body.summary.failed,
         skipped: body.summary.skipped,
       });
+      router.refresh();
       if (body.summary.checked === 0) {
         showToast("Tidak ada sertifikat yang jatuh pada milestone reminder hari ini.");
       } else {
@@ -110,7 +113,8 @@ export function ReminderCenter({
         )}
 
         <p className="text-sm text-slate-600">
-          <strong className="text-ink font-mono">{pendingCount}</strong> sertifikat/sertifikasi sedang berada
+          <strong className="text-ink font-mono">{pendingCount}</strong> item (sertifikat/sertifikasi/project/alat)
+          sedang berada
           tepat pada milestone reminder (90/60/30/14/7/3/1/0 hari) dan belum dikirimi email hari ini.
         </p>
 

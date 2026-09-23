@@ -11,7 +11,7 @@ export default async function PersonnelImportPage() {
   return (
     <>
       <Navbar
-        title="Import Sertifikasi Personil"
+        title="Import Personnel Certification"
         subtitle="Tambahkan banyak data sertifikasi personil sekaligus lewat Excel"
         adminName={session.name}
         role={session.role}

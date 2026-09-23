@@ -17,7 +17,7 @@ export default async function PersonnelCertificationsPage() {
   return (
     <>
       <Navbar
-        title="Sertifikasi Personil"
+        title="Personnel Certifications"
         subtitle="Pengingat sertifikasi & kompetensi internal — terpisah dari sertifikat klien"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}

@@ -13,7 +13,7 @@ export default async function NewPersonnelCertificationPage() {
   return (
     <>
       <Navbar
-        title="Tambah Sertifikasi Personil"
+        title="Add Personnel Certification"
         subtitle="Catat sertifikasi/kompetensi baru untuk personil internal"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}

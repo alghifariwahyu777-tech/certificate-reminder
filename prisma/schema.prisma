@@ -15,13 +15,15 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      String   @default("ADMIN") // "ADMIN" | "VIEWER"
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
+  id               String    @id @default(cuid())
+  name             String
+  email            String    @unique
+  password         String
+  role             String    @default("ADMIN") // "ADMIN" | "VIEWER"
+  isActive         Boolean   @default(true)
+  resetToken       String?   @unique
+  resetTokenExpiry DateTime?
+  createdAt        DateTime  @default(now())
 }
 
 model Category {
@@ -164,6 +166,10 @@ model EmailLog {
   certificate              Certificate?            @relation(fields: [certificateId], references: [id], onDelete: Cascade)
   personnelCertificationId String?
   personnelCertification   PersonnelCertification? @relation(fields: [personnelCertificationId], references: [id], onDelete: Cascade)
+  projectId                String?
+  project                  Project?                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  equipmentId              String?
+  equipment                Equipment?              @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
   milestoneDays            Int
   recipient                String
   cc                       String?
@@ -173,8 +179,12 @@ model EmailLog {
 
   @@unique([certificateId, milestoneDays])
   @@unique([personnelCertificationId, milestoneDays])
+  @@unique([projectId, milestoneDays])
+  @@unique([equipmentId, milestoneDays])
   @@index([certificateId])
   @@index([personnelCertificationId])
+  @@index([projectId])
+  @@index([equipmentId])
 }
 
 /// Append-only record of who did what. Written by lib/audit.ts from within
@@ -448,6 +458,7 @@ model Employee {
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
   certifications PersonnelCertification[]
+  equipmentAsPic Equipment[]
 
   @@index([departmentId])
 }
@@ -497,5 +508,116 @@ model AppSettings {
   id                  String   @id @default("default")
   adminWhatsappNumber String? // full international format, digits only, e.g. "6281234567890" — used to build wa.me links
   updatedAt           DateTime @updatedAt
+}
+
+/// Portfolio grouping for Project Monitoring — e.g. "PIK", "Serco", etc.
+/// Separate from Category (client certificate categories) since this
+/// classifies internal work contracts, not certificates.
+model ProjectCategory {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  projects  Project[]
+}
+
+/// Internal work-contract monitoring — a further development of Certificate
+/// Reminder for tracking the company's own projects (not client
+/// certificates): what work was done, when, for how much, and reminders
+/// for the project's own target completion date. Doubles as a running
+/// database of completed/ongoing work for future reference.
+model Project {
+  id               String            @id @default(cuid())
+  projectNumber    String            @unique // kontrak/project number
+  projectName      String
+  categoryId       String
+  category         ProjectCategory   @relation(fields: [categoryId], references: [id])
+  clientName       String // pemberi kerja — free text, not tied to the certificate Client list
+  pic              String // internal PIC name
+  picEmail         String?
+  ccEmail          String? // atasan — CC'd alongside the PIC's own reminder
+  contractValue    Decimal? // Rupiah
+  startDate        DateTime?
+  targetEndDate    DateTime // reminder milestones are computed from this date
+  actualEndDate    DateTime? // set when the project is actually finished — distinct from the target
+  status           String            @default("ONGOING") // "ONGOING" | "COMPLETED" | "CANCELLED" — reminders only fire while ONGOING
+  description      String?
+  fileUrl          String?
+  driveFileId      String?
+  fileMimeType     String?
+  notes            String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime? // soft delete, same pattern as Certificate
+  addenda          ProjectAddendum[]
+  emailLogs        EmailLog[]
+
+  @@index([categoryId])
+  @@index([targetEndDate])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+/// One row per contract addendum/amendment — history is kept, and the
+/// addendum's new target date becomes the project's new reminder reference
+/// (same convention as Certificate → RenewalHistory).
+model ProjectAddendum {
+  id                String   @id @default(cuid())
+  projectId         String
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  addendumNumber    String // e.g. "Addendum 1"
+  description       String?
+  previousEndDate   DateTime
+  newTargetEndDate  DateTime
+  newContractValue  Decimal?
+  fileUrl           String?
+  driveFileId       String?
+  fileMimeType      String?
+  createdAt         DateTime @default(now())
+  createdBy         String?
+
+  @@index([projectId])
+}
+
+/// Category for internal equipment — e.g. "Alat Ukur Listrik", "Alat Ukur Dimensi".
+model EquipmentCategory {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  createdAt DateTime    @default(now())
+  equipment Equipment[]
+}
+
+/// Internal Sucofindo-owned equipment requiring periodic calibration —
+/// same reminder-milestone convention as Certificate/PersonnelCertification,
+/// with a PIC (linked to Employee, so name/NIP/email/department are never
+/// duplicated) plus an optional supervisor CC.
+model Equipment {
+  id                  String            @id @default(cuid())
+  name                String
+  assetNumber         String? // internal asset/serial number
+  brand               String? // merk
+  model               String? // tipe
+  color                String? // warna
+  categoryId          String
+  category            EquipmentCategory @relation(fields: [categoryId], references: [id])
+  picId               String
+  pic                 Employee          @relation(fields: [picId], references: [id])
+  ccEmail             String? // atasan — CC'd alongside the PIC's own reminder
+  calibrationNumber   String?
+  calibratedBy        String? // lembaga/instansi kalibrator
+  lastCalibrationDate DateTime?
+  nextCalibrationDate DateTime // reminder milestones are computed from this date
+  fileUrl             String?
+  driveFileId         String?
+  fileMimeType        String?
+  notes               String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  deletedAt           DateTime?
+  emailLogs           EmailLog[]
+
+  @@index([categoryId])
+  @@index([picId])
+  @@index([nextCalibrationDate])
+  @@index([deletedAt])
 }
 
