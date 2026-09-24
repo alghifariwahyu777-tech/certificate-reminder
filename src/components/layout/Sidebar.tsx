@@ -151,7 +151,7 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" }) {
           title={collapsed ? "Perluas sidebar" : "Perkecil sidebar"}
           className="absolute -right-3.5 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-slate-200 border-2 border-ink hover:bg-slate-600 hover:text-white shadow-md transition-colors"
         >
-          {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}}
+          {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
         </button>
       </div>
 
