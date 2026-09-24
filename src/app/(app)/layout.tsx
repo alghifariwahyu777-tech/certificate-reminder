@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { getSession } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/Sidebar";
+
+export const metadata: Metadata = {
+  title: "Reminder System | PT Sucofindo (Persero)",
+};
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -12,7 +17,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div className="flex-1 min-w-0 flex flex-col overflow-y-auto">
         <div className="flex-1">{children}</div>
         <footer className="px-5 md:px-8 py-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-400 dark:text-slate-500 font-mono">
-          PT Sucofindo (Persero) · Certificate Reminder System · Internal Use Only
+          PT Sucofindo (Persero) · Reminder System · Internal Use Only
         </footer>
       </div>
     </div>

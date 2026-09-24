@@ -9,7 +9,9 @@ export default async function NewProjectPage() {
   if (!session) redirect("/login");
   if (session.role !== "ADMIN") redirect("/projects");
 
-  const categories = await prisma.projectCategory.findMany({ orderBy: { name: "asc" } });
+  const [categories] = await Promise.all([
+    prisma.projectCategory.findMany({ orderBy: { name: "asc" } }),
+  ]);
 
   return (
     <>
@@ -20,7 +22,9 @@ export default async function NewProjectPage() {
         role={session.role}
       />
       <div className="p-5 md:p-8">
-        <ProjectForm categories={categories.map((c) => ({ id: c.id, name: c.name }))} />
+        <ProjectForm
+          categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+        />
       </div>
     </>
   );

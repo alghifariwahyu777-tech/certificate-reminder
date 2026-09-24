@@ -29,6 +29,7 @@ import {
   ChevronsRight,
   FolderClock,
   Wrench,
+  Users2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SucofindoMark } from "@/components/brand/SucofindoLogo";
@@ -45,10 +46,10 @@ const NAV_GROUPS = [
   {
     label: "Personnel",
     items: [
-      { href: "/employees", label: "Personnel", icon: UserSquare2, adminOnly: false },
-      { href: "/personnel-certifications", label: "Personnel Certifications", icon: Award, adminOnly: false },
-      { href: "/personnel-categories", label: "Certification Categories", icon: Tags, adminOnly: false },
-      { href: "/personnel-email-template", label: "Personnel Email Template", icon: Mail, adminOnly: true },
+      { href: "/employees", label: "Employees", icon: UserSquare2, adminOnly: false },
+      { href: "/personnel-certifications", label: "Certifications", icon: Award, adminOnly: false },
+      { href: "/personnel-categories", label: "Categories", icon: Tags, adminOnly: false },
+      { href: "/personnel-email-template", label: "Email Template", icon: Mail, adminOnly: true },
     ],
   },
   {
@@ -67,16 +68,16 @@ const NAV_GROUPS = [
     label: "Project",
     items: [
       { href: "/projects", label: "Project Monitoring", icon: FolderClock, adminOnly: false },
-      { href: "/project-categories", label: "Project Categories", icon: Tags, adminOnly: false },
-      { href: "/project-email-template", label: "Project Email Template", icon: Mail, adminOnly: true },
+      { href: "/project-categories", label: "Categories", icon: Tags, adminOnly: false },
+      { href: "/project-email-template", label: "Email Template", icon: Mail, adminOnly: true },
     ],
   },
   {
     label: "Equipment",
     items: [
       { href: "/equipment", label: "Equipment Calibration", icon: Wrench, adminOnly: false },
-      { href: "/equipment-categories", label: "Equipment Categories", icon: Tags, adminOnly: false },
-      { href: "/equipment-email-template", label: "Equipment Email Template", icon: Mail, adminOnly: true },
+      { href: "/equipment-categories", label: "Categories", icon: Tags, adminOnly: false },
+      { href: "/equipment-email-template", label: "Email Template", icon: Mail, adminOnly: true },
     ],
   },
   {
@@ -85,6 +86,7 @@ const NAV_GROUPS = [
       { href: "/notifications", label: "Notifications", icon: Bell, adminOnly: false },
       { href: "/reports", label: "Reports", icon: FileBarChart, adminOnly: false },
       { href: "/users", label: "Users", icon: Users, adminOnly: true },
+      { href: "/supervisors", label: "Supervisors", icon: Users2, adminOnly: true },
       { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
       { href: "/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true },
       { href: "/trash", label: "Trash", icon: Trash2, adminOnly: true },
@@ -125,7 +127,7 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" }) {
   return (
     <aside
       className={cn(
-        "hidden md:flex md:flex-col bg-ink text-slate-300 h-screen shrink-0 sticky top-0 transition-[width] duration-150",
+        "hidden md:flex md:flex-col bg-ink text-slate-300 h-screen shrink-0 sticky top-0 z-20 transition-[width] duration-150",
         hydrated ? (collapsed ? "md:w-[68px]" : "md:w-60") : "md:w-60"
       )}
     >
@@ -136,7 +138,7 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" }) {
         {!collapsed && (
           <div className="min-w-0">
             <p className="font-display font-semibold text-white text-sm leading-tight">
-              Certificate Reminder
+              Reminder System
             </p>
             <p className="font-mono text-[9px] tracking-[0.1em] text-brand-teal uppercase leading-tight mt-0.5">
               Ensuring Quality, Protecting Trust
@@ -147,9 +149,9 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" }) {
           onClick={toggleCollapsed}
           aria-label={collapsed ? "Perluas sidebar" : "Perkecil sidebar"}
           title={collapsed ? "Perluas sidebar" : "Perkecil sidebar"}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-slate-700 text-slate-300 border border-white/10 hover:bg-slate-600 hover:text-white transition-colors"
+          className="absolute -right-3.5 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-slate-200 border-2 border-ink hover:bg-slate-600 hover:text-white shadow-md transition-colors"
         >
-          {collapsed ? <ChevronsRight className="h-3.5 w-3.5" /> : <ChevronsLeft className="h-3.5 w-3.5" />}
+          {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}}
         </button>
       </div>
 

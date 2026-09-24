@@ -18,7 +18,7 @@ export default function LoginPage() {
             <SucofindoMark size={26} />
           </div>
           <div>
-            <span className="font-display font-semibold text-lg block leading-tight">Certificate Reminder</span>
+            <span className="font-display font-semibold text-lg block leading-tight">Reminder System</span>
             <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-brand-teal">
               Ensuring Quality, Protecting Trust
             </span>

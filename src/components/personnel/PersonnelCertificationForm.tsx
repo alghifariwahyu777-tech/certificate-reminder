@@ -187,20 +187,6 @@ export function PersonnelCertificationForm({
           </div>
 
           <div>
-            <Label htmlFor="pc-cc">Email CC (Atasan/HR)</Label>
-            <Input
-              id="pc-cc"
-              type="email"
-              {...register("ccEmail")}
-              error={errors.ccEmail?.message}
-              placeholder="hr@sucofindo.co.id"
-            />
-            <p className="text-xs text-slate-400 mt-1">
-              Reminder akan dikirim ke email personil, dengan CC ke alamat ini (opsional).
-            </p>
-          </div>
-
-          <div>
             <Label htmlFor="pc-notes">Catatan</Label>
             <Textarea id="pc-notes" {...register("notes")} error={errors.notes?.message} rows={3} />
           </div>

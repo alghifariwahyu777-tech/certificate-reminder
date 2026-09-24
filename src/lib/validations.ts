@@ -442,3 +442,13 @@ export const equipmentSchema = z.object({
   fileMimeType: z.string().nullable().optional(),
 });
 export type EquipmentInput = z.infer<typeof equipmentSchema>;
+
+// --- Centralized Supervisor ("Atasan") directory ---
+
+export const supervisorSchema = z.object({
+  name: z.string().min(1, "Nama wajib diisi").max(120, "Maksimal 120 karakter"),
+  email: z.string().min(1, "Email wajib diisi").email("Format email tidak valid"),
+  position: z.string().max(120, "Maksimal 120 karakter").optional(),
+  isActive: z.boolean().optional(),
+});
+export type SupervisorInput = z.infer<typeof supervisorSchema>;

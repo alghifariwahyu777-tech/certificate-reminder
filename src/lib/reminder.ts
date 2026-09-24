@@ -32,15 +32,31 @@ export type ReminderRunSummary = {
 export async function runReminderCheck(): Promise<ReminderRunSummary> {
   const summary: ReminderRunSummary = { checked: 0, sent: 0, failed: 0, skipped: 0, details: [] };
 
-  await runCertificateReminders(summary);
-  await runPersonnelReminders(summary);
-  await runProjectReminders(summary);
-  await runEquipmentReminders(summary);
+  // Every ACTIVE supervisor is CC'd on every reminder across all four
+  // domains — fetched once per run rather than per record, since it's the
+  // same list regardless of which certificate/project/equipment triggered
+  // the email. Toggling a supervisor active/inactive here immediately
+  // changes who's CC'd everywhere on the next run.
+  const activeSupervisors = await prisma.supervisor.findMany({
+    where: { isActive: true },
+    select: { email: true },
+  });
+  const supervisorCc = activeSupervisors.map((s) => s.email).join(", ") || undefined;
+
+  await runCertificateReminders(summary, supervisorCc);
+  await runPersonnelReminders(summary, supervisorCc);
+  await runProjectReminders(summary, supervisorCc);
+  await runEquipmentReminders(summary, supervisorCc);
 
   return summary;
 }
 
-async function runCertificateReminders(summary: ReminderRunSummary): Promise<void> {
+/** Combines the global active-Supervisor CC list with a record's own legacy ccEmail (if any), so old free-text CC entries keep working alongside the new centralized list. */
+function combineCc(supervisorCc: string | undefined, legacyCcEmail: string | null | undefined): string | undefined {
+  return [supervisorCc, legacyCcEmail].filter(Boolean).join(", ") || undefined;
+}
+
+async function runCertificateReminders(summary: ReminderRunSummary, supervisorCc: string | undefined): Promise<void> {
   const certificates = await prisma.certificate.findMany({
     where: { deletedAt: null },
     include: { category: true, client: true },
@@ -92,7 +108,7 @@ async function runCertificateReminders(summary: ReminderRunSummary): Promise<voi
     const recipientList = recipients.join(", ");
     const result = await sendReminderEmail({
       to: recipientList,
-      cc: cert.ccEmail,
+      cc: combineCc(supervisorCc, cert.ccEmail),
       data: {
         certificateName: cert.certificateName,
         certificateNumber: cert.certificateNumber,
@@ -109,7 +125,7 @@ async function runCertificateReminders(summary: ReminderRunSummary): Promise<voi
         certificateId: cert.id,
         milestoneDays: milestone,
         recipient: recipientList,
-        cc: cert.ccEmail,
+        cc: combineCc(supervisorCc, cert.ccEmail),
         status: result.status,
         errorMessage: "errorMessage" in result ? result.errorMessage : null,
       },
@@ -129,20 +145,43 @@ async function runCertificateReminders(summary: ReminderRunSummary): Promise<voi
   }
 }
 
-async function runPersonnelReminders(summary: ReminderRunSummary): Promise<void> {
+async function runPersonnelReminders(summary: ReminderRunSummary, supervisorCc: string | undefined): Promise<void> {
   const certifications = await prisma.personnelCertification.findMany({
     where: { deletedAt: null },
     include: { category: true, employee: { include: { department: true } } },
   });
 
   for (const cert of certifications) {
-    if (!cert.employee.isActive) continue; // don't chase reminders for staff no longer active
-
     const daysRemaining = getDaysRemaining(cert.expiryDate);
     const milestone = REMINDER_MILESTONES.find((m) => m === daysRemaining);
     if (milestone === undefined) continue;
 
     summary.checked += 1;
+
+    // Inactive staff still get logged as SKIPPED (not silently ignored) —
+    // otherwise the Dashboard's pending count (which has no way to know
+    // about this exclusion) would count this as forever-pending, since
+    // clicking "Kirim Reminder Sekarang" would never actually resolve it.
+    if (!cert.employee.isActive) {
+      await prisma.emailLog.create({
+        data: {
+          personnelCertificationId: cert.id,
+          milestoneDays: milestone,
+          recipient: "-",
+          status: "SKIPPED",
+          errorMessage: "Personil sudah tidak aktif.",
+        },
+      });
+      summary.skipped += 1;
+      summary.details.push({
+        certificateNumber: cert.certificationNumber || "-",
+        certificateName: `${cert.certificationName} (${cert.employee.name})`,
+        milestoneDays: milestone,
+        status: "SKIPPED",
+        errorMessage: "Personil sudah tidak aktif.",
+      });
+      continue;
+    }
 
     const alreadySent = await prisma.emailLog.findUnique({
       where: {
@@ -174,7 +213,7 @@ async function runPersonnelReminders(summary: ReminderRunSummary): Promise<void>
 
     const result = await sendPersonnelReminderEmail({
       to: cert.employee.email,
-      cc: cert.ccEmail,
+      cc: combineCc(supervisorCc, cert.ccEmail),
       data: {
         employeeName: cert.employee.name,
         position: cert.employee.position,
@@ -192,7 +231,7 @@ async function runPersonnelReminders(summary: ReminderRunSummary): Promise<void>
         personnelCertificationId: cert.id,
         milestoneDays: milestone,
         recipient: cert.employee.email,
-        cc: cert.ccEmail,
+        cc: combineCc(supervisorCc, cert.ccEmail),
         status: result.status,
         errorMessage: "errorMessage" in result ? result.errorMessage : null,
       },
@@ -212,7 +251,7 @@ async function runPersonnelReminders(summary: ReminderRunSummary): Promise<void>
   }
 }
 
-async function runProjectReminders(summary: ReminderRunSummary): Promise<void> {
+async function runProjectReminders(summary: ReminderRunSummary, supervisorCc: string | undefined): Promise<void> {
   const projects = await prisma.project.findMany({
     where: { deletedAt: null, status: "ONGOING" }, // only chase reminders for projects still in progress
     include: { category: true },
@@ -253,7 +292,7 @@ async function runProjectReminders(summary: ReminderRunSummary): Promise<void> {
 
     const result = await sendProjectReminderEmail({
       to: project.picEmail,
-      cc: project.ccEmail,
+      cc: combineCc(supervisorCc, project.ccEmail),
       data: {
         projectNumber: project.projectNumber,
         projectName: project.projectName,
@@ -270,7 +309,7 @@ async function runProjectReminders(summary: ReminderRunSummary): Promise<void> {
         projectId: project.id,
         milestoneDays: milestone,
         recipient: project.picEmail,
-        cc: project.ccEmail,
+        cc: combineCc(supervisorCc, project.ccEmail),
         status: result.status,
         errorMessage: "errorMessage" in result ? result.errorMessage : null,
       },
@@ -290,20 +329,39 @@ async function runProjectReminders(summary: ReminderRunSummary): Promise<void> {
   }
 }
 
-async function runEquipmentReminders(summary: ReminderRunSummary): Promise<void> {
+async function runEquipmentReminders(summary: ReminderRunSummary, supervisorCc: string | undefined): Promise<void> {
   const equipmentList = await prisma.equipment.findMany({
     where: { deletedAt: null },
     include: { category: true, pic: true },
   });
 
   for (const equipment of equipmentList) {
-    if (!equipment.pic.isActive) continue; // don't chase reminders for staff no longer active
-
     const daysRemaining = getDaysRemaining(equipment.nextCalibrationDate);
     const milestone = REMINDER_MILESTONES.find((m) => m === daysRemaining);
     if (milestone === undefined) continue;
 
     summary.checked += 1;
+
+    if (!equipment.pic.isActive) {
+      await prisma.emailLog.create({
+        data: {
+          equipmentId: equipment.id,
+          milestoneDays: milestone,
+          recipient: "-",
+          status: "SKIPPED",
+          errorMessage: "PIC alat sudah tidak aktif.",
+        },
+      });
+      summary.skipped += 1;
+      summary.details.push({
+        certificateNumber: equipment.assetNumber || "-",
+        certificateName: `${equipment.name} (${equipment.pic.name})`,
+        milestoneDays: milestone,
+        status: "SKIPPED",
+        errorMessage: "PIC alat sudah tidak aktif.",
+      });
+      continue;
+    }
 
     const alreadySent = await prisma.emailLog.findUnique({
       where: { equipmentId_milestoneDays: { equipmentId: equipment.id, milestoneDays: milestone } },
@@ -333,7 +391,7 @@ async function runEquipmentReminders(summary: ReminderRunSummary): Promise<void>
 
     const result = await sendEquipmentReminderEmail({
       to: equipment.pic.email,
-      cc: equipment.ccEmail,
+      cc: combineCc(supervisorCc, equipment.ccEmail),
       data: {
         name: equipment.name,
         assetNumber: equipment.assetNumber,
@@ -351,7 +409,7 @@ async function runEquipmentReminders(summary: ReminderRunSummary): Promise<void>
         equipmentId: equipment.id,
         milestoneDays: milestone,
         recipient: equipment.pic.email,
-        cc: equipment.ccEmail,
+        cc: combineCc(supervisorCc, equipment.ccEmail),
         status: result.status,
         errorMessage: "errorMessage" in result ? result.errorMessage : null,
       },

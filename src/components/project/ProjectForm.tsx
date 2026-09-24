@@ -157,15 +157,9 @@ export function ProjectForm({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="pr-cc">Email CC (Atasan)</Label>
-              <Input id="pr-cc" type="email" {...register("ccEmail")} error={errors.ccEmail?.message} />
-            </div>
-            <div>
-              <Label htmlFor="pr-value">Nilai Kontrak (Rp)</Label>
-              <Input id="pr-value" type="number" step="any" {...register("contractValue")} error={errors.contractValue?.message} placeholder="0" />
-            </div>
+          <div>
+            <Label htmlFor="pr-value">Nilai Kontrak (Rp)</Label>
+            <Input id="pr-value" type="number" step="any" {...register("contractValue")} error={errors.contractValue?.message} placeholder="0" />
           </div>
 
           <div className="grid grid-cols-3 gap-3">

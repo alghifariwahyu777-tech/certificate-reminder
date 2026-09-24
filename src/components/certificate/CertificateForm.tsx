@@ -240,17 +240,6 @@ export function CertificateForm({
           </div>
 
           <div>
-            <Label htmlFor="ccEmail">Email CC (Atasan/HR)</Label>
-            <Input
-              id="ccEmail"
-              type="email"
-              placeholder="manager@perusahaan.co.id (opsional)"
-              error={errors.ccEmail?.message}
-              {...register("ccEmail")}
-            />
-          </div>
-
-          <div>
             <Label htmlFor="issueDate">Tanggal Terbit</Label>
             <Input id="issueDate" type="date" error={errors.issueDate?.message} {...register("issueDate")} />
           </div>

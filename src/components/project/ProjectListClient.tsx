@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, Plus, Eye, Pencil, Trash2 } from "lucide-react";
+import { Search, Plus, Eye, Pencil, Trash2, X } from "lucide-react";
 import { Input, Select } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -55,6 +55,9 @@ export function ProjectListClient({
   const [items, setItems] = useState(initialProjects);
   const [deleteTarget, setDeleteTarget] = useState<ProjectItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -70,6 +73,19 @@ export function ProjectListClient({
       return matchesSearch && matchesCategory && matchesStatus;
     });
   }, [items, search, categoryFilter, statusFilter]);
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((prev) => (prev.size === filtered.length ? new Set() : new Set(filtered.map((p) => p.id))));
+  }
 
   async function confirmDelete() {
     if (!deleteTarget) return;
@@ -87,6 +103,29 @@ export function ProjectListClient({
       router.refresh();
     } finally {
       setDeleting(false);
+    }
+  }
+
+  async function confirmBulkDelete() {
+    setBulkDeleting(true);
+    try {
+      const res = await fetch("/api/projects/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showToast(body.message || "Gagal menghapus project terpilih.", "error");
+        return;
+      }
+      setItems((prev) => prev.filter((i) => !selectedIds.has(i.id)));
+      showToast(`${body.deletedCount} project berhasil dihapus.`);
+      setBulkDeleteOpen(false);
+      setSelectedIds(new Set());
+      router.refresh();
+    } finally {
+      setBulkDeleting(false);
     }
   }
 
@@ -128,11 +167,39 @@ export function ProjectListClient({
         )}
       </div>
 
+      {canManage && selectedIds.size > 0 && (
+        <div className="flex items-center justify-between rounded-md border border-accent/30 bg-accent/5 px-4 py-2.5">
+          <span className="text-sm text-ink">
+            <strong>{selectedIds.size}</strong> project dipilih
+          </span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setSelectedIds(new Set())}>
+              <X className="h-3.5 w-3.5" />
+              Batal
+            </Button>
+            <Button variant="danger" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+              <Trash2 className="h-3.5 w-3.5" />
+              Hapus Terpilih
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-slate-500 border-b border-slate-100 bg-slate-50/60">
+                {canManage && (
+                  <th className="px-4 py-3 font-medium w-10">
+                    <input
+                      type="checkbox"
+                      checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                      onChange={toggleSelectAll}
+                      className="rounded border-slate-300"
+                    />
+                  </th>
+                )}
                 <th className="px-4 py-3 font-medium">Project</th>
                 <th className="px-4 py-3 font-medium">Kategori</th>
                 <th className="px-4 py-3 font-medium">Klien</th>
@@ -146,7 +213,7 @@ export function ProjectListClient({
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={canManage ? 9 : 8} className="px-4 py-10 text-center text-slate-400">
                     Belum ada project yang cocok.
                   </td>
                 </tr>
@@ -155,6 +222,16 @@ export function ProjectListClient({
                   const days = getDaysRemaining(p.targetEndDate);
                   return (
                     <tr key={p.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/60">
+                      {canManage && (
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(p.id)}
+                            onChange={() => toggleSelect(p.id)}
+                            className="rounded border-slate-300"
+                          />
+                        </td>
+                      )}
                       <td className="px-4 py-3">
                         <p className="font-medium text-ink">{p.projectName}</p>
                         <p className="text-xs text-slate-400 font-mono">{p.projectNumber}</p>
@@ -224,6 +301,21 @@ export function ProjectListClient({
           </Button>
           <Button variant="danger" isLoading={deleting} onClick={confirmDelete}>
             Hapus
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={bulkDeleteOpen} onClose={() => setBulkDeleteOpen(false)} title="Hapus Project Terpilih">
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          Akan memindahkan <strong>{selectedIds.size}</strong> project ke Trash. Data bisa dipulihkan
+          nanti dari halaman Trash. Lanjutkan?
+        </p>
+        <div className="flex justify-end gap-2 mt-5">
+          <Button variant="outline" onClick={() => setBulkDeleteOpen(false)}>
+            Batal
+          </Button>
+          <Button variant="danger" isLoading={bulkDeleting} onClick={confirmBulkDelete}>
+            Hapus {selectedIds.size} Project
           </Button>
         </div>
       </Modal>

@@ -23,6 +23,18 @@ export laporan.
 ## Fitur
 
 ### Penyempurnaan Terbaru
+- **Bug fix**: Sertifikasi Personil & Equipment yang pemiliknya non-aktif sekarang tercatat
+  "Dilewati" di log (sebelumnya dilewati diam-diam, bikin widget Dashboard salah hitung
+  "pending" selamanya).
+- Label menu yang terpotong 2 baris dipersingkat; tombol collapse Sidebar diperbesar &
+  diperbaiki posisinya (sebelumnya tertutup area konten).
+- Nama aplikasi di halaman Admin (Sidebar, login, judul tab) diubah jadi **"Reminder
+  System"** — Client Portal tidak terpengaruh.
+- **Supervisors (baru)** — menu **Supervisors**: direktori atasan terpusat. Setiap atasan
+  berstatus **Aktif** otomatis di-CC ke **seluruh** reminder (Sertifikat Klien, Sertifikasi
+  Personil, Project, Equipment) — tidak perlu dipilih satu-satu per data. Field "Email CC"
+  di keempat form dihapus karena sudah otomatis. Kalau ada restrukturisasi, cukup
+  nonaktifkan/ubah data di satu tempat ini.
 - **Project Email Template** dan **Equipment Email Template** — wording email reminder untuk
   kedua fitur baru ini sekarang bisa diedit lewat UI (mode Sederhana/Lanjutan + preview
   langsung), persis seperti Email Template klien & personil. Sebelumnya hardcode di kode.

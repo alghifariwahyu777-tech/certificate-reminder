@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, Plus, Eye, Pencil, Trash2 } from "lucide-react";
+import { Search, Plus, Eye, Pencil, Trash2, X } from "lucide-react";
 import { Input, Select } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -40,6 +40,9 @@ export function EquipmentListClient({
   const [items, setItems] = useState(initialEquipment);
   const [deleteTarget, setDeleteTarget] = useState<EquipmentItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -54,6 +57,19 @@ export function EquipmentListClient({
       return matchesSearch && matchesCategory && matchesStatus;
     });
   }, [items, search, categoryFilter, statusFilter]);
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((prev) => (prev.size === filtered.length ? new Set() : new Set(filtered.map((e) => e.id))));
+  }
 
   async function confirmDelete() {
     if (!deleteTarget) return;
@@ -71,6 +87,29 @@ export function EquipmentListClient({
       router.refresh();
     } finally {
       setDeleting(false);
+    }
+  }
+
+  async function confirmBulkDelete() {
+    setBulkDeleting(true);
+    try {
+      const res = await fetch("/api/equipment/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showToast(body.message || "Gagal menghapus alat terpilih.", "error");
+        return;
+      }
+      setItems((prev) => prev.filter((i) => !selectedIds.has(i.id)));
+      showToast(`${body.deletedCount} alat berhasil dihapus.`);
+      setBulkDeleteOpen(false);
+      setSelectedIds(new Set());
+      router.refresh();
+    } finally {
+      setBulkDeleting(false);
     }
   }
 
@@ -112,11 +151,39 @@ export function EquipmentListClient({
         )}
       </div>
 
+      {canManage && selectedIds.size > 0 && (
+        <div className="flex items-center justify-between rounded-md border border-accent/30 bg-accent/5 px-4 py-2.5">
+          <span className="text-sm text-ink">
+            <strong>{selectedIds.size}</strong> alat dipilih
+          </span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setSelectedIds(new Set())}>
+              <X className="h-3.5 w-3.5" />
+              Batal
+            </Button>
+            <Button variant="danger" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+              <Trash2 className="h-3.5 w-3.5" />
+              Hapus Terpilih
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-slate-500 border-b border-slate-100 bg-slate-50/60">
+                {canManage && (
+                  <th className="px-4 py-3 font-medium w-10">
+                    <input
+                      type="checkbox"
+                      checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                      onChange={toggleSelectAll}
+                      className="rounded border-slate-300"
+                    />
+                  </th>
+                )}
                 <th className="px-4 py-3 font-medium">Alat</th>
                 <th className="px-4 py-3 font-medium">Kategori</th>
                 <th className="px-4 py-3 font-medium">PIC</th>
@@ -128,7 +195,7 @@ export function EquipmentListClient({
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={canManage ? 7 : 6} className="px-4 py-10 text-center text-slate-400">
                     Belum ada alat yang cocok.
                   </td>
                 </tr>
@@ -138,6 +205,16 @@ export function EquipmentListClient({
                   const days = getDaysRemaining(e.nextCalibrationDate);
                   return (
                     <tr key={e.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/60">
+                      {canManage && (
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(e.id)}
+                            onChange={() => toggleSelect(e.id)}
+                            className="rounded border-slate-300"
+                          />
+                        </td>
+                      )}
                       <td className="px-4 py-3">
                         <p className="font-medium text-ink">{e.name}</p>
                         <p className="text-xs text-slate-400 font-mono">
@@ -205,6 +282,21 @@ export function EquipmentListClient({
           </Button>
           <Button variant="danger" isLoading={deleting} onClick={confirmDelete}>
             Hapus
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={bulkDeleteOpen} onClose={() => setBulkDeleteOpen(false)} title="Hapus Alat Terpilih">
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          Akan memindahkan <strong>{selectedIds.size}</strong> alat ke Trash. Data bisa dipulihkan nanti dari
+          halaman Trash. Lanjutkan?
+        </p>
+        <div className="flex justify-end gap-2 mt-5">
+          <Button variant="outline" onClick={() => setBulkDeleteOpen(false)}>
+            Batal
+          </Button>
+          <Button variant="danger" isLoading={bulkDeleting} onClick={confirmBulkDelete}>
+            Hapus {selectedIds.size} Alat
           </Button>
         </div>
       </Modal>

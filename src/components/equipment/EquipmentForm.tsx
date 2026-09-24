@@ -170,11 +170,6 @@ export function EquipmentForm({
             <p className="text-xs text-slate-400 mt-1">Reminder kalibrasi akan dikirim ke email PIC ini.</p>
           </div>
 
-          <div>
-            <Label htmlFor="eq-cc">Email CC (Atasan)</Label>
-            <Input id="eq-cc" type="email" {...register("ccEmail")} error={errors.ccEmail?.message} />
-          </div>
-
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="eq-calNumber">Nomor Sertifikat Kalibrasi</Label>

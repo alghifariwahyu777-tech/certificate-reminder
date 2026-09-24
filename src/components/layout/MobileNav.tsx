@@ -29,6 +29,7 @@ import {
   LogOut,
   FolderClock,
   Wrench,
+  Users2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SucofindoMark } from "@/components/brand/SucofindoLogo";
@@ -45,10 +46,10 @@ const NAV_GROUPS = [
   {
     label: "Personnel",
     items: [
-      { href: "/employees", label: "Personnel", icon: UserSquare2, adminOnly: false },
-      { href: "/personnel-certifications", label: "Personnel Certifications", icon: Award, adminOnly: false },
-      { href: "/personnel-categories", label: "Certification Categories", icon: Tags, adminOnly: false },
-      { href: "/personnel-email-template", label: "Personnel Email Template", icon: Mail, adminOnly: true },
+      { href: "/employees", label: "Employees", icon: UserSquare2, adminOnly: false },
+      { href: "/personnel-certifications", label: "Certifications", icon: Award, adminOnly: false },
+      { href: "/personnel-categories", label: "Categories", icon: Tags, adminOnly: false },
+      { href: "/personnel-email-template", label: "Email Template", icon: Mail, adminOnly: true },
     ],
   },
   {
@@ -67,16 +68,16 @@ const NAV_GROUPS = [
     label: "Project",
     items: [
       { href: "/projects", label: "Project Monitoring", icon: FolderClock, adminOnly: false },
-      { href: "/project-categories", label: "Project Categories", icon: Tags, adminOnly: false },
-      { href: "/project-email-template", label: "Project Email Template", icon: Mail, adminOnly: true },
+      { href: "/project-categories", label: "Categories", icon: Tags, adminOnly: false },
+      { href: "/project-email-template", label: "Email Template", icon: Mail, adminOnly: true },
     ],
   },
   {
     label: "Equipment",
     items: [
       { href: "/equipment", label: "Equipment Calibration", icon: Wrench, adminOnly: false },
-      { href: "/equipment-categories", label: "Equipment Categories", icon: Tags, adminOnly: false },
-      { href: "/equipment-email-template", label: "Equipment Email Template", icon: Mail, adminOnly: true },
+      { href: "/equipment-categories", label: "Categories", icon: Tags, adminOnly: false },
+      { href: "/equipment-email-template", label: "Email Template", icon: Mail, adminOnly: true },
     ],
   },
   {
@@ -85,6 +86,7 @@ const NAV_GROUPS = [
       { href: "/notifications", label: "Notifications", icon: Bell, adminOnly: false },
       { href: "/reports", label: "Reports", icon: FileBarChart, adminOnly: false },
       { href: "/users", label: "Users", icon: Users, adminOnly: true },
+      { href: "/supervisors", label: "Supervisors", icon: Users2, adminOnly: true },
       { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
       { href: "/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true },
       { href: "/trash", label: "Trash", icon: Trash2, adminOnly: true },
@@ -120,7 +122,7 @@ export function MobileNav({ role }: { role: "ADMIN" | "VIEWER" }) {
                   <SucofindoMark size={20} />
                 </div>
                 <div>
-                  <p className="font-display font-semibold text-white text-sm leading-tight">Certificate Reminder</p>
+                  <p className="font-display font-semibold text-white text-sm leading-tight">Reminder System</p>
                   <p className="font-mono text-[8px] tracking-[0.1em] text-brand-teal uppercase leading-tight mt-0.5">
                     Ensuring Quality, Protecting Trust
                   </p>

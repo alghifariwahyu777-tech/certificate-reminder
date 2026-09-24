@@ -83,7 +83,7 @@ model Certificate {
   storageLocation   String?
   pic               String
   picEmail          String?
-  ccEmail           String?
+  ccEmail           String? // atasan email — now supplemented by the global active-Supervisor CC list
   description       String?
   notes             String?
   fileUrl           String? // app-internal proxy URL, e.g. /api/files/{driveFileId}
@@ -488,7 +488,7 @@ model PersonnelCertification {
   fileUrl            String?
   driveFileId        String? // Supabase Storage object path (see Certificate.driveFileId for naming history)
   fileMimeType       String?
-  ccEmail            String? // HR/supervisor email — CC'd alongside the employee's own reminder
+  ccEmail            String? // atasan email — now supplemented by the global active-Supervisor CC list
   notes              String?
   createdAt          DateTime                        @default(now())
   updatedAt          DateTime                        @updatedAt
@@ -534,7 +534,7 @@ model Project {
   clientName       String // pemberi kerja — free text, not tied to the certificate Client list
   pic              String // internal PIC name
   picEmail         String?
-  ccEmail          String? // atasan — CC'd alongside the PIC's own reminder
+  ccEmail          String? // atasan email — now supplemented by the global active-Supervisor CC list
   contractValue    Decimal? // Rupiah
   startDate        DateTime?
   targetEndDate    DateTime // reminder milestones are computed from this date
@@ -601,7 +601,7 @@ model Equipment {
   category            EquipmentCategory @relation(fields: [categoryId], references: [id])
   picId               String
   pic                 Employee          @relation(fields: [picId], references: [id])
-  ccEmail             String? // atasan — CC'd alongside the PIC's own reminder
+  ccEmail             String? // atasan email — now supplemented by the global active-Supervisor CC list
   calibrationNumber   String?
   calibratedBy        String? // lembaga/instansi kalibrator
   lastCalibrationDate DateTime?
@@ -619,5 +619,21 @@ model Equipment {
   @@index([picId])
   @@index([nextCalibrationDate])
   @@index([deletedAt])
+}
+
+/// Centralized "atasan" (supervisor) directory — every ACTIVE row here is
+/// automatically CC'd on every reminder email across all four domains
+/// (Certificate, PersonnelCertification, Project, Equipment). No per-record
+/// selection needed: toggling a supervisor active/inactive here immediately
+/// changes who's CC'd everywhere, which is what actually survives an
+/// organizational restructuring without editing individual records.
+model Supervisor {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  position  String? // jabatan, optional
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
