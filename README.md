@@ -23,6 +23,29 @@ export laporan.
 ## Fitur
 
 ### Penyempurnaan Terbaru
+- **Dashboard Utama dirombak total** — sekarang mencakup **seluruh 4 domain** reminder, bukan
+  cuma Certificate:
+  - Banner **"Perlu Perhatian"** di paling atas — rincian per domain (mis. "3 Sertifikat, 1
+    Project"), klik untuk langsung ke halaman terkait.
+  - **4 Tab** (Certificate / Personnel / Project / Equipment) — masing-masing dengan kartu KPI
+    sendiri (Total/Aktif/Segera Berakhir/Expired) dan tabel "Segera Berakhir". Tab Certificate
+    tetap menyertakan grafik distribusi kategori & tren bulanan.
+  - Reminder Center & Recent Activity tetap di bagian bawah, sudah mencakup 4 domain sejak
+    sebelumnya.
+- **Bug fix**: kolom search di Certificate, Personnel Certification, Project, dan Equipment
+  Calibration sekarang otomatis melebar saat diklik/diketik (akar masalahnya: lebar kolom yang
+  terlalu sempit dari penataan "1 baris" sebelumnya, bukan soal warna teks) — jadi tulisan yang
+  diketik tetap terlihat penuh.
+- Menu **Monitoring** dipindah masuk ke grup **Client** di Sidebar.
+- Filter di halaman **Project Monitoring** & **Equipment Calibration** dirapikan jadi 1 baris,
+  dan ditambahkan filter **Tahun** (sebelumnya cuma ada di Certificate & Personnel).
+- **Kartu ringkasan monitoring** ditambahkan di halaman Project Monitoring: Total Nilai
+  Kontrak, Nilai Kontrak Berjalan, Nilai Kontrak Selesai, Rata-rata Lama Pengerjaan.
+- **Notifikasi diperluas** — Sertifikasi Personil, Project (yang masih Berjalan), dan Equipment
+  yang sudah Expiring Soon/Expired sekarang ikut muncul di lonceng Notifikasi internal
+  (sebelumnya cuma Sertifikat Klien & siklus Pengajuan).
+- **Semua kolom tabel** di Sertifikasi Personil, Project Monitoring, dan Equipment Calibration
+  sekarang bisa diurutkan naik/turun dengan klik header — sama seperti tabel Certificate.
 - **Bug fix**: Sertifikasi Personil & Equipment yang pemiliknya non-aktif sekarang tercatat
   "Dilewati" di log (sebelumnya dilewati diam-diam, bikin widget Dashboard salah hitung
   "pending" selamanya).

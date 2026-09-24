@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, Plus, Eye, Pencil, Trash2, X } from "lucide-react";
+import { Search, Plus, Eye, Pencil, Trash2, X, ArrowUpDown } from "lucide-react";
 import { Input, Select } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -52,6 +52,9 @@ export function ProjectListClient({
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [yearFilter, setYearFilter] = useState("");
+  const [sortBy, setSortBy] = useState("targetEndDate");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [items, setItems] = useState(initialProjects);
   const [deleteTarget, setDeleteTarget] = useState<ProjectItem | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -61,7 +64,7 @@ export function ProjectListClient({
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return items.filter((p) => {
+    const result = items.filter((p) => {
       const matchesSearch =
         !q ||
         p.projectName.toLowerCase().includes(q) ||
@@ -70,9 +73,42 @@ export function ProjectListClient({
         p.pic.toLowerCase().includes(q);
       const matchesCategory = !categoryFilter || p.categoryName === categoryFilter;
       const matchesStatus = !statusFilter || p.status === statusFilter;
-      return matchesSearch && matchesCategory && matchesStatus;
+      const matchesYear = !yearFilter || new Date(p.targetEndDate).getFullYear().toString() === yearFilter;
+      return matchesSearch && matchesCategory && matchesStatus && matchesYear;
     });
-  }, [items, search, categoryFilter, statusFilter]);
+
+    const dir = sortDir === "asc" ? 1 : -1;
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case "projectNumber":
+          return a.projectNumber.localeCompare(b.projectNumber) * dir;
+        case "projectName":
+          return a.projectName.localeCompare(b.projectName) * dir;
+        case "clientName":
+          return a.clientName.localeCompare(b.clientName) * dir;
+        case "contractValue":
+          return ((Number(a.contractValue) || 0) - (Number(b.contractValue) || 0)) * dir;
+        case "targetEndDate":
+        default:
+          return (new Date(a.targetEndDate).getTime() - new Date(b.targetEndDate).getTime()) * dir;
+      }
+    });
+    return result;
+  }, [items, search, categoryFilter, statusFilter, yearFilter, sortBy, sortDir]);
+
+  function toggleSort(field: string) {
+    if (sortBy === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(field);
+      setSortDir("asc");
+    }
+  }
+
+  const years = useMemo(() => {
+    const current = new Date().getFullYear();
+    return Array.from({ length: 7 }, (_, i) => current - 2 + i);
+  }, []);
 
   function toggleSelect(id: string) {
     setSelectedIds((prev) => {
@@ -132,8 +168,8 @@ export function ProjectListClient({
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-        <div className="flex flex-col sm:flex-row gap-3 flex-1 flex-wrap">
-          <div className="relative min-w-[220px] max-w-sm flex-1">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
+          <div className="relative col-span-2 sm:col-span-1 focus-within:sm:col-span-2 transition-all duration-150">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Cari nama, nomor, klien, atau PIC..."
@@ -142,7 +178,7 @@ export function ProjectListClient({
               className="pl-9"
             />
           </div>
-          <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="sm:w-48">
+          <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
             <option value="">Semua Kategori</option>
             {categories.map((c) => (
               <option key={c.id} value={c.name}>
@@ -150,11 +186,19 @@ export function ProjectListClient({
               </option>
             ))}
           </Select>
-          <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="sm:w-40">
+          <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="">Semua Status</option>
             <option value="ONGOING">Berjalan</option>
             <option value="COMPLETED">Selesai</option>
             <option value="CANCELLED">Dibatalkan</option>
+          </Select>
+          <Select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
+            <option value="">Semua Tahun</option>
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
           </Select>
         </div>
         {canManage && (
@@ -200,12 +244,20 @@ export function ProjectListClient({
                     />
                   </th>
                 )}
-                <th className="px-4 py-3 font-medium">Project</th>
+                <th className="px-4 py-3 font-medium">
+                  <SortHeader label="Project" field="projectName" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                </th>
                 <th className="px-4 py-3 font-medium">Kategori</th>
-                <th className="px-4 py-3 font-medium">Klien</th>
+                <th className="px-4 py-3 font-medium">
+                  <SortHeader label="Klien" field="clientName" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                </th>
                 <th className="px-4 py-3 font-medium">PIC</th>
-                <th className="px-4 py-3 font-medium">Target Selesai</th>
-                <th className="px-4 py-3 font-medium">Nilai Kontrak</th>
+                <th className="px-4 py-3 font-medium">
+                  <SortHeader label="Target Selesai" field="targetEndDate" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                </th>
+                <th className="px-4 py-3 font-medium">
+                  <SortHeader label="Nilai Kontrak" field="contractValue" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                </th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium text-right">Aksi</th>
               </tr>
@@ -320,5 +372,30 @@ export function ProjectListClient({
         </div>
       </Modal>
     </div>
+  );
+}
+
+function SortHeader({
+  label,
+  field,
+  current,
+  dir,
+  onToggle,
+}: {
+  label: string;
+  field: string;
+  current: string;
+  dir: "asc" | "desc";
+  onToggle: (field: string) => void;
+}) {
+  const active = current === field;
+  return (
+    <button
+      onClick={() => onToggle(field)}
+      className={`flex items-center gap-1 hover:text-ink ${active ? "text-ink" : ""}`}
+    >
+      {label}
+      <ArrowUpDown className={`h-3 w-3 ${active ? "text-accent" : "text-slate-300"} ${active && dir === "desc" ? "rotate-180" : ""}`} />
+    </button>
   );
 }

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, Plus, Eye, Pencil, Trash2, X } from "lucide-react";
+import { Search, Plus, Eye, Pencil, Trash2, X, ArrowUpDown } from "lucide-react";
 import { Input, Select } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -37,6 +37,9 @@ export function EquipmentListClient({
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [yearFilter, setYearFilter] = useState("");
+  const [sortBy, setSortBy] = useState("nextCalibrationDate");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [items, setItems] = useState(initialEquipment);
   const [deleteTarget, setDeleteTarget] = useState<EquipmentItem | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -46,7 +49,7 @@ export function EquipmentListClient({
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return items.filter((e) => {
+    const result = items.filter((e) => {
       const matchesSearch =
         !q ||
         e.name.toLowerCase().includes(q) ||
@@ -54,9 +57,40 @@ export function EquipmentListClient({
         e.picName.toLowerCase().includes(q);
       const matchesCategory = !categoryFilter || e.categoryName === categoryFilter;
       const matchesStatus = !statusFilter || getCertificateStatus(e.nextCalibrationDate) === statusFilter;
-      return matchesSearch && matchesCategory && matchesStatus;
+      const matchesYear = !yearFilter || new Date(e.nextCalibrationDate).getFullYear().toString() === yearFilter;
+      return matchesSearch && matchesCategory && matchesStatus && matchesYear;
     });
-  }, [items, search, categoryFilter, statusFilter]);
+
+    const dir = sortDir === "asc" ? 1 : -1;
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case "name":
+          return a.name.localeCompare(b.name) * dir;
+        case "categoryName":
+          return a.categoryName.localeCompare(b.categoryName) * dir;
+        case "picName":
+          return a.picName.localeCompare(b.picName) * dir;
+        case "nextCalibrationDate":
+        default:
+          return (new Date(a.nextCalibrationDate).getTime() - new Date(b.nextCalibrationDate).getTime()) * dir;
+      }
+    });
+    return result;
+  }, [items, search, categoryFilter, statusFilter, yearFilter, sortBy, sortDir]);
+
+  function toggleSort(field: string) {
+    if (sortBy === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(field);
+      setSortDir("asc");
+    }
+  }
+
+  const years = useMemo(() => {
+    const current = new Date().getFullYear();
+    return Array.from({ length: 7 }, (_, i) => current - 2 + i);
+  }, []);
 
   function toggleSelect(id: string) {
     setSelectedIds((prev) => {
@@ -116,8 +150,8 @@ export function EquipmentListClient({
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-        <div className="flex flex-col sm:flex-row gap-3 flex-1 flex-wrap">
-          <div className="relative min-w-[220px] max-w-sm flex-1">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
+          <div className="relative col-span-2 sm:col-span-1 focus-within:sm:col-span-2 transition-all duration-150">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Cari nama alat, nomor aset, atau PIC..."
@@ -126,7 +160,7 @@ export function EquipmentListClient({
               className="pl-9"
             />
           </div>
-          <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="sm:w-48">
+          <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
             <option value="">Semua Kategori</option>
             {categories.map((c) => (
               <option key={c.id} value={c.name}>
@@ -134,11 +168,19 @@ export function EquipmentListClient({
               </option>
             ))}
           </Select>
-          <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="sm:w-44">
+          <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="">Semua Status</option>
             <option value="ACTIVE">Active</option>
             <option value="EXPIRING_SOON">Expiring Soon</option>
             <option value="EXPIRED">Expired</option>
+          </Select>
+          <Select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
+            <option value="">Semua Tahun</option>
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
           </Select>
         </div>
         {canManage && (
@@ -184,10 +226,18 @@ export function EquipmentListClient({
                     />
                   </th>
                 )}
-                <th className="px-4 py-3 font-medium">Alat</th>
-                <th className="px-4 py-3 font-medium">Kategori</th>
-                <th className="px-4 py-3 font-medium">PIC</th>
-                <th className="px-4 py-3 font-medium">Kalibrasi Berikutnya</th>
+                <th className="px-4 py-3 font-medium">
+                  <SortHeader label="Alat" field="name" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                </th>
+                <th className="px-4 py-3 font-medium">
+                  <SortHeader label="Kategori" field="categoryName" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                </th>
+                <th className="px-4 py-3 font-medium">
+                  <SortHeader label="PIC" field="picName" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                </th>
+                <th className="px-4 py-3 font-medium">
+                  <SortHeader label="Kalibrasi Berikutnya" field="nextCalibrationDate" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                </th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium text-right">Aksi</th>
               </tr>
@@ -301,5 +351,30 @@ export function EquipmentListClient({
         </div>
       </Modal>
     </div>
+  );
+}
+
+function SortHeader({
+  label,
+  field,
+  current,
+  dir,
+  onToggle,
+}: {
+  label: string;
+  field: string;
+  current: string;
+  dir: "asc" | "desc";
+  onToggle: (field: string) => void;
+}) {
+  const active = current === field;
+  return (
+    <button
+      onClick={() => onToggle(field)}
+      className={`flex items-center gap-1 hover:text-ink ${active ? "text-ink" : ""}`}
+    >
+      {label}
+      <ArrowUpDown className={`h-3 w-3 ${active ? "text-accent" : "text-slate-300"} ${active && dir === "desc" ? "rotate-180" : ""}`} />
+    </button>
   );
 }

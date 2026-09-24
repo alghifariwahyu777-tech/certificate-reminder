@@ -40,7 +40,6 @@ const NAV_GROUPS = [
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false },
       { href: "/applications", label: "Applications", icon: ClipboardList, adminOnly: false },
-      { href: "/monitoring", label: "Monitoring", icon: Gauge, adminOnly: false },
     ],
   },
   {
@@ -56,6 +55,7 @@ const NAV_GROUPS = [
     label: "Client",
     items: [
       { href: "/certificate", label: "Certificate", icon: FileBadge2, adminOnly: false },
+      { href: "/monitoring", label: "Monitoring", icon: Gauge, adminOnly: false },
       { href: "/services", label: "Services", icon: Layers, adminOnly: false },
       { href: "/document-types", label: "Document Types", icon: FileType, adminOnly: false },
       { href: "/clients", label: "Clients", icon: Building2, adminOnly: false },

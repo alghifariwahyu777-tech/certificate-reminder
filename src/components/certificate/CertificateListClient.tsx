@@ -178,7 +178,7 @@ export function CertificateListClient({
     <div className="space-y-4">
       <div className="flex flex-col lg:flex-row lg:items-center gap-3 justify-between">
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 flex-1">
-          <div className="relative col-span-2 sm:col-span-1">
+          <div className="relative col-span-2 sm:col-span-1 focus-within:sm:col-span-2 focus-within:xl:col-span-3 transition-all duration-150">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Cari nama, nomor, klien, atau PIC..."

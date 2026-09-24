@@ -19,6 +19,11 @@ export async function GET(request: NextRequest) {
     take: limit,
     include: {
       certificate: { select: { id: true, certificateName: true, certificateNumber: true } },
+      personnelCertification: {
+        select: { id: true, certificationName: true, certificationNumber: true },
+      },
+      project: { select: { id: true, projectName: true, projectNumber: true } },
+      equipment: { select: { id: true, name: true, assetNumber: true } },
       application: { select: { id: true, applicationNumber: true } },
     },
   });

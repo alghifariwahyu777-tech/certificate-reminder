@@ -12,6 +12,9 @@ type NotificationItem = {
   status: "NEW" | "READ" | "DONE";
   createdAt: string;
   certificate: { id: string; certificateName: string; certificateNumber: string } | null;
+  personnelCertification: { id: string; certificationName: string; certificationNumber: string | null } | null;
+  project: { id: string; projectName: string; projectNumber: string } | null;
+  equipment: { id: string; name: string; assetNumber: string | null } | null;
   application: { id: string; applicationNumber: string } | null;
 };
 
@@ -23,6 +26,9 @@ function iconFor(type: NotificationItem["type"]) {
 
 function linkFor(n: NotificationItem) {
   if (n.certificate) return `/certificate/${n.certificate.id}`;
+  if (n.personnelCertification) return `/personnel-certifications/${n.personnelCertification.id}`;
+  if (n.project) return `/projects/${n.project.id}`;
+  if (n.equipment) return `/equipment/${n.equipment.id}`;
   if (n.application) return `/applications/${n.application.id}`;
   return "/notifications";
 }

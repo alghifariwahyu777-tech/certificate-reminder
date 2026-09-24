@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, Plus, Eye, Pencil, Trash2, FileSpreadsheet, X } from "lucide-react";
+import { Search, Plus, Eye, Pencil, Trash2, FileSpreadsheet, X, ArrowUpDown } from "lucide-react";
 import { Input, Select } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -39,6 +39,8 @@ export function PersonnelCertificationListClient({
   const [statusFilter, setStatusFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("");
+  const [sortBy, setSortBy] = useState("expiryDate");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [items, setItems] = useState(initialCertifications);
   const [deleteTarget, setDeleteTarget] = useState<CertItem | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -53,7 +55,7 @@ export function PersonnelCertificationListClient({
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return items.filter((c) => {
+    const result = items.filter((c) => {
       const matchesSearch =
         !q ||
         c.certificationName.toLowerCase().includes(q) ||
@@ -64,7 +66,32 @@ export function PersonnelCertificationListClient({
       const matchesYear = !yearFilter || new Date(c.expiryDate).getFullYear() === Number(yearFilter);
       return matchesSearch && matchesStatus && matchesCategory && matchesYear;
     });
-  }, [items, search, statusFilter, categoryFilter, yearFilter]);
+
+    const dir = sortDir === "asc" ? 1 : -1;
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case "certificationName":
+          return a.certificationName.localeCompare(b.certificationName) * dir;
+        case "employeeName":
+          return a.employeeName.localeCompare(b.employeeName) * dir;
+        case "categoryName":
+          return a.categoryName.localeCompare(b.categoryName) * dir;
+        case "expiryDate":
+        default:
+          return (new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()) * dir;
+      }
+    });
+    return result;
+  }, [items, search, statusFilter, categoryFilter, yearFilter, sortBy, sortDir]);
+
+  function toggleSort(field: string) {
+    if (sortBy === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(field);
+      setSortDir("asc");
+    }
+  }
 
   function toggleSelect(id: string) {
     setSelectedIds((prev) => {
@@ -127,7 +154,7 @@ export function PersonnelCertificationListClient({
     <div className="space-y-4">
       <div className="flex flex-col lg:flex-row lg:items-center gap-3 justify-between">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
-          <div className="relative col-span-2 sm:col-span-1">
+          <div className="relative col-span-2 sm:col-span-1 focus-within:sm:col-span-2 transition-all duration-150">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Cari nama, nomor, atau personil..."
@@ -210,10 +237,18 @@ export function PersonnelCertificationListClient({
                     />
                   </th>
                 )}
-                <th className="px-4 py-3 font-medium">Sertifikasi</th>
-                <th className="px-4 py-3 font-medium">Personil</th>
-                <th className="px-4 py-3 font-medium">Kategori</th>
-                <th className="px-4 py-3 font-medium">Berakhir</th>
+                <th className="px-4 py-3 font-medium">
+                  <SortHeader label="Sertifikasi" field="certificationName" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                </th>
+                <th className="px-4 py-3 font-medium">
+                  <SortHeader label="Personil" field="employeeName" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                </th>
+                <th className="px-4 py-3 font-medium">
+                  <SortHeader label="Kategori" field="categoryName" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                </th>
+                <th className="px-4 py-3 font-medium">
+                  <SortHeader label="Berakhir" field="expiryDate" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                </th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium text-right">Aksi</th>
               </tr>
@@ -331,5 +366,30 @@ export function PersonnelCertificationListClient({
         </div>
       </Modal>
     </div>
+  );
+}
+
+function SortHeader({
+  label,
+  field,
+  current,
+  dir,
+  onToggle,
+}: {
+  label: string;
+  field: string;
+  current: string;
+  dir: "asc" | "desc";
+  onToggle: (field: string) => void;
+}) {
+  const active = current === field;
+  return (
+    <button
+      onClick={() => onToggle(field)}
+      className={`flex items-center gap-1 hover:text-ink ${active ? "text-ink" : ""}`}
+    >
+      {label}
+      <ArrowUpDown className={`h-3 w-3 ${active ? "text-accent" : "text-slate-300"} ${active && dir === "desc" ? "rotate-180" : ""}`} />
+    </button>
   );
 }

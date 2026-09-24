@@ -4,21 +4,9 @@ import { getSession } from "@/lib/auth";
 import { getDaysRemaining, getJakartaToday } from "@/lib/status";
 import { REMINDER_MILESTONES } from "@/lib/reminder";
 import { Navbar } from "@/components/layout/Navbar";
-import { Card, CardContent } from "@/components/ui/Card";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { CategoryChart } from "@/components/dashboard/CategoryChart";
-import { MonthlyTrendChart } from "@/components/dashboard/MonthlyTrendChart";
+import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { ReminderCenter } from "@/components/dashboard/ReminderCenter";
-import { formatDate } from "@/lib/utils";
-import {
-  FileBadge2,
-  ShieldCheck,
-  TimerReset,
-  AlertTriangle,
-  ArrowRight,
-  RefreshCw,
-} from "lucide-react";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -50,6 +38,19 @@ export default async function DashboardPage() {
     upcoming,
     trendRows,
     categories,
+    personnelTotal,
+    personnelExpired,
+    personnelWithin30,
+    personnelUpcoming,
+    projectOngoing,
+    projectCompleted,
+    projectExpired,
+    projectWithin30,
+    projectUpcoming,
+    equipmentTotal,
+    equipmentExpired,
+    equipmentWithin30,
+    equipmentUpcoming,
   ] = await Promise.all([
     prisma.certificate.count({ where: notDeleted }),
     prisma.certificate.count({ where: { ...notDeleted, expiryDate: { gt: in30 } } }),
@@ -72,9 +73,43 @@ export default async function DashboardPage() {
       select: { expiryDate: true },
     }),
     prisma.category.findMany({ include: { _count: { select: { certificates: true } } } }),
-  ]);
 
-  const expiringSoon = within30;
+    // --- Personnel Certification ---
+    prisma.personnelCertification.count({ where: notDeleted }),
+    prisma.personnelCertification.count({ where: { ...notDeleted, expiryDate: { lt: today } } }),
+    prisma.personnelCertification.count({ where: { ...notDeleted, expiryDate: { gte: today, lte: in30 } } }),
+    prisma.personnelCertification.findMany({
+      where: { ...notDeleted, expiryDate: { lte: in30 } },
+      orderBy: { expiryDate: "asc" },
+      take: 8,
+      include: { category: true, employee: true },
+    }),
+
+    // --- Project (ONGOING only — completed/cancelled projects don't need attention) ---
+    prisma.project.count({ where: { ...notDeleted, status: "ONGOING" } }),
+    prisma.project.count({ where: { ...notDeleted, status: "COMPLETED" } }),
+    prisma.project.count({ where: { ...notDeleted, status: "ONGOING", targetEndDate: { lt: today } } }),
+    prisma.project.count({
+      where: { ...notDeleted, status: "ONGOING", targetEndDate: { gte: today, lte: in30 } },
+    }),
+    prisma.project.findMany({
+      where: { ...notDeleted, status: "ONGOING", targetEndDate: { lte: in30 } },
+      orderBy: { targetEndDate: "asc" },
+      take: 8,
+      include: { category: true },
+    }),
+
+    // --- Equipment Calibration ---
+    prisma.equipment.count({ where: notDeleted }),
+    prisma.equipment.count({ where: { ...notDeleted, nextCalibrationDate: { lt: today } } }),
+    prisma.equipment.count({ where: { ...notDeleted, nextCalibrationDate: { gte: today, lte: in30 } } }),
+    prisma.equipment.findMany({
+      where: { ...notDeleted, nextCalibrationDate: { lte: in30 } },
+      orderBy: { nextCalibrationDate: "asc" },
+      take: 8,
+      include: { category: true, pic: true },
+    }),
+  ]);
 
   const chartData = categories.map((c) => ({
     name: c.name,
@@ -242,178 +277,120 @@ export default async function DashboardPage() {
     }));
   }
 
-  const stats = [
-    { label: "Total Sertifikat", value: total, icon: FileBadge2, accent: "text-ink bg-ink/5 border-ink/10" },
-    {
-      label: "Sertifikat Aktif",
-      value: active,
-      icon: ShieldCheck,
-      accent: "text-signal-active bg-signal-activeBg border-signal-activeBorder",
+  const certificateData = {
+    stats: {
+      total,
+      active,
+      expiringSoon: within30,
+      expired,
+      extraLabel: "Renewal Berjalan",
+      extraValue: renewalInProgress,
     },
-    {
-      label: "Berakhir < 30 Hari",
-      value: within30,
-      icon: TimerReset,
-      accent: "text-signal-soon bg-signal-soonBg border-signal-soonBorder",
+    upcoming: upcoming.map((c) => ({
+      id: c.id,
+      title: c.certificateName,
+      subtitle: c.certificateNumber,
+      secondary: c.category.name,
+      date: c.expiryDate.toISOString(),
+      daysRemaining: getDaysRemaining(c.expiryDate),
+      detailHref: `/certificate/${c.id}`,
+    })),
+  };
+
+  const personnelActive = personnelTotal - personnelExpired - personnelWithin30;
+  const personnelData = {
+    stats: { total: personnelTotal, active: personnelActive, expiringSoon: personnelWithin30, expired: personnelExpired },
+    upcoming: personnelUpcoming.map((c) => ({
+      id: c.id,
+      title: c.certificationName,
+      subtitle: c.certificationNumber || "-",
+      secondary: `${c.employee.name} · ${c.category.name}`,
+      date: c.expiryDate.toISOString(),
+      daysRemaining: getDaysRemaining(c.expiryDate),
+      detailHref: `/personnel-certifications/${c.id}`,
+    })),
+  };
+
+  const projectActive = projectOngoing - projectExpired - projectWithin30;
+  const projectData = {
+    stats: {
+      total: projectOngoing,
+      active: projectActive,
+      expiringSoon: projectWithin30,
+      expired: projectExpired,
+      extraLabel: "Selesai",
+      extraValue: projectCompleted,
     },
-    {
-      label: "Berakhir < 60 Hari",
-      value: within60,
-      icon: TimerReset,
-      accent: "text-signal-soon bg-signal-soonBg border-signal-soonBorder",
-    },
-    {
-      label: "Berakhir < 90 Hari",
-      value: within90,
-      icon: TimerReset,
-      accent: "text-signal-soon bg-signal-soonBg border-signal-soonBorder",
-    },
-    {
-      label: "Expired",
-      value: expired,
-      icon: AlertTriangle,
-      accent: "text-signal-expired bg-signal-expiredBg border-signal-expiredBorder",
-    },
-    {
-      label: "Renewal Berjalan",
-      value: renewalInProgress,
-      icon: RefreshCw,
-      accent: "text-accent bg-accent/5 border-accent/20",
-    },
-  ];
+    upcoming: projectUpcoming.map((p) => ({
+      id: p.id,
+      title: p.projectName,
+      subtitle: p.projectNumber,
+      secondary: `${p.clientName} · ${p.category.name}`,
+      date: p.targetEndDate.toISOString(),
+      daysRemaining: getDaysRemaining(p.targetEndDate),
+      detailHref: `/projects/${p.id}`,
+    })),
+  };
+
+  const equipmentActive = equipmentTotal - equipmentExpired - equipmentWithin30;
+  const equipmentData = {
+    stats: { total: equipmentTotal, active: equipmentActive, expiringSoon: equipmentWithin30, expired: equipmentExpired },
+    upcoming: equipmentUpcoming.map((e) => ({
+      id: e.id,
+      title: e.name,
+      subtitle: e.assetNumber || "-",
+      secondary: `${e.pic.name} · ${e.category.name}`,
+      date: e.nextCalibrationDate.toISOString(),
+      daysRemaining: getDaysRemaining(e.nextCalibrationDate),
+      detailHref: `/equipment/${e.id}`,
+    })),
+  };
+
+  // Per-domain breakdown for the cross-domain "Perlu Perhatian" banner —
+  // each domain's own Expiring Soon + Expired count.
+  const attentionBreakdown = [
+    { label: "Sertifikat", count: within30 + expired, href: "/certificate" },
+    { label: "Sertifikasi Personil", count: personnelWithin30 + personnelExpired, href: "/personnel-certifications" },
+    { label: "Project", count: projectWithin30 + projectExpired, href: "/projects" },
+    { label: "Equipment", count: equipmentWithin30 + equipmentExpired, href: "/equipment" },
+  ].filter((d) => d.count > 0);
 
   return (
     <>
-      <Navbar title="Dashboard" subtitle="Ringkasan status registry sertifikat" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
+      <Navbar title="Dashboard" subtitle="Ringkasan seluruh reminder — Certificate, Personnel, Project, Equipment" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
 
       <div className="p-5 md:p-8 space-y-6">
-        {(expiringSoon > 0 || expired > 0) && (
-          <div className="space-y-2">
-            {expiringSoon > 0 && (
-              <div className="flex items-center gap-2.5 rounded-md border border-signal-soonBorder bg-signal-soonBg px-4 py-3 text-sm text-signal-soon">
-                <span aria-hidden>⚠️</span>
-                <span>
-                  <strong>{expiringSoon}</strong> sertifikat akan berakhir dalam 30 hari.
-                </span>
-              </div>
-            )}
-            {expired > 0 && (
-              <div className="flex items-center gap-2.5 rounded-md border border-signal-expiredBorder bg-signal-expiredBg px-4 py-3 text-sm text-signal-expired">
-                <span aria-hidden>🔴</span>
-                <span>
-                  <strong>{expired}</strong> sertifikat telah kedaluwarsa.
-                </span>
-              </div>
-            )}
+        {attentionBreakdown.length > 0 && (
+          <div className="rounded-md border border-signal-soonBorder bg-signal-soonBg px-4 py-3">
+            <p className="text-sm text-signal-soon font-medium mb-2">⚠️ Perlu Perhatian — total {attentionBreakdown.reduce((s, d) => s + d.count, 0)} item</p>
+            <div className="flex flex-wrap gap-2">
+              {attentionBreakdown.map((d) => (
+                <Link
+                  key={d.label}
+                  href={d.href}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-slate-900 border border-signal-soonBorder px-3 py-1 text-xs font-medium text-ink dark:text-slate-100 hover:bg-signal-soonBg/50"
+                >
+                  <strong className="font-mono">{d.count}</strong> {d.label}
+                </Link>
+              ))}
+            </div>
           </div>
         )}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {stats.map((s) => (
-            <Card key={s.label} className="h-full">
-              <CardContent className="flex items-start justify-between h-full">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-500 font-medium mb-1.5 leading-snug min-h-[2rem]">
-                    {s.label}
-                  </p>
-                  <p className="font-display text-2xl font-semibold text-ink font-mono">{s.value}</p>
-                </div>
-                <div className={`h-9 w-9 rounded flex items-center justify-center border shrink-0 ${s.accent}`}>
-                  <s.icon className="h-4.5 w-4.5" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <DashboardTabs
+          certificate={certificateData}
+          personnel={personnelData}
+          project={projectData}
+          equipment={equipmentData}
+          chartData={chartData}
+          trendData={trendData}
+        />
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          <Card className="lg:col-span-3">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-              <div>
-                <h3 className="font-display font-semibold text-ink text-base">Segera Berakhir</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Diurutkan berdasarkan tanggal expired terdekat</p>
-              </div>
-              <Link
-                href="/certificate"
-                className="text-xs font-medium text-accent hover:text-accent-light flex items-center gap-1"
-              >
-                Lihat semua <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs uppercase tracking-wide text-slate-500 border-b border-slate-100">
-                    <th className="px-5 py-2.5 font-medium">Sertifikat</th>
-                    <th className="px-5 py-2.5 font-medium">Kategori</th>
-                    <th className="px-5 py-2.5 font-medium">Expired</th>
-                    <th className="px-5 py-2.5 font-medium">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {upcoming.length === 0 && (
-                    <tr>
-                      <td colSpan={4} className="px-5 py-8 text-center text-slate-400">
-                        Tidak ada sertifikat yang perlu diperhatikan saat ini.
-                      </td>
-                    </tr>
-                  )}
-                  {upcoming.map((c) => {
-                    const days = getDaysRemaining(c.expiryDate);
-                    return (
-                      <tr key={c.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/60">
-                        <td className="px-5 py-3">
-                          <Link href={`/certificate/${c.id}`} className="font-medium text-ink hover:text-accent">
-                            {c.certificateName}
-                          </Link>
-                          <p className="text-xs text-slate-400 font-mono">{c.certificateNumber}</p>
-                        </td>
-                        <td className="px-5 py-3 text-slate-600">{c.category.name}</td>
-                        <td className="px-5 py-3 text-slate-600">
-                          {formatDate(c.expiryDate)}
-                          <p className="text-xs text-slate-400">
-                            {days < 0 ? `${Math.abs(days)} hari lalu` : `${days} hari lagi`}
-                          </p>
-                        </td>
-                        <td className="px-5 py-3">
-                          <StatusBadge expiryDate={c.expiryDate} />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-
-          <Card className="lg:col-span-2">
-            <div className="px-5 py-4 border-b border-slate-100">
-              <h3 className="font-display font-semibold text-ink text-base">Sertifikat per Kategori</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Distribusi jumlah sertifikat</p>
-            </div>
-            <CardContent>
-              <CategoryChart data={chartData} />
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          <Card className="lg:col-span-3">
-            <div className="px-5 py-4 border-b border-slate-100">
-              <h3 className="font-display font-semibold text-ink text-base">Tren Sertifikat Akan Berakhir</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Jumlah sertifikat yang berakhir per bulan, 12 bulan ke depan</p>
-            </div>
-            <CardContent>
-              <MonthlyTrendChart data={trendData} />
-            </CardContent>
-          </Card>
-
-          {session?.role === "ADMIN" && (
-            <div className="lg:col-span-2">
-              <RecentActivity items={recentActivity} />
-            </div>
-          )}
-        </div>
+        {session?.role === "ADMIN" && (
+          <div className="max-w-2xl">
+            <RecentActivity items={recentActivity} />
+          </div>
+        )}
 
         {session?.role === "ADMIN" && (
           <ReminderCenter
