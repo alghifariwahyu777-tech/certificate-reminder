@@ -178,7 +178,7 @@ export function ProjectCategoryManager({
         <Label htmlFor="new-category">Nama Kategori</Label>
         <Input
           id="new-category"
-          placeholder="Contoh: K3, SIM, Auditor ISO"
+          placeholder="Contoh: PIK, Serco, Konstruksi"
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           error={addError || undefined}

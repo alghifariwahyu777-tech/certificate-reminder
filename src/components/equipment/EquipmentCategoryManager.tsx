@@ -178,7 +178,7 @@ export function EquipmentCategoryManager({
         <Label htmlFor="new-category">Nama Kategori</Label>
         <Input
           id="new-category"
-          placeholder="Contoh: K3, SIM, Auditor ISO"
+          placeholder="Contoh: Alat Ukur Listrik, Alat Ukur Suhu, Alat Laboratorium"
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           error={addError || undefined}

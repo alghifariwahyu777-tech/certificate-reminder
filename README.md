@@ -23,6 +23,10 @@ export laporan.
 ## Fitur
 
 ### Penyempurnaan Terbaru
+- Contoh placeholder di modal "Tambah Kategori" Project dan Equipment diperbaiki — sebelumnya
+  masih menampilkan contoh kategori Personil ("K3, SIM, Auditor ISO") yang ke-copy tanpa
+  disesuaikan. Project sekarang "PIK, Serco, Konstruksi"; Equipment "Alat Ukur Listrik, Alat
+  Ukur Suhu, Alat Laboratorium".
 - Ikon menu **Category** di grup Client disamakan dengan Category di Personnel/Project/Equipment
   (sebelumnya beda sendiri).
 - Menu **Departments** dipindah keluar dari grup Client ke bagian umum di atas — sifatnya lintas
