@@ -136,11 +136,18 @@ export function EquipmentForm({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="eq-asset">Nomor Aset/Seri</Label>
+              <Label htmlFor="eq-asset">Nomor Aset/CODE</Label>
               <Input id="eq-asset" {...register("assetNumber")} error={errors.assetNumber?.message} />
             </div>
+            <div>
+              <Label htmlFor="eq-serial">Serial Number</Label>
+              <Input id="eq-serial" {...register("serialNumber")} error={errors.serialNumber?.message} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <Label htmlFor="eq-brand">Merk</Label>
               <Input id="eq-brand" {...register("brand")} error={errors.brand?.message} />
@@ -149,11 +156,37 @@ export function EquipmentForm({
               <Label htmlFor="eq-model">Tipe</Label>
               <Input id="eq-model" {...register("model")} error={errors.model?.message} />
             </div>
+            <div>
+              <Label htmlFor="eq-color">Warna</Label>
+              <Input id="eq-color" {...register("color")} error={errors.color?.message} />
+            </div>
           </div>
 
-          <div>
-            <Label htmlFor="eq-color">Warna</Label>
-            <Input id="eq-color" {...register("color")} error={errors.color?.message} className="max-w-[200px]" />
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label htmlFor="eq-condition">Kondisi Barang</Label>
+              <Select id="eq-condition" {...register("condition")} error={errors.condition?.message}>
+                <option value="">— Pilih —</option>
+                <option value="Baik">Baik</option>
+                <option value="Cukup">Cukup</option>
+                <option value="Rusak Ringan">Rusak Ringan</option>
+                <option value="Rusak Berat">Rusak Berat</option>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="eq-usageStatus">Status Barang</Label>
+              <Select id="eq-usageStatus" {...register("usageStatus")} error={errors.usageStatus?.message}>
+                <option value="">— Pilih —</option>
+                <option value="Terpakai">Terpakai</option>
+                <option value="Tidak Terpakai">Tidak Terpakai</option>
+                <option value="Dalam Perbaikan">Dalam Perbaikan</option>
+                <option value="Afkir">Afkir</option>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="eq-ownerUnit">Unit Kerja Pemilik</Label>
+              <Input id="eq-ownerUnit" {...register("ownerUnit")} error={errors.ownerUnit?.message} placeholder="Contoh: SCI Cilacap" />
+            </div>
           </div>
 
           <div>
@@ -176,8 +209,32 @@ export function EquipmentForm({
               <Input id="eq-calNumber" {...register("calibrationNumber")} error={errors.calibrationNumber?.message} />
             </div>
             <div>
-              <Label htmlFor="eq-calBy">Instansi Kalibrator</Label>
+              <Label htmlFor="eq-calBy">Lembaga Kalibrasi</Label>
               <Input id="eq-calBy" {...register("calibratedBy")} error={errors.calibratedBy?.message} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label htmlFor="eq-calType">Jenis Kalibrasi</Label>
+              <Select id="eq-calType" {...register("calibrationType")} error={errors.calibrationType?.message}>
+                <option value="">— Pilih —</option>
+                <option value="Internal">Internal</option>
+                <option value="Eksternal">Eksternal</option>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="eq-calInterval">Interval Kalibrasi</Label>
+              <Select id="eq-calInterval" {...register("calibrationInterval")} error={errors.calibrationInterval?.message}>
+                <option value="">— Pilih —</option>
+                <option value="6 Bulan">6 Bulan</option>
+                <option value="1 Tahun">1 Tahun</option>
+                <option value="2 Tahun">2 Tahun</option>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="eq-range">Range / Kapasitas</Label>
+              <Input id="eq-range" {...register("measurementRange")} error={errors.measurementRange?.message} placeholder="Contoh: 0 - 210 °C" />
             </div>
           </div>
 

@@ -59,10 +59,14 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const validSortFields = ["certificateName", "certificateNumber", "expiryDate", "issueDate"];
-  const orderBy: Prisma.CertificateOrderByWithRelationInput = validSortFields.includes(sortBy)
+  const scalarSortFields = ["certificateName", "certificateNumber", "expiryDate", "issueDate", "pic"];
+  const relationSortFields: Record<string, Prisma.CertificateOrderByWithRelationInput> = {
+    clientName: { client: { name: sortDir } },
+    categoryName: { category: { name: sortDir } },
+  };
+  const orderBy: Prisma.CertificateOrderByWithRelationInput = scalarSortFields.includes(sortBy)
     ? { [sortBy]: sortDir }
-    : { expiryDate: "asc" };
+    : relationSortFields[sortBy] || { expiryDate: "asc" };
 
   const [total, certificates] = await Promise.all([
     prisma.certificate.count({ where }),

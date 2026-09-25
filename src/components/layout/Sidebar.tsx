@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   FileBadge2,
-  FolderKanban,
   Building2,
   Building,
   UserCircle,
@@ -40,6 +39,7 @@ const NAV_GROUPS = [
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false },
       { href: "/applications", label: "Applications", icon: ClipboardList, adminOnly: false },
+      { href: "/departments", label: "Departments", icon: Building, adminOnly: false },
     ],
   },
   {
@@ -59,8 +59,7 @@ const NAV_GROUPS = [
       { href: "/services", label: "Services", icon: Layers, adminOnly: false },
       { href: "/document-types", label: "Document Types", icon: FileType, adminOnly: false },
       { href: "/clients", label: "Clients", icon: Building2, adminOnly: false },
-      { href: "/category", label: "Category", icon: FolderKanban, adminOnly: false },
-      { href: "/departments", label: "Departments", icon: Building, adminOnly: false },
+      { href: "/category", label: "Category", icon: Tags, adminOnly: false },
       { href: "/email-template", label: "Email Template", icon: Mail, adminOnly: true },
     ],
   },

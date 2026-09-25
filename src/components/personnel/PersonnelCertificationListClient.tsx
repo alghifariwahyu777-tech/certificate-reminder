@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, Plus, Eye, Pencil, Trash2, FileSpreadsheet, X, ArrowUpDown } from "lucide-react";
+import { Plus, Eye, Pencil, Trash2, FileSpreadsheet, X, ArrowUpDown } from "lucide-react";
+import { SearchPopoverButton } from "@/components/ui/SearchPopoverButton";
 import { Input, Select } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -154,13 +155,12 @@ export function PersonnelCertificationListClient({
     <div className="space-y-4">
       <div className="flex flex-col lg:flex-row lg:items-center gap-3 justify-between">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
-          <div className="relative col-span-2 sm:col-span-1 focus-within:sm:col-span-2 transition-all duration-150">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Cari nama, nomor, atau personil..."
+          <div className="col-span-2 sm:col-span-1">
+            <SearchPopoverButton
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              onChange={setSearch}
+              label="Cari Sertifikasi"
+              placeholder="Nama, nomor, atau personil..."
             />
           </div>
           <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>

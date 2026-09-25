@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-  Search,
   ChevronLeft,
   ChevronRight,
   LogIn,
@@ -13,12 +12,15 @@ import {
   Upload,
   RefreshCw,
   Send,
+  RotateCcw,
+  XCircle,
 } from "lucide-react";
 import { Input, Select } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { SkeletonListItems } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
+import { SearchPopoverButton } from "@/components/ui/SearchPopoverButton";
 
 type AuditLogItem = {
   id: string;
@@ -36,6 +38,8 @@ const ACTION_ICONS: Record<string, typeof LogIn> = {
   CREATE: Plus,
   UPDATE: Pencil,
   DELETE: Trash2,
+  RESTORE: RotateCcw,
+  PERMANENT_DELETE: XCircle,
   UPLOAD: Upload,
   RENEW: RefreshCw,
   SEND_REMINDER: Send,
@@ -47,13 +51,44 @@ const ACTION_COLORS: Record<string, string> = {
   CREATE: "text-signal-active bg-signal-activeBg border-signal-activeBorder",
   UPDATE: "text-accent bg-accent/5 border-accent/20",
   DELETE: "text-signal-expired bg-signal-expiredBg border-signal-expiredBorder",
+  RESTORE: "text-signal-active bg-signal-activeBg border-signal-activeBorder",
+  PERMANENT_DELETE: "text-signal-expired bg-signal-expiredBg border-signal-expiredBorder",
   UPLOAD: "text-accent bg-accent/5 border-accent/20",
   RENEW: "text-signal-soon bg-signal-soonBg border-signal-soonBorder",
   SEND_REMINDER: "text-ink bg-ink/5 border-ink/10",
 };
 
-const ENTITY_TYPES = ["Certificate", "Category", "Department", "Client", "User", "Renewal", "Auth", "Reminder"];
-const ACTIONS = ["LOGIN", "LOGOUT", "CREATE", "UPDATE", "DELETE", "UPLOAD", "RENEW", "SEND_REMINDER"];
+// Keep in sync with AuditEntityType / AuditAction in src/lib/audit.ts.
+const ENTITY_TYPES = [
+  "Certificate",
+  "Category",
+  "Department",
+  "Client",
+  "User",
+  "Renewal",
+  "Auth",
+  "Reminder",
+  "Service",
+  "Application",
+  "Employee",
+  "PersonnelCertification",
+  "Project",
+  "ProjectAddendum",
+  "Equipment",
+  "Supervisor",
+];
+const ACTIONS = [
+  "LOGIN",
+  "LOGOUT",
+  "CREATE",
+  "UPDATE",
+  "DELETE",
+  "RESTORE",
+  "PERMANENT_DELETE",
+  "UPLOAD",
+  "RENEW",
+  "SEND_REMINDER",
+];
 
 export function AuditLogViewer() {
   const { showToast } = useToast();
@@ -107,13 +142,12 @@ export function AuditLogViewer() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input
-            placeholder="Cari pengguna atau deskripsi..."
+        <div className="flex-1 max-w-sm">
+          <SearchPopoverButton
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            onChange={setSearch}
+            label="Cari Aktivitas"
+            placeholder="Nama pengguna atau deskripsi..."
           />
         </div>
         <Select value={action} onChange={(e) => setAction(e.target.value)} className="sm:w-48">

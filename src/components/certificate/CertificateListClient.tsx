@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  Search,
   Plus,
   Eye,
   Pencil,
@@ -18,6 +17,7 @@ import { Input, Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
+import { SearchPopoverButton } from "@/components/ui/SearchPopoverButton";
 import { SkeletonTableRows } from "@/components/ui/Skeleton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useToast } from "@/components/ui/Toast";
@@ -178,13 +178,12 @@ export function CertificateListClient({
     <div className="space-y-4">
       <div className="flex flex-col lg:flex-row lg:items-center gap-3 justify-between">
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 flex-1">
-          <div className="relative col-span-2 sm:col-span-1 focus-within:sm:col-span-2 focus-within:xl:col-span-3 transition-all duration-150">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Cari nama, nomor, klien, atau PIC..."
+          <div className="col-span-2 sm:col-span-1">
+            <SearchPopoverButton
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              onChange={setSearch}
+              label="Cari Sertifikat"
+              placeholder="Nama, nomor, klien, atau PIC..."
             />
           </div>
           <Select value={clientId} onChange={(e) => setClientId(e.target.value)}>
@@ -285,12 +284,18 @@ export function CertificateListClient({
                 <th className="px-4 py-3 font-medium">
                   <SortHeader label="Nama Sertifikat" field="certificateName" current={sortBy} dir={sortDir} onToggle={toggleSort} />
                 </th>
-                <th className="px-4 py-3 font-medium">Klien</th>
-                <th className="px-4 py-3 font-medium">Kategori</th>
+                <th className="px-4 py-3 font-medium">
+                  <SortHeader label="Klien" field="clientName" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                </th>
+                <th className="px-4 py-3 font-medium">
+                  <SortHeader label="Kategori" field="categoryName" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                </th>
                 <th className="px-4 py-3 font-medium">
                   <SortHeader label="Expired" field="expiryDate" current={sortBy} dir={sortDir} onToggle={toggleSort} />
                 </th>
-                <th className="px-4 py-3 font-medium">PIC</th>
+                <th className="px-4 py-3 font-medium">
+                  <SortHeader label="PIC" field="pic" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                </th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium text-right">Aksi</th>
               </tr>

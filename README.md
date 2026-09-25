@@ -23,6 +23,29 @@ export laporan.
 ## Fitur
 
 ### Penyempurnaan Terbaru
+- Ikon menu **Category** di grup Client disamakan dengan Category di Personnel/Project/Equipment
+  (sebelumnya beda sendiri).
+- Menu **Departments** dipindah keluar dari grup Client ke bagian umum di atas — sifatnya lintas
+  fitur, bukan spesifik Client.
+- **Equipment Calibration disesuaikan dengan form kalibrasi resmi** (FOR-SCI-UMU-198) — 7 field
+  baru ditambahkan: **Serial Number** (terpisah dari Nomor Aset/CODE), **Kondisi Barang**
+  (Baik/Cukup/Rusak Ringan/Rusak Berat), **Status Barang** (Terpakai/Tidak Terpakai/Dalam
+  Perbaikan/Afkir), **Unit Kerja Pemilik** (cabang/divisi pemilik alat), **Jenis Kalibrasi**
+  (Internal/Eksternal), **Interval Kalibrasi** (6 Bulan/1 Tahun/2 Tahun), dan **Range/Kapasitas**.
+  Sudah terintegrasi ke form tambah/edit, halaman detail, dan laporan Excel/PDF Equipment.
+- **Search jadi tombol pop-up** — di Certificate, Personnel Certification, Project, Equipment,
+  dan Audit Log: klik tombol search membuka modal dengan kolom teks penuh, jadi kata yang
+  diketik selalu terlihat utuh (menggantikan kolom sempit sebelumnya).
+- **Kartu ringkasan Certificate Monitoring** disamakan tampilannya dengan Project Monitoring
+  (ikon di kiri, ukuran font, dan tata letak kartu — Project Monitoring jadi acuan).
+- **Halaman Reports dirombak** — sekarang dikelompokkan jelas per kategori: **Certificate
+  Klien**, **Personnel**, **Project**, **Equipment**. Ditambahkan 2 laporan baru yang
+  sebelumnya belum ada: **Status & Nilai Kontrak Project** dan **Jadwal Kalibrasi Alat**.
+- **Filter Audit Log dilengkapi** — sebelumnya cuma mencakup 8 jenis Entitas/Aksi lama, sekarang
+  mencakup seluruh 16 jenis entitas (termasuk Project, Equipment, Supervisor) dan 10 jenis aksi
+  (termasuk RESTORE, PERMANENT_DELETE) yang sebenarnya ada di sistem.
+- **Sorting kolom Certificate diperluas** — Klien, Kategori, dan PIC sekarang juga bisa
+  diurutkan (sebelumnya cuma Nomor, Nama, dan Expired).
 - **Dashboard Utama dirombak total** — sekarang mencakup **seluruh 4 domain** reminder, bukan
   cuma Certificate:
   - Banner **"Perlu Perhatian"** di paling atas — rincian per domain (mis. "3 Sertifikat, 1

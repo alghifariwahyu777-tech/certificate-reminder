@@ -15,7 +15,9 @@ export type ReportType =
   | "surveillance"
   | "sla"
   | "monitoring"
-  | "personnel_certifications";
+  | "personnel_certifications"
+  | "project_status"
+  | "equipment_calibration";
 
 export const REPORT_LABELS: Record<ReportType, string> = {
   active: "Sertifikat Aktif",
@@ -29,6 +31,8 @@ export const REPORT_LABELS: Record<ReportType, string> = {
   sla: "Kepatuhan SLA Tahap Workflow",
   monitoring: "Monitoring Manajemen",
   personnel_certifications: "Sertifikasi Personil",
+  project_status: "Status & Nilai Kontrak Project",
+  equipment_calibration: "Jadwal Kalibrasi Alat",
 };
 
 export type ReportTable = {
@@ -341,6 +345,98 @@ async function personnelCertificationsReport(): Promise<ReportTable> {
   };
 }
 
+async function projectReport(): Promise<ReportTable> {
+  const projects = await prisma.project.findMany({
+    where: { deletedAt: null },
+    include: { category: true },
+    orderBy: { targetEndDate: "asc" },
+  });
+
+  return {
+    title: REPORT_LABELS.project_status,
+    generatedAt: new Date(),
+    columns: [
+      "No",
+      "Nomor Project",
+      "Nama Project",
+      "Kategori",
+      "Klien",
+      "PIC",
+      "Nilai Kontrak",
+      "Target Selesai",
+      "Status",
+    ],
+    rows: projects.map((p, i) => [
+      i + 1,
+      p.projectNumber,
+      p.projectName,
+      p.category.name,
+      p.clientName,
+      p.pic,
+      p.contractValue ? Number(p.contractValue) : 0,
+      p.targetEndDate.toLocaleDateString("id-ID"),
+      p.status === "ONGOING" ? "Berjalan" : p.status === "COMPLETED" ? "Selesai" : "Dibatalkan",
+    ]),
+  };
+}
+
+async function equipmentReport(): Promise<ReportTable> {
+  const equipmentList = await prisma.equipment.findMany({
+    where: { deletedAt: null },
+    include: { category: true, pic: true },
+    orderBy: { nextCalibrationDate: "asc" },
+  });
+
+  return {
+    title: REPORT_LABELS.equipment_calibration,
+    generatedAt: new Date(),
+    columns: [
+      "No",
+      "Nama Alat",
+      "Nomor Aset/CODE",
+      "Serial Number",
+      "Merk / Tipe",
+      "Kategori",
+      "Kondisi",
+      "Status",
+      "Unit Kerja Pemilik",
+      "PIC",
+      "No. Sertifikat Kalibrasi",
+      "Lembaga Kalibrasi",
+      "Jenis Kalibrasi",
+      "Interval Kalibrasi",
+      "Range/Kapasitas",
+      "Kalibrasi Terakhir",
+      "Kalibrasi Berikutnya",
+      "Status Kalibrasi",
+    ],
+    rows: equipmentList.map((e, i) => [
+      i + 1,
+      e.name,
+      e.assetNumber || "-",
+      e.serialNumber || "-",
+      [e.brand, e.model].filter(Boolean).join(" ") || "-",
+      e.category.name,
+      e.condition || "-",
+      e.usageStatus || "-",
+      e.ownerUnit || "-",
+      e.pic.name,
+      e.calibrationNumber || "-",
+      e.calibratedBy || "-",
+      e.calibrationType || "-",
+      e.calibrationInterval || "-",
+      e.measurementRange || "-",
+      e.lastCalibrationDate ? e.lastCalibrationDate.toLocaleDateString("id-ID") : "-",
+      e.nextCalibrationDate.toLocaleDateString("id-ID"),
+      getCertificateStatus(e.nextCalibrationDate) === "EXPIRED"
+        ? "Expired"
+        : getCertificateStatus(e.nextCalibrationDate) === "EXPIRING_SOON"
+          ? "Expiring Soon"
+          : "Active",
+    ]),
+  };
+}
+
 export async function getReportTable(type: ReportType): Promise<ReportTable> {
   switch (type) {
     case "active":
@@ -365,5 +461,9 @@ export async function getReportTable(type: ReportType): Promise<ReportTable> {
       return monitoringReport();
     case "personnel_certifications":
       return personnelCertificationsReport();
+    case "project_status":
+      return projectReport();
+    case "equipment_calibration":
+      return equipmentReport();
   }
 }

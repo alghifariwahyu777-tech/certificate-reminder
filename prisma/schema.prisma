@@ -604,7 +604,8 @@ model EquipmentCategory {
 model Equipment {
   id                  String            @id @default(cuid())
   name                String
-  assetNumber         String? // internal asset/serial number
+  assetNumber         String? // internal asset code — "CODE" column in the calibration monitoring form
+  serialNumber        String? // "Serial Number" column — distinct from the asset code above
   brand               String? // merk
   model               String? // tipe
   color                String? // warna
@@ -613,8 +614,14 @@ model Equipment {
   picId               String
   pic                 Employee          @relation(fields: [picId], references: [id])
   ccEmail             String? // atasan email — now supplemented by the global active-Supervisor CC list
+  condition           String? // "Kondisi Barang" — e.g. Baik/Cukup/Rusak
+  usageStatus         String? // "Status Barang" — e.g. Terpakai/Tidak Terpakai
+  ownerUnit           String? // "Unit Kerja Pemilik" — owning branch/division
   calibrationNumber   String?
-  calibratedBy        String? // lembaga/instansi kalibrator
+  calibratedBy        String? // "Lembaga Kalibrasi" — lembaga/instansi kalibrator
+  calibrationType     String? // "Jenis Kalibrasi" — Internal | Eksternal
+  calibrationInterval String? // "Interval Kalibrasi" — e.g. "1 Tahun", "6 Bulan"
+  measurementRange    String? // "Range / Kapasitas"
   lastCalibrationDate DateTime?
   nextCalibrationDate DateTime // reminder milestones are computed from this date
   fileUrl             String?

@@ -65,18 +65,16 @@ export default async function MonitoringPage() {
         role={session?.role || "ADMIN"}
       />
       <div className="p-5 md:p-8 space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {summaryCards.map((c) => (
-            <Card key={c.label} className="h-full">
-              <CardContent className="flex items-start justify-between h-full">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-500 font-medium mb-1.5 leading-snug min-h-[2rem]">
-                    {c.label}
-                  </p>
-                  <p className="font-display text-xl font-semibold text-ink font-mono">{c.value}</p>
+            <Card key={c.label}>
+              <CardContent className="flex items-center gap-3.5">
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border ${c.accent}`}>
+                  <c.icon className="h-5 w-5" />
                 </div>
-                <div className={`h-9 w-9 rounded flex items-center justify-center border shrink-0 ${c.accent}`}>
-                  <c.icon className="h-4.5 w-4.5" />
+                <div className="min-w-0">
+                  <p className="text-xs text-slate-500">{c.label}</p>
+                  <p className="text-lg font-semibold text-ink truncate">{c.value}</p>
                 </div>
               </CardContent>
             </Card>
