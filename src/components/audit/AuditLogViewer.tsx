@@ -74,6 +74,7 @@ const ENTITY_TYPES = [
   "PersonnelCertification",
   "Project",
   "ProjectAddendum",
+  "ProjectMonitoring",
   "Equipment",
   "Supervisor",
 ];

@@ -3,7 +3,7 @@ import type { ReportTable } from "@/lib/reports";
 
 export async function generateExcelReport(table: ReportTable): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "Certificate Reminder System";
+  workbook.creator = "Reminder System";
   workbook.created = table.generatedAt;
 
   const sheet = workbook.addWorksheet(table.title.slice(0, 31)); // Excel sheet name limit

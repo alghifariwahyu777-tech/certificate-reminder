@@ -37,7 +37,7 @@ export async function sendPersonnelReminderEmail(params: {
     };
   }
 
-  const fromName = process.env.EMAIL_FROM_NAME || "Certificate Reminder - PT Sucofindo (Persero)";
+  const fromName = process.env.EMAIL_FROM_NAME || "Reminder System - PT Sucofindo (Persero)";
   const from = `"${fromName}" <${process.env.GMAIL_USER}>`;
   const template = await getPersonnelEmailTemplate();
   const subject = substitutePersonnelPlaceholders(template.subject, params.data);

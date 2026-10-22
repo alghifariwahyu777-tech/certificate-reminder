@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
   if (transporter) {
     const appUrl = process.env.APP_URL || "http://localhost:3000";
     const resetUrl = `${appUrl}/portal/reset-password?token=${token}`;
-    const fromName = process.env.EMAIL_FROM_NAME || "Certificate Reminder - PT Sucofindo (Persero)";
+    const fromName = process.env.EMAIL_FROM_NAME || "Reminder System - PT Sucofindo (Persero)";
 
     await transporter
       .sendMail({

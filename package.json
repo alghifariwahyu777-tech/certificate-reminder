@@ -1,5 +1,5 @@
 {
-  "name": "certificate-reminder",
+  "name": "reminder-system",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -7,7 +7,9 @@
     "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "next lint",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "prisma:seed": "tsx prisma/seed.ts",
+    "import:competency": "tsx prisma/import-competency.ts",
+    "import:equipment-calibration": "tsx prisma/import-equipment-calibration.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

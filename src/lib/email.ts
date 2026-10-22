@@ -53,7 +53,7 @@ export async function sendReminderEmail(params: {
 
   // Gmail SMTP always sends as the authenticated mailbox — only the
   // display name in front of it can be customized, not the address itself.
-  const fromName = process.env.EMAIL_FROM_NAME || "Certificate Reminder - PT Sucofindo (Persero)";
+  const fromName = process.env.EMAIL_FROM_NAME || "Reminder System - PT Sucofindo (Persero)";
   const from = `"${fromName}" <${process.env.GMAIL_USER}>`;
   const template = await getEmailTemplate();
   const subject = substitutePlaceholders(template.subject, params.data);

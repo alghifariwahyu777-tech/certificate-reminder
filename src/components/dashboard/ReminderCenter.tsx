@@ -22,6 +22,7 @@ type RunDetail = {
   certificateNumber: string;
   certificateName: string;
   milestoneDays: number;
+  label?: string;
   status: "SENT" | "FAILED" | "SKIPPED";
   errorMessage?: string;
 };
@@ -135,7 +136,7 @@ export function ReminderCenter({
                   <div key={i} className="px-3 py-2 flex items-center gap-2 text-xs">
                     <Icon className={`h-3.5 w-3.5 shrink-0 ${STATUS_COLOR[d.status]}`} />
                     <span className="text-ink font-medium truncate">{d.certificateName}</span>
-                    <span className="text-slate-400 font-mono shrink-0">H-{d.milestoneDays}</span>
+                    <span className="text-slate-400 font-mono shrink-0">{d.label ?? `H-${d.milestoneDays}`}</span>
                     {d.errorMessage && <span className="text-slate-400 truncate">— {d.errorMessage}</span>}
                   </div>
                 );

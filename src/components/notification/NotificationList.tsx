@@ -11,7 +11,18 @@ import { cn, formatDate } from "@/lib/utils";
 
 type NotificationItem = {
   id: string;
-  type: "EXPIRING_SOON" | "EXPIRED" | "APP_SUBMITTED" | "APP_REVISION_REQUIRED" | "APP_APPROVED" | "APP_CERTIFICATE_ISSUED";
+  type:
+    | "EXPIRING_SOON"
+    | "EXPIRED"
+    | "APP_SUBMITTED"
+    | "APP_REVISION_REQUIRED"
+    | "APP_APPROVED"
+    | "APP_CERTIFICATE_ISSUED"
+    // project realisasi alerts (lib/project-alerts.ts)
+    | "PROJECT_DEVIATION_CRITICAL"
+    | "PROJECT_PROGRESS_STALE"
+    | "PROJECT_TERM_DUE"
+    | "PROJECT_INVOICE_OVERDUE";
   message: string;
   status: "NEW" | "READ" | "DONE";
   createdAt: string;
@@ -25,6 +36,8 @@ type NotificationItem = {
 function iconFor(type: NotificationItem["type"]) {
   if (type === "EXPIRED") return { Icon: AlertTriangle, color: "text-signal-expired" };
   if (type === "EXPIRING_SOON") return { Icon: TimerReset, color: "text-signal-soon" };
+  if (type === "PROJECT_DEVIATION_CRITICAL" || type === "PROJECT_INVOICE_OVERDUE") return { Icon: AlertTriangle, color: "text-signal-expired" };
+  if (type === "PROJECT_PROGRESS_STALE" || type === "PROJECT_TERM_DUE") return { Icon: TimerReset, color: "text-signal-soon" };
   return { Icon: ClipboardList, color: "text-accent" };
 }
 

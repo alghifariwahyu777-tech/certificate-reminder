@@ -1,4 +1,4 @@
-# Certificate Reminder — PT Sucofindo (Persero)
+# Reminder System — PT Sucofindo (Persero)
 
 Sistem internal untuk mengelola sertifikat klien yang menggunakan jasa sertifikasi, inspeksi,
 dan kalibrasi PT Sucofindo (Persero) — lengkap dengan pemantauan masa berlaku, riwayat
@@ -22,7 +22,77 @@ export laporan.
 
 ## Fitur
 
+### Project Monitoring — Realisasi (Oktober 2026)
+
+Project Monitoring kini menjadi pusat pemantauan banyak project sekaligus, bukan hanya pengingat
+target selesai. Halaman detail project (`/projects/[id]`) memiliki tab:
+
+- **Ringkasan** — status kesehatan (On Track / Waspada / Kritis), progres rencana vs realisasi,
+  deviasi, SPI, sisa waktu & prakiraan selesai, ringkasan tagihan/piutang/biaya, **Kurva S**, dan
+  daftar "Perlu Perhatian".
+- **Progres** — laporan progres berkala (% kumulatif + uraian + lampiran) dan **rencana progres**
+  per periode (bisa diisi otomatis mingguan/bulanan lalu disesuaikan).
+- **Milestone** — tahapan/deliverable berbobot dengan tanggal rencana & aktual serta bukti.
+- **Termin & Penagihan** — termin pembayaran dengan alur Belum Ditagih → Sudah Ditagih → Dibayar
+  (no./tgl invoice, jatuh tempo, tgl & nominal bayar), piutang dan invoice lewat jatuh tempo.
+- **Biaya** — anggaran (RAB) per kategori vs realisasi biaya, CPI, estimasi margin.
+- **Kendala & Risiko** — log isu dengan dampak, PIC tindak lanjut, target, dan status.
+- **Kontrak & Addendum** — data kontrak, riwayat addendum, dokumen kontrak (seperti sebelumnya).
+
+**Cara progres dihitung ("keduanya")**: progres realisasi otomatis = jumlah bobot milestone yang
+sudah selesai (dinormalisasi ke 100%). Laporan progres manual mengoreksi angka itu mulai tanggal
+laporannya, sampai ada milestone selesai atau laporan yang lebih baru. **Rencana** diambil dari
+tabel rencana progres; jika kosong, dari tanggal rencana × bobot milestone; jika itu juga kosong,
+garis lurus dari tanggal mulai ke target selesai.
+
+**Dashboard Realisasi** (`/projects/dashboard`) — KPI portofolio (progres tertimbang nilai kontrak,
+jumlah kritis/waspada, tertagih/terbayar/piutang, biaya), grafik per kategori, daftar "Perlu
+Perhatian", tabel semua project (bisa diurutkan & difilter per status/kategori/PIC/kondisi), dan
+**export Excel** (sheet Monitoring Project + Termin & Penagihan).
+
+**Reminder realisasi** (ikut job harian `/api/reminders/run`): satu email per project ke PIC + CC
+seluruh Supervisor aktif bila ada kejadian baru — progres kritis, progres tidak diperbarui, termin
+sudah waktunya ditagih, atau invoice lewat jatuh tempo — plus notifikasi in-app. Tiap kejadian
+hanya dikirim sekali (tabel `ProjectAlertLog`). Ambang batasnya diatur di **Settings → Monitoring
+Project**.
+
+**Migration**: folder `prisma/migrations` sebelumnya hanya berisi `init`, padahal banyak tabel
+(Employee, Project, Equipment, Supervisor, dst.) ditambahkan setelahnya — kemungkinan lewat
+`prisma db push`. Ditambahkan dua migration:
+1. `20261022090000_catch_up_schema` — idempoten (`IF NOT EXISTS`); di database produksi yang
+   sudah lengkap tidak mengubah apa pun, di database baru melengkapi skema setelah `init`.
+2. `20261022090100_project_monitoring_realisasi` — tabel-tabel realisasi baru + kolom ambang
+   batas di `AppSettings`.
+
+Keduanya diterapkan otomatis oleh `prisma migrate deploy` saat build/deploy. Ke depannya, pakai
+`npx prisma migrate dev --name <nama>` untuk setiap perubahan skema (jangan `db push`) agar folder
+migration tetap lengkap.
+
 ### Penyempurnaan Terbaru
+- **Data riil Cabang Cilacap diimpor ke struktur sistem** lewat dua script satu-kali di
+  `prisma/import-competency.ts` dan `prisma/import-equipment-calibration.ts` (jalankan dengan
+  `npm run import:competency` / `npm run import:equipment-calibration` setelah `DATABASE_URL`
+  mengarah ke database yang benar — aman dijalankan berulang, tidak akan membuat duplikat):
+  - **Matriks Kompetensi CLP 26** → 26 Employee baru (Kepala Cabang, Bidang Dukungan Bisnis, OPS),
+    dikelompokkan ke 4 Department sesuai "Bidang" pada sumber, dan 162 PersonnelCertification
+    (satu per tanda "x" di matriks) yang terbagi ke 11 PersonnelCertificationCategory sesuai
+    kelompok kompetensi di file Excel (AEBT & Industri, SERCO, K3 & QSHE, dst). Sumbernya tidak
+    mencantumkan tanggal kedaluwarsa per kompetensi, jadi setiap baris diberi tanggal placeholder
+    (31 Des 2099, tidak akan memicu reminder) dan catatan yang menjelaskan hal ini — perbarui
+    tanggalnya bila kompetensi tersebut memang punya masa berlaku. Email tiap pegawai juga hasil
+    generate otomatis mengikuti konvensi penamaan perusahaan (nama.depan.belakang@sucofindo.co.id)
+    karena sumber tidak mencantumkan email — mohon diverifikasi sebelum reminder sungguhan
+    dikirim ke alamat tersebut.
+  - **Form Monitoring Peralatan Kalibrasi (FOR-SCI-UMU-198, Rev. 03)** → 43 data Equipment nyata
+    (Sulfur Analyzer, Calorimeter, oven/furnace, timbangan, test sieve, dll.), semuanya diberi
+    kategori "Alat Laboratorium" (sumber tidak memisah kategori per alat — pisahkan lagi lewat
+    menu Kategori Equipment bila perlu) dan PIC default "Bhumi Hardianto" (sesuai kolom
+    "Disiapkan Oleh" di form, karena form tidak mencantumkan PIC per alat — ubah PIC di alat
+    tertentu bila memang ada penanggung jawab lain). **Perhatian:** 14 dari 43 alat sudah lewat
+    tanggal kalibrasinya per tanggal impor — begitu data ini masuk ke database live, sistem akan
+    langsung menandainya "Kedaluwarsa" dan mengirim reminder ke PIC + seluruh Supervisor aktif
+    pada jadwal reminder berikutnya. Kalibrasi ulang atau perbaiki tanggalnya dulu bila belum
+    ingin email itu terkirim.
 - Contoh placeholder di modal "Tambah Kategori" Project dan Equipment diperbaiki — sebelumnya
   masih menampilkan contoh kategori Personil ("K3, SIM, Auditor ISO") yang ke-copy tanpa
   disesuaikan. Project sekarang "PIK, Serco, Konstruksi"; Equipment "Alat Ukur Listrik, Alat
@@ -479,7 +549,7 @@ perusahaan.
    ```
    GMAIL_USER="nama.anda@gmail.com"
    GMAIL_APP_PASSWORD="16_karakter_dari_langkah_2"
-   EMAIL_FROM_NAME="Certificate Reminder - PT Sucofindo (Persero)"
+   EMAIL_FROM_NAME="Reminder System - PT Sucofindo (Persero)"
    APP_URL="https://domain-produksi-anda.com"
    ```
 4. Restart server. Isi field **Email PIC** di setiap sertifikat — reminder hanya terkirim kalau

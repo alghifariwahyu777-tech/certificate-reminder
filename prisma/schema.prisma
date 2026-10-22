@@ -73,8 +73,8 @@ model Department {
 }
 
 model Certificate {
-  id                String   @id @default(cuid())
-  certificateNumber String   @unique
+  id                String         @id @default(cuid())
+  certificateNumber String         @unique
   certificateName   String
   issuingBody       String?
   issueDate         DateTime
@@ -90,21 +90,21 @@ model Certificate {
   driveFileId       String? // Google Drive file ID — needed to delete/replace the file
   fileMimeType      String? // e.g. "application/pdf" | "image/jpeg" — Drive URLs have no extension to sniff
   categoryId        String
-  category          Category    @relation(fields: [categoryId], references: [id])
+  category          Category       @relation(fields: [categoryId], references: [id])
   clientId          String
-  client            Client      @relation(fields: [clientId], references: [id])
+  client            Client         @relation(fields: [clientId], references: [id])
   departmentId      String?
-  department        Department? @relation(fields: [departmentId], references: [id])
-  applicationId     String?     @unique // set when this certificate was issued from an Application (Phase 7)
-  application       Application? @relation(fields: [applicationId], references: [id])
+  department        Department?    @relation(fields: [departmentId], references: [id])
+  applicationId     String?        @unique // set when this certificate was issued from an Application (Phase 7)
+  application       Application?   @relation(fields: [applicationId], references: [id])
   serviceId         String? // which Service this was issued under, if via an Application
-  service           Service?    @relation(fields: [serviceId], references: [id])
+  service           Service?       @relation(fields: [serviceId], references: [id])
   renewals          Renewal[]
   surveillances     Surveillance[]
   emailLogs         EmailLog[]
   notifications     Notification[]
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
   deletedAt         DateTime? // soft delete — set instead of removing the row; see /trash
 
   @@index([categoryId])
@@ -248,22 +248,22 @@ model Notification {
 /// A certification service offered to clients (e.g. "ISO 9001", "Halal").
 /// Each service owns its own document requirements and workflow stages.
 model Service {
-  id                       String              @id @default(cuid())
-  name                     String              @unique
-  code                     String              @unique
-  description              String?
-  isActive                 Boolean             @default(true)
-  requiresAudit            Boolean             @default(true)
-  requiresSurveillance     Boolean             @default(false)
-  surveillanceCount        Int? // how many surveillance visits after certificate issuance
+  id                         String               @id @default(cuid())
+  name                       String               @unique
+  code                       String               @unique
+  description                String?
+  isActive                   Boolean              @default(true)
+  requiresAudit              Boolean              @default(true)
+  requiresSurveillance       Boolean              @default(false)
+  surveillanceCount          Int? // how many surveillance visits after certificate issuance
   surveillanceIntervalMonths Int? // months between each surveillance
-  estimatedProcessingDays  Int? // shown to clients as a rough expectation, not an SLA guarantee
-  createdAt                DateTime            @default(now())
-  updatedAt                DateTime            @updatedAt
-  requirements             ServiceRequirement[]
-  stages                   WorkflowStage[]
-  applications             Application[]
-  certificates             Certificate[]
+  estimatedProcessingDays    Int? // shown to clients as a rough expectation, not an SLA guarantee
+  createdAt                  DateTime             @default(now())
+  updatedAt                  DateTime             @updatedAt
+  requirements               ServiceRequirement[]
+  stages                     WorkflowStage[]
+  applications               Application[]
+  certificates               Certificate[]
 }
 
 /// Master catalog of document types (e.g. "NIB", "Legal Document") reused
@@ -280,17 +280,17 @@ model DocumentType {
 /// Join between a Service and a DocumentType — what's required (or
 /// optional) to submit for that specific service's initial application.
 model ServiceRequirement {
-  id               String       @id @default(cuid())
-  serviceId        String
-  service          Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  documentTypeId   String
-  documentType     DocumentType @relation(fields: [documentTypeId], references: [id])
-  mandatory        Boolean      @default(true)
-  allowedFileTypes String       @default("pdf,jpg,png") // comma-separated extensions, no dot
-  maxFileSizeMB    Int          @default(10)
-  templateUrl      String? // optional link/proxy URL to a downloadable template
-  displayOrder     Int          @default(0)
-  createdAt        DateTime     @default(now())
+  id                   String                @id @default(cuid())
+  serviceId            String
+  service              Service               @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  documentTypeId       String
+  documentType         DocumentType          @relation(fields: [documentTypeId], references: [id])
+  mandatory            Boolean               @default(true)
+  allowedFileTypes     String                @default("pdf,jpg,png") // comma-separated extensions, no dot
+  maxFileSizeMB        Int                   @default(10)
+  templateUrl          String? // optional link/proxy URL to a downloadable template
+  displayOrder         Int                   @default(0)
+  createdAt            DateTime              @default(now())
   applicationDocuments ApplicationDocument[]
 
   @@unique([serviceId, documentTypeId])
@@ -303,18 +303,18 @@ model ServiceRequirement {
 /// named. `clientVisible`/`clientDescription` control what a client sees in
 /// their portal vs. internal-only stages.
 model WorkflowStage {
-  id                String   @id @default(cuid())
+  id                String             @id @default(cuid())
   serviceId         String
-  service           Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  service           Service            @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   name              String
   stageType         String // APPLICATION | DOCUMENT_REVIEW | PREPARATION | AUDIT | ASSESSMENT |
-                            // CERTIFICATION_DECISION | CERTIFICATE_ISSUANCE | SURVEILLANCE | COMPLETED | CUSTOM
+  // CERTIFICATION_DECISION | CERTIFICATE_ISSUANCE | SURVEILLANCE | COMPLETED | CUSTOM
   sequence          Int
   slaDays           Int?
   picRole           String? // free-text role/department expected to own this stage
-  clientVisible     Boolean  @default(true)
+  clientVisible     Boolean            @default(true)
   clientDescription String? // plain-language description shown to clients (vs. internal name)
-  createdAt         DateTime @default(now())
+  createdAt         DateTime           @default(now())
   applicationStages ApplicationStage[]
 
   @@unique([serviceId, sequence])
@@ -333,24 +333,24 @@ model WorkflowStage {
 /// Starts as DRAFT while the client is still filling it out / uploading
 /// documents, then moves through review states once submitted.
 model Application {
-  id                String    @id @default(cuid())
-  applicationNumber String    @unique // e.g. CERT-APP-2026-000123
+  id                String                @id @default(cuid())
+  applicationNumber String                @unique // e.g. CERT-APP-2026-000123
   clientId          String
-  client            Client    @relation(fields: [clientId], references: [id])
+  client            Client                @relation(fields: [clientId], references: [id])
   serviceId         String
-  service           Service   @relation(fields: [serviceId], references: [id])
+  service           Service               @relation(fields: [serviceId], references: [id])
   contactName       String
   contactPosition   String?
   contactEmail      String?
   contactPhone      String?
   description       String?
   notes             String? // internal-only note, never shown to the client
-  contractValue     Decimal?  @db.Decimal(18, 2) // Rupiah value of this engagement — admin-entered, used for management monitoring/reporting
-  status            String    @default("DRAFT")
+  contractValue     Decimal?              @db.Decimal(18, 2) // Rupiah value of this engagement — admin-entered, used for management monitoring/reporting
+  status            String                @default("DRAFT")
   // DRAFT | SUBMITTED | DOCUMENT_REVIEW | REVISION_REQUIRED | APPROVED | REJECTED | CANCELLED | COMPLETED
   submittedAt       DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
   documents         ApplicationDocument[]
   stages            ApplicationStage[]
   certificate       Certificate?
@@ -424,18 +424,18 @@ model ApplicationStage {
 // =========================================================================
 
 model Surveillance {
-  id             String    @id @default(cuid())
+  id             String      @id @default(cuid())
   certificateId  String
   certificate    Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
   sequenceNumber Int // 1st, 2nd, ... surveillance visit for this certificate
   scheduledDate  DateTime
-  status         String    @default("SCHEDULED") // SCHEDULED | CONFIRMED | IN_PROGRESS | COMPLETED | CANCELLED | POSTPONED
+  status         String      @default("SCHEDULED") // SCHEDULED | CONFIRMED | IN_PROGRESS | COMPLETED | CANCELLED | POSTPONED
   completedDate  DateTime?
   picName        String?
   notes          String? // internal-only
   result         String? // outcome shown to the client once completed
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
   @@unique([certificateId, sequenceNumber])
   @@index([certificateId])
@@ -456,16 +456,16 @@ model Surveillance {
 /// Internal staff member being tracked for certification reminders. No
 /// login of their own — purely admin-managed, they only ever receive email.
 model Employee {
-  id             String                 @id @default(cuid())
+  id             String                   @id @default(cuid())
   name           String
-  employeeId     String?                @unique // NIP / employee number, optional
+  employeeId     String?                  @unique // NIP / employee number, optional
   position       String? // jabatan
   departmentId   String?
-  department     Department?            @relation(fields: [departmentId], references: [id])
+  department     Department?              @relation(fields: [departmentId], references: [id])
   email          String
-  isActive       Boolean                @default(true)
-  createdAt      DateTime               @default(now())
-  updatedAt      DateTime               @updatedAt
+  isActive       Boolean                  @default(true)
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
   certifications PersonnelCertification[]
   equipmentAsPic Equipment[]
 
@@ -476,34 +476,34 @@ model Employee {
 /// the client-certificate `Category` model since the two taxonomies serve
 /// different purposes (competency areas vs. client service categories).
 model PersonnelCertificationCategory {
-  id            String                   @id @default(cuid())
-  name          String                   @unique
-  createdAt     DateTime                 @default(now())
+  id             String                   @id @default(cuid())
+  name           String                   @unique
+  createdAt      DateTime                 @default(now())
   certifications PersonnelCertification[]
 }
 
 model PersonnelCertification {
-  id                 String                          @id @default(cuid())
-  employeeId         String
-  employee           Employee                        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  categoryId         String
-  category           PersonnelCertificationCategory  @relation(fields: [categoryId], references: [id])
-  certificationName  String
+  id                  String                         @id @default(cuid())
+  employeeId          String
+  employee            Employee                       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  categoryId          String
+  category            PersonnelCertificationCategory @relation(fields: [categoryId], references: [id])
+  certificationName   String
   certificationNumber String?
-  issuingBody        String?
-  issueDate          DateTime?
-  validFrom          DateTime?
-  expiryDate         DateTime
-  fileUrl            String?
-  driveFileId        String? // Supabase Storage object path (see Certificate.driveFileId for naming history)
-  fileMimeType       String?
-  ccEmail            String? // atasan email — now supplemented by the global active-Supervisor CC list
-  notes              String?
-  createdAt          DateTime                        @default(now())
-  updatedAt          DateTime                        @updatedAt
-  deletedAt          DateTime? // soft delete, same pattern as Certificate
-  emailLogs          EmailLog[]
-  notifications      Notification[]
+  issuingBody         String?
+  issueDate           DateTime?
+  validFrom           DateTime?
+  expiryDate          DateTime
+  fileUrl             String?
+  driveFileId         String? // Supabase Storage object path (see Certificate.driveFileId for naming history)
+  fileMimeType        String?
+  ccEmail             String? // atasan email — now supplemented by the global active-Supervisor CC list
+  notes               String?
+  createdAt           DateTime                       @default(now())
+  updatedAt           DateTime                       @updatedAt
+  deletedAt           DateTime? // soft delete, same pattern as Certificate
+  emailLogs           EmailLog[]
+  notifications       Notification[]
 
   @@index([employeeId])
   @@index([categoryId])
@@ -515,9 +515,14 @@ model PersonnelCertification {
 /// values that don't belong to any other model — same singleton pattern as
 /// EmailTemplate.
 model AppSettings {
-  id                  String   @id @default("default")
-  adminWhatsappNumber String? // full international format, digits only, e.g. "6281234567890" — used to build wa.me links
-  updatedAt           DateTime @updatedAt
+  id                        String   @id @default("default")
+  adminWhatsappNumber       String? // full international format, digits only, e.g. "6281234567890" — used to build wa.me links
+  // --- Project Monitoring thresholds (realisasi) ---
+  projectDeviationWarning   Float    @default(5) // deviasi (rencana − realisasi, poin %) ≥ ini → "Waspada"
+  projectDeviationCritical  Float    @default(10) // deviasi ≥ ini → "Kritis" (memicu reminder)
+  projectProgressStaleDays  Int      @default(14) // progres tidak diperbarui selama ini → reminder
+  projectInvoiceOverdueDays Int      @default(30) // invoice belum dibayar lewat jatuh tempo + ini → reminder (dipakai jika jatuh tempo kosong: dihitung dari tanggal invoice)
+  updatedAt                 DateTime @updatedAt
 }
 
 /// Portfolio grouping for Project Monitoring — e.g. "PIK", "Serco", etc.
@@ -536,31 +541,39 @@ model ProjectCategory {
 /// for the project's own target completion date. Doubles as a running
 /// database of completed/ongoing work for future reference.
 model Project {
-  id               String            @id @default(cuid())
-  projectNumber    String            @unique // kontrak/project number
-  projectName      String
-  categoryId       String
-  category         ProjectCategory   @relation(fields: [categoryId], references: [id])
-  clientName       String // pemberi kerja — free text, not tied to the certificate Client list
-  pic              String // internal PIC name
-  picEmail         String?
-  ccEmail          String? // atasan email — now supplemented by the global active-Supervisor CC list
-  contractValue    Decimal? // Rupiah
-  startDate        DateTime?
-  targetEndDate    DateTime // reminder milestones are computed from this date
-  actualEndDate    DateTime? // set when the project is actually finished — distinct from the target
-  status           String            @default("ONGOING") // "ONGOING" | "COMPLETED" | "CANCELLED" — reminders only fire while ONGOING
-  description      String?
-  fileUrl          String?
-  driveFileId      String?
-  fileMimeType     String?
-  notes            String?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  deletedAt        DateTime? // soft delete, same pattern as Certificate
-  addenda          ProjectAddendum[]
-  emailLogs        EmailLog[]
-  notifications    Notification[]
+  id              String                  @id @default(cuid())
+  projectNumber   String                  @unique // kontrak/project number
+  projectName     String
+  categoryId      String
+  category        ProjectCategory         @relation(fields: [categoryId], references: [id])
+  clientName      String // pemberi kerja — free text, not tied to the certificate Client list
+  pic             String // internal PIC name
+  picEmail        String?
+  ccEmail         String? // atasan email — now supplemented by the global active-Supervisor CC list
+  contractValue   Decimal? // Rupiah
+  startDate       DateTime?
+  targetEndDate   DateTime // reminder milestones are computed from this date
+  actualEndDate   DateTime? // set when the project is actually finished — distinct from the target
+  status          String                  @default("ONGOING") // "ONGOING" | "COMPLETED" | "CANCELLED" — reminders only fire while ONGOING
+  description     String?
+  fileUrl         String?
+  driveFileId     String?
+  fileMimeType    String?
+  notes           String?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  deletedAt       DateTime? // soft delete, same pattern as Certificate
+  addenda         ProjectAddendum[]
+  milestones      ProjectMilestone[]
+  progressPlans   ProjectProgressPlan[]
+  progressReports ProjectProgressReport[]
+  terms           ProjectTerm[]
+  budgetItems     ProjectBudgetItem[]
+  expenses        ProjectExpense[]
+  issues          ProjectIssue[]
+  alertLogs       ProjectAlertLog[]
+  emailLogs       EmailLog[]
+  notifications   Notification[]
 
   @@index([categoryId])
   @@index([targetEndDate])
@@ -572,19 +585,19 @@ model Project {
 /// addendum's new target date becomes the project's new reminder reference
 /// (same convention as Certificate → RenewalHistory).
 model ProjectAddendum {
-  id                String   @id @default(cuid())
-  projectId         String
-  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  addendumNumber    String // e.g. "Addendum 1"
-  description       String?
-  previousEndDate   DateTime
-  newTargetEndDate  DateTime
-  newContractValue  Decimal?
-  fileUrl           String?
-  driveFileId       String?
-  fileMimeType      String?
-  createdAt         DateTime @default(now())
-  createdBy         String?
+  id               String   @id @default(cuid())
+  projectId        String
+  project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  addendumNumber   String // e.g. "Addendum 1"
+  description      String?
+  previousEndDate  DateTime
+  newTargetEndDate DateTime
+  newContractValue Decimal?
+  fileUrl          String?
+  driveFileId      String?
+  fileMimeType     String?
+  createdAt        DateTime @default(now())
+  createdBy        String?
 
   @@index([projectId])
 }
@@ -608,7 +621,7 @@ model Equipment {
   serialNumber        String? // "Serial Number" column — distinct from the asset code above
   brand               String? // merk
   model               String? // tipe
-  color                String? // warna
+  color               String? // warna
   categoryId          String
   category            EquipmentCategory @relation(fields: [categoryId], references: [id])
   picId               String
@@ -656,3 +669,175 @@ model Supervisor {
   updatedAt DateTime @updatedAt
 }
 
+// =========================================================================
+// PROJECT MONITORING — REALISASI
+// Everything below hangs off Project and tracks how a contract is actually
+// going: physical progress (planned vs actual → Kurva S, deviasi, SPI),
+// milestones/deliverables, payment terms (termin → invoice → paid),
+// budget vs actual cost, and issues/risks. Derived figures (progress %,
+// deviation, health) are computed on read in lib/project-monitoring.ts —
+// never stored — so they're always accurate as of "now".
+// =========================================================================
+
+/// A weighted stage/deliverable of a project (e.g. "Kick-off", "Inspeksi
+/// Lapangan", "Laporan Final", "BAST"). Completed milestones' weights sum
+/// into the default "actual progress" figure; planned dates + weights form
+/// the default planned S-curve when no explicit plan has been entered.
+model ProjectMilestone {
+  id           String    @id @default(cuid())
+  projectId    String
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sequence     Int       @default(0)
+  name         String
+  description  String?
+  weight       Decimal   @default(0) // bobot % terhadap total pekerjaan (total idealnya 100)
+  plannedDate  DateTime?
+  actualDate   DateTime? // set when status becomes DONE
+  status       String    @default("PENDING") // "PENDING" | "IN_PROGRESS" | "DONE"
+  fileUrl      String? // bukti / dokumen deliverable
+  driveFileId  String?
+  fileMimeType String?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([projectId])
+}
+
+/// Planned cumulative progress at a point in time — one row per period end
+/// (weekly/monthly). Together these are the planned S-curve. Optional: when
+/// a project has none, the plan is derived from milestones, then linearly
+/// from startDate → targetEndDate.
+model ProjectProgressPlan {
+  id             String   @id @default(cuid())
+  projectId      String
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  periodDate     DateTime
+  plannedPercent Decimal // kumulatif, 0–100
+
+  @@unique([projectId, periodDate])
+  @@index([projectId])
+}
+
+/// A periodic progress report with a manually stated cumulative actual %.
+/// "Both" mode: actual progress defaults to completed-milestone weights,
+/// and a manual report overrides it from its reportDate onward (until a
+/// later milestone completion or report supersedes it).
+model ProjectProgressReport {
+  id            String   @id @default(cuid())
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  reportDate    DateTime
+  actualPercent Decimal // kumulatif, 0–100
+  summary       String? // pekerjaan yang sudah dilakukan
+  nextPlan      String? // rencana periode berikutnya
+  fileUrl       String?
+  driveFileId   String?
+  fileMimeType  String?
+  createdBy     String?
+  createdAt     DateTime @default(now())
+
+  @@index([projectId])
+  @@index([reportDate])
+}
+
+/// Termin pembayaran — planned billing tranche and its lifecycle:
+/// PLANNED (belum ditagih) → INVOICED (invoice terbit) → PAID (dibayar).
+model ProjectTerm {
+  id            String    @id @default(cuid())
+  projectId     String
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sequence      Int       @default(0)
+  name          String // e.g. "Uang Muka", "Termin 1"
+  percent       Decimal? // % dari nilai kontrak (opsional, informatif)
+  amount        Decimal // nominal Rupiah yang ditagihkan
+  requirement   String? // syarat penagihan, mis. "Progres 50% + BAPP"
+  plannedDate   DateTime? // rencana tanggal tagih
+  status        String    @default("PLANNED") // "PLANNED" | "INVOICED" | "PAID"
+  invoiceNumber String?
+  invoiceDate   DateTime?
+  dueDate       DateTime? // jatuh tempo pembayaran
+  paidDate      DateTime?
+  paidAmount    Decimal?
+  fileUrl       String? // invoice / bukti bayar
+  driveFileId   String?
+  fileMimeType  String?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([projectId])
+  @@index([status])
+}
+
+/// Anggaran biaya (RAB internal) per kategori biaya.
+model ProjectBudgetItem {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  category    String // see PROJECT_COST_CATEGORIES in lib/project-monitoring-shared.ts
+  description String?
+  amount      Decimal
+  createdAt   DateTime @default(now())
+
+  @@index([projectId])
+}
+
+/// Realisasi biaya — one row per actual expense.
+model ProjectExpense {
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  expenseDate  DateTime
+  category     String
+  description  String
+  amount       Decimal
+  fileUrl      String?
+  driveFileId  String?
+  fileMimeType String?
+  createdBy    String?
+  createdAt    DateTime @default(now())
+
+  @@index([projectId])
+}
+
+/// Kendala (ISSUE — already happening) atau risiko (RISK — might happen).
+model ProjectIssue {
+  id          String    @id @default(cuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  type        String    @default("ISSUE") // "ISSUE" | "RISK"
+  title       String
+  description String?
+  impact      String    @default("MEDIUM") // "LOW" | "MEDIUM" | "HIGH"
+  owner       String? // PIC tindak lanjut
+  targetDate  DateTime?
+  status      String    @default("OPEN") // "OPEN" | "CLOSED"
+  resolution  String?
+  closedAt    DateTime?
+  createdBy   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([projectId])
+  @@index([status])
+}
+
+/// Dedup log for realisasi alerts (progress stale, deviation critical,
+/// term due, invoice overdue). refKey identifies the specific occurrence
+/// (e.g. a term id, or the latest report id) so each occurrence alerts once.
+model ProjectAlertLog {
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  alertType    String // "PROGRESS_STALE" | "DEVIATION_CRITICAL" | "TERM_DUE" | "INVOICE_OVERDUE"
+  refKey       String
+  recipient    String
+  cc           String?
+  status       String // "SENT" | "FAILED" | "SKIPPED"
+  errorMessage String?
+  sentAt       DateTime @default(now())
+
+  @@unique([projectId, alertType, refKey])
+  @@index([projectId])
+}

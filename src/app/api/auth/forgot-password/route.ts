@@ -38,17 +38,17 @@ export async function POST(request: NextRequest) {
   if (transporter) {
     const appUrl = process.env.APP_URL || "http://localhost:3000";
     const resetUrl = `${appUrl}/reset-password?token=${token}`;
-    const fromName = process.env.EMAIL_FROM_NAME || "Certificate Reminder - PT Sucofindo (Persero)";
+    const fromName = process.env.EMAIL_FROM_NAME || "Reminder System - PT Sucofindo (Persero)";
 
     await transporter
       .sendMail({
         from: `"${fromName}" <${process.env.GMAIL_USER}>`,
         to: user.email,
-        subject: "Reset Password - Certificate Reminder Admin",
+        subject: "Reset Password - Reminder System Admin",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #1e293b;">
             <div style="background: #0F172A; padding: 20px 24px; border-radius: 8px 8px 0 0; border-bottom: 3px solid #0EA89B;">
-              <span style="color: #ffffff; font-size: 14px; font-weight: bold;">PT Sucofindo (Persero) — Certificate Reminder System</span>
+              <span style="color: #ffffff; font-size: 14px; font-weight: bold;">PT Sucofindo (Persero) — Reminder System</span>
             </div>
             <div style="border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px; padding: 24px;">
               <p>Halo ${user.name},</p>

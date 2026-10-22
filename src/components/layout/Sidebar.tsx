@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
+  TrendingUp,
   FileBadge2,
   Building2,
   Building,
@@ -32,6 +33,15 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SucofindoMark } from "@/components/brand/SucofindoLogo";
+
+const ALL_NAV_HREFS = () => NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href));
+
+/** Exact match, or the longest nav href that prefixes the path (so /projects/dashboard doesn't also light up /projects). */
+function isNavActive(pathname: string, href: string) {
+  if (pathname === href) return true;
+  if (!pathname.startsWith(href + "/")) return false;
+  return !ALL_NAV_HREFS().some((other) => other.length > href.length && (pathname === other || pathname.startsWith(other + "/")));
+}
 
 const NAV_GROUPS = [
   {
@@ -66,6 +76,7 @@ const NAV_GROUPS = [
   {
     label: "Project",
     items: [
+      { href: "/projects/dashboard", label: "Dashboard Realisasi", icon: TrendingUp, adminOnly: false },
       { href: "/projects", label: "Project Monitoring", icon: FolderClock, adminOnly: false },
       { href: "/project-categories", label: "Categories", icon: Tags, adminOnly: false },
       { href: "/project-email-template", label: "Email Template", icon: Mail, adminOnly: true },
@@ -163,7 +174,7 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" }) {
               </p>
             )}
             {group.items.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(item.href + "/");
+              const active = isNavActive(pathname, item.href);
               const Icon = item.icon;
               return (
                 <Link

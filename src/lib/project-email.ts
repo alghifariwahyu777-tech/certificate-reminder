@@ -36,7 +36,7 @@ export async function sendProjectReminderEmail(params: {
     };
   }
 
-  const fromName = process.env.EMAIL_FROM_NAME || "Certificate Reminder - PT Sucofindo (Persero)";
+  const fromName = process.env.EMAIL_FROM_NAME || "Reminder System - PT Sucofindo (Persero)";
   const from = `"${fromName}" <${process.env.GMAIL_USER}>`;
   const template = await getProjectEmailTemplate();
   const subject = substituteProjectPlaceholders(template.subject, params.data);

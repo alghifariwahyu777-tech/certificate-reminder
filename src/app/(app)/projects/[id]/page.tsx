@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -9,6 +8,17 @@ import { ProjectAddendumSection } from "@/components/project/ProjectAddendumSect
 import { formatDate } from "@/lib/utils";
 import { getDaysRemaining } from "@/lib/status";
 import { Pencil, Download, ArrowLeft, FileWarning } from "lucide-react";
+import { getProjectWithMonitoring } from "@/lib/project-monitoring";
+import { HEALTH_BADGE_CLASS, HEALTH_LABEL, formatPercent } from "@/lib/project-monitoring-shared";
+import { MonitoringTabs } from "@/components/project/monitoring/MonitoringTabs";
+import { SummaryPanel } from "@/components/project/monitoring/SummaryPanel";
+import { ProgressPanel } from "@/components/project/monitoring/ProgressPanel";
+import { MilestonePanel } from "@/components/project/monitoring/MilestonePanel";
+import { TermPanel } from "@/components/project/monitoring/TermPanel";
+import { CostPanel } from "@/components/project/monitoring/CostPanel";
+import { IssuePanel } from "@/components/project/monitoring/IssuePanel";
+import { ProgressBar } from "@/components/project/monitoring/shared";
+import type { ProjectMonitoringDTO } from "@/components/project/monitoring/types";
 
 const STATUS_LABEL: Record<string, string> = { ONGOING: "Berjalan", COMPLETED: "Selesai", CANCELLED: "Dibatalkan" };
 
@@ -23,11 +33,96 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
   const params = await context.params;
   const session = await getSession();
 
-  const project = await prisma.project.findFirst({
-    where: { id: params.id, deletedAt: null },
-    include: { category: true, addenda: { orderBy: { createdAt: "desc" } } },
-  });
-  if (!project) notFound();
+  const loaded = await getProjectWithMonitoring(params.id);
+  if (!loaded) notFound();
+  const { project, summary } = loaded;
+  const canManage = session?.role === "ADMIN";
+  const d = (v: Date | null) => (v ? v.toISOString().slice(0, 10) : null);
+  const n = (v: { toString(): string } | null) => (v === null ? null : Number(v.toString()));
+
+  const monitoring: ProjectMonitoringDTO = {
+    projectId: project.id,
+    status: project.status,
+    contractValue: n(project.contractValue),
+    startDate: d(project.startDate),
+    targetEndDate: project.targetEndDate.toISOString(),
+    canManage,
+    today: loaded.today,
+    input: loaded.input,
+    summary,
+    thresholds: loaded.thresholds,
+    milestones: project.milestones.map((m) => ({
+      id: m.id,
+      sequence: m.sequence,
+      name: m.name,
+      description: m.description,
+      weight: Number(m.weight),
+      plannedDate: d(m.plannedDate),
+      actualDate: d(m.actualDate),
+      status: m.status,
+      notes: m.notes,
+      fileUrl: m.fileUrl,
+      driveFileId: m.driveFileId,
+      fileMimeType: m.fileMimeType,
+    })),
+    plans: project.progressPlans.map((p) => ({ periodDate: d(p.periodDate) as string, plannedPercent: Number(p.plannedPercent) })),
+    reports: project.progressReports.map((r) => ({
+      id: r.id,
+      reportDate: d(r.reportDate) as string,
+      actualPercent: Number(r.actualPercent),
+      summary: r.summary,
+      nextPlan: r.nextPlan,
+      createdBy: r.createdBy,
+      fileUrl: r.fileUrl,
+      driveFileId: r.driveFileId,
+      fileMimeType: r.fileMimeType,
+    })),
+    terms: project.terms.map((t) => ({
+      id: t.id,
+      sequence: t.sequence,
+      name: t.name,
+      percent: n(t.percent),
+      amount: Number(t.amount),
+      requirement: t.requirement,
+      plannedDate: d(t.plannedDate),
+      status: t.status,
+      invoiceNumber: t.invoiceNumber,
+      invoiceDate: d(t.invoiceDate),
+      dueDate: d(t.dueDate),
+      paidDate: d(t.paidDate),
+      paidAmount: n(t.paidAmount),
+      notes: t.notes,
+      fileUrl: t.fileUrl,
+      driveFileId: t.driveFileId,
+      fileMimeType: t.fileMimeType,
+    })),
+    budgetItems: project.budgetItems.map((b) => ({ id: b.id, category: b.category, description: b.description, amount: Number(b.amount) })),
+    expenses: project.expenses.map((e) => ({
+      id: e.id,
+      expenseDate: d(e.expenseDate) as string,
+      category: e.category,
+      description: e.description,
+      amount: Number(e.amount),
+      createdBy: e.createdBy,
+      fileUrl: e.fileUrl,
+      driveFileId: e.driveFileId,
+      fileMimeType: e.fileMimeType,
+    })),
+    issues: project.issues.map((i) => ({
+      id: i.id,
+      type: i.type,
+      title: i.title,
+      description: i.description,
+      impact: i.impact,
+      owner: i.owner,
+      targetDate: d(i.targetDate),
+      status: i.status,
+      resolution: i.resolution,
+      closedAt: i.closedAt ? i.closedAt.toISOString() : null,
+      createdBy: i.createdBy,
+      createdAt: i.createdAt.toISOString(),
+    })),
+  };
 
   const days = getDaysRemaining(project.targetEndDate);
 
@@ -60,7 +155,7 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}
       />
-      <div className="p-5 md:p-8 max-w-4xl space-y-5">
+      <div className="p-5 md:p-8 max-w-6xl space-y-5">
         <div className="flex items-center justify-between">
           <Link href="/projects" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-ink">
             <ArrowLeft className="h-4 w-4" />
@@ -82,9 +177,43 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
               <CardTitle className="text-xl">{project.projectName}</CardTitle>
               <p className="text-sm text-slate-500 font-mono mt-1">{project.projectNumber}</p>
             </div>
-            <span className="stamp-badge bg-blue-50 text-blue-700 border-blue-200">
-              {STATUS_LABEL[project.status]}
-            </span>
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+              <span className="stamp-badge bg-blue-50 text-blue-700 border-blue-200">
+                {STATUS_LABEL[project.status]}
+              </span>
+              <span className={`stamp-badge ${HEALTH_BADGE_CLASS[summary.health]}`}>{HEALTH_LABEL[summary.health]}</span>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0 pb-2">
+            <div className="flex justify-between text-xs text-slate-500 mb-1.5">
+              <span>
+                Progres {formatPercent(summary.actualPercent)} · rencana {formatPercent(summary.plannedPercent)}
+              </span>
+              <span>
+                {project.category.name} · {project.clientName}
+              </span>
+            </div>
+            <ProgressBar value={summary.actualPercent} marker={summary.plannedPercent} />
+          </CardContent>
+        </Card>
+
+        <MonitoringTabs
+          badges={{
+            kendala: summary.openHighIssues || undefined,
+            termin: summary.overdueInvoiceCount || undefined,
+          }}
+          panels={{
+            ringkasan: <SummaryPanel data={monitoring} />,
+            progres: <ProgressPanel data={monitoring} />,
+            milestone: <MilestonePanel data={monitoring} />,
+            termin: <TermPanel data={monitoring} />,
+            biaya: <CostPanel data={monitoring} />,
+            kendala: <IssuePanel data={monitoring} />,
+            kontrak: (
+        <div className="space-y-5">
+        <Card>
+          <CardHeader>
+            <CardTitle>Data Kontrak</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
             {fields.map((f) => (
@@ -160,6 +289,10 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
             )}
           </CardContent>
         </Card>
+        </div>
+            ),
+          }}
+        />
       </div>
     </>
   );

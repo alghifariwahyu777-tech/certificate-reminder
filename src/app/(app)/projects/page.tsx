@@ -3,7 +3,10 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { ProjectListClient } from "@/components/project/ProjectListClient";
 import { Card, CardContent } from "@/components/ui/Card";
-import { Wallet, TrendingUp, CheckCircle2, Gauge } from "lucide-react";
+import { Wallet, TrendingUp, CheckCircle2, Gauge, LayoutDashboard } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { getProjectPortfolio } from "@/lib/project-monitoring";
 
 function formatRupiah(value: number): string {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(
@@ -13,14 +16,16 @@ function formatRupiah(value: number): string {
 
 export default async function ProjectsPage() {
   const session = await getSession();
-  const [projects, categories] = await Promise.all([
+  const [projects, categories, portfolio] = await Promise.all([
     prisma.project.findMany({
       where: { deletedAt: null },
       include: { category: true },
       orderBy: { targetEndDate: "asc" },
     }),
     prisma.projectCategory.findMany({ orderBy: { name: "asc" } }),
+    getProjectPortfolio(),
   ]);
+  const summaryById = new Map(portfolio.rows.map((r) => [r.id, r.summary]));
 
   const toNumber = (v: unknown) => (v ? Number(v) : 0);
   const ongoing = projects.filter((p) => p.status === "ONGOING");
@@ -77,6 +82,14 @@ export default async function ProjectsPage() {
         role={session?.role || "ADMIN"}
       />
       <div className="p-5 md:p-8 space-y-6">
+        <div className="flex justify-end -mb-2">
+          <Link href="/projects/dashboard">
+            <Button variant="outline" size="sm">
+              <LayoutDashboard className="h-4 w-4" />
+              Dashboard Realisasi
+            </Button>
+          </Link>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {summaryCards.map((card) => (
             <Card key={card.label}>
@@ -106,6 +119,9 @@ export default async function ProjectsPage() {
             targetEndDate: p.targetEndDate.toISOString(),
             status: p.status as "ONGOING" | "COMPLETED" | "CANCELLED",
             contractValue: p.contractValue?.toString() || null,
+            actualPercent: summaryById.get(p.id)?.actualPercent ?? 0,
+            plannedPercent: summaryById.get(p.id)?.plannedPercent ?? 0,
+            health: summaryById.get(p.id)?.health ?? "ON_TRACK",
           }))}
         />
       </div>

@@ -4,6 +4,7 @@ import { sendReminderEmail } from "@/lib/email";
 import { sendPersonnelReminderEmail } from "@/lib/personnel-email";
 import { sendProjectReminderEmail } from "@/lib/project-email";
 import { sendEquipmentReminderEmail } from "@/lib/equipment-email";
+import { runProjectMonitoringAlerts } from "@/lib/project-alerts";
 
 /** Reminder milestones per spec: days remaining before expiry (0 = expiry day itself). */
 export const REMINDER_MILESTONES = [90, 60, 30, 14, 7, 3, 1, 0] as const;
@@ -17,6 +18,7 @@ export type ReminderRunSummary = {
     certificateNumber: string;
     certificateName: string;
     milestoneDays: number;
+    label?: string; // shown instead of "H-{milestoneDays}" for non-milestone alerts (project realisasi)
     status: "SENT" | "FAILED" | "SKIPPED";
     errorMessage?: string;
   }[];
@@ -46,6 +48,7 @@ export async function runReminderCheck(): Promise<ReminderRunSummary> {
   await runCertificateReminders(summary, supervisorCc);
   await runPersonnelReminders(summary, supervisorCc);
   await runProjectReminders(summary, supervisorCc);
+  await runProjectMonitoringAlerts(summary, supervisorCc);
   await runEquipmentReminders(summary, supervisorCc);
 
   return summary;

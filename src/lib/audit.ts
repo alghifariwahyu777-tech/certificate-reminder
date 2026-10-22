@@ -27,6 +27,7 @@ export type AuditEntityType =
   | "PersonnelCertification"
   | "Project"
   | "ProjectAddendum"
+  | "ProjectMonitoring"
   | "Equipment"
   | "Supervisor";
 

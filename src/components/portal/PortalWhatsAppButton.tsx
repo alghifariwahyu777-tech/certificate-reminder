@@ -5,7 +5,7 @@ const MESSAGES = {
   login:
     "Halo, saya klien PT Sucofindo (Persero) dan belum memiliki akun Client Portal. Mohon bantuannya untuk didaftarkan.",
   authenticated:
-    "Halo, saya ingin bertanya terkait pengajuan/sertifikasi saya di Certificate Reminder System PT Sucofindo (Persero).",
+    "Halo, saya ingin bertanya terkait pengajuan/sertifikasi saya di Reminder System PT Sucofindo (Persero).",
 };
 
 /** Floating "Contact Admin" button, bottom-right — only renders when the admin has configured a number. */

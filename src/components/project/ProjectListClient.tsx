@@ -12,6 +12,8 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { formatDate } from "@/lib/utils";
 import { getDaysRemaining } from "@/lib/status";
+import { HEALTH_BADGE_CLASS, HEALTH_LABEL, formatPercent, type ProjectHealth } from "@/lib/project-monitoring-shared";
+import { ProgressBar } from "@/components/project/monitoring/shared";
 
 type ProjectItem = {
   id: string;
@@ -23,6 +25,9 @@ type ProjectItem = {
   targetEndDate: string;
   status: "ONGOING" | "COMPLETED" | "CANCELLED";
   contractValue: string | null;
+  actualPercent: number;
+  plannedPercent: number;
+  health: ProjectHealth;
 };
 
 const STATUS_LABEL: Record<string, string> = { ONGOING: "Berjalan", COMPLETED: "Selesai", CANCELLED: "Dibatalkan" };
@@ -258,6 +263,7 @@ export function ProjectListClient({
                 <th className="px-4 py-3 font-medium">
                   <SortHeader label="Nilai Kontrak" field="contractValue" current={sortBy} dir={sortDir} onToggle={toggleSort} />
                 </th>
+                <th className="px-4 py-3 font-medium">Progres</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium text-right">Aksi</th>
               </tr>
@@ -265,7 +271,7 @@ export function ProjectListClient({
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={canManage ? 9 : 8} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={canManage ? 10 : 9} className="px-4 py-10 text-center text-slate-400">
                     Belum ada project yang cocok.
                   </td>
                 </tr>
@@ -300,8 +306,22 @@ export function ProjectListClient({
                         )}
                       </td>
                       <td className="px-4 py-3 text-slate-600 font-mono text-xs">{formatRupiah(p.contractValue)}</td>
+                      <td className="px-4 py-3 min-w-[9rem]">
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="tabular-nums text-ink font-medium">{formatPercent(p.actualPercent)}</span>
+                          {p.status === "ONGOING" && (
+                            <span className="text-slate-400 tabular-nums">rcn {formatPercent(p.plannedPercent, 0)}</span>
+                          )}
+                        </div>
+                        <ProgressBar value={p.actualPercent} marker={p.status === "ONGOING" ? p.plannedPercent : undefined} />
+                      </td>
                       <td className="px-4 py-3">
-                        <span className={`stamp-badge ${STATUS_CLASS[p.status]}`}>{STATUS_LABEL[p.status]}</span>
+                        <div className="flex flex-col items-start gap-1">
+                          <span className={`stamp-badge ${STATUS_CLASS[p.status]}`}>{STATUS_LABEL[p.status]}</span>
+                          {p.status === "ONGOING" && (
+                            <span className={`stamp-badge ${HEALTH_BADGE_CLASS[p.health]}`}>{HEALTH_LABEL[p.health]}</span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">

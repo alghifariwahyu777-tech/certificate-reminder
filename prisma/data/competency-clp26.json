@@ -1,0 +1,972 @@
+{
+  "employees": [
+    {
+      "name": "Ipmawan Hidayatullah",
+      "position": "Kepala Cabang Cilacap",
+      "bidang": "Manajerial",
+      "sheet": "Kepala Cabang"
+    },
+    {
+      "name": "Irfan Hadi K",
+      "position": "Kepala Bidang Dukungan Bisnis",
+      "bidang": "Dukungan Bisnis",
+      "sheet": "Bidang Dukungan Bisnis"
+    },
+    {
+      "name": "Muhammad Nurul Amin",
+      "position": "Finance & Accounting Officer 3",
+      "bidang": "Dukungan Bisnis",
+      "sheet": "Bidang Dukungan Bisnis"
+    },
+    {
+      "name": "Agus Hendriawan",
+      "position": "HR & GA Officer 3",
+      "bidang": "Dukungan Bisnis",
+      "sheet": "Bidang Dukungan Bisnis"
+    },
+    {
+      "name": "Alan Priambodo",
+      "position": "HR & GA Officer 3",
+      "bidang": "Dukungan Bisnis",
+      "sheet": "Bidang Dukungan Bisnis"
+    },
+    {
+      "name": "Denny Dharminto",
+      "position": "Kepala Bidang PDO",
+      "bidang": "Bidang PDO",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Bhumi Hardianto",
+      "position": "Inspector 4",
+      "bidang": "Bidang Inspeksi dan Pengujian Cabang Cilacap",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Lifia Dhiya A",
+      "position": "Administration Officer 1",
+      "bidang": "Bidang PDO",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Alif Yusril Ihza",
+      "position": "Inspector 2",
+      "bidang": "Bidang Inspeksi dan Pengujian Cabang Cilacap",
+      "sheet": "OPS"
+    },
+    {
+      "name": "April Yanto Wibowo",
+      "position": "Inspector 1",
+      "bidang": "Bidang Inspeksi dan Pengujian Cabang Cilacap",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Annisa Permata Dinda",
+      "position": "Analyst 3",
+      "bidang": "Bidang Inspeksi dan Pengujian Cabang Cilacap",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Aprillia Intan Saputri",
+      "position": "Analyst 3",
+      "bidang": "Bidang Inspeksi dan Pengujian Cabang Cilacap",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Vidhi Roesdi Arwah Pangestu",
+      "position": "Analyst 3",
+      "bidang": "Bidang Inspeksi dan Pengujian Cabang Cilacap",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Surajiman",
+      "position": "Technical Inspector 3",
+      "bidang": "Bidang Inspeksi dan Pengujian Cabang Cilacap",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Amin Sugeng Purwanto",
+      "position": "Technical Inspector 2",
+      "bidang": "Bidang Inspeksi dan Pengujian Cabang Cilacap",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Ari Setiawan",
+      "position": "Technical Inspector 1",
+      "bidang": "Bidang Inspeksi dan Pengujian Cabang Cilacap",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Puspo Satrio Nugroho",
+      "position": "Inspector 3",
+      "bidang": "Bidang Inspeksi dan Pengujian Cabang Cilacap",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Riski Dwi Irawan",
+      "position": "Technical Inspector 2",
+      "bidang": "Bidang Inspeksi dan Pengujian Cabang Cilacap",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Rumkit Tubarkah",
+      "position": "Inspector 2",
+      "bidang": "Bidang Inspeksi dan Pengujian Cabang Cilacap",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Syabani Rais",
+      "position": "Inspector 2",
+      "bidang": "Bidang Inspeksi dan Pengujian Cabang Cilacap",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Djoko Utomo",
+      "position": "SAO 3",
+      "bidang": "Bidang PDO",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Kunta Yudhistira",
+      "position": "SAO 2",
+      "bidang": "Bidang PDO",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Krisnanda Eka Trisnayudha",
+      "position": "Inspector 3",
+      "bidang": "Bidang Inspeksi dan Pengujian Cabang Cilacap",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Romi Irawan",
+      "position": "Inspector 2",
+      "bidang": "Bidang Inspeksi dan Pengujian Cabang Cilacap",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Gati Prasetyo",
+      "position": "Lead Auditor",
+      "bidang": "Bidang Inspeksi dan Pengujian Cabang Cilacap",
+      "sheet": "OPS"
+    },
+    {
+      "name": "Dhani Hapsari",
+      "position": "Risk Officer 1",
+      "bidang": "Bidang Inspeksi dan Pengujian Cabang Cilacap",
+      "sheet": "OPS"
+    }
+  ],
+  "records": [
+    {
+      "employee": "Ipmawan Hidayatullah",
+      "category": "Manajerial",
+      "competency": "ISO 31000:2018"
+    },
+    {
+      "employee": "Ipmawan Hidayatullah",
+      "category": "Manajerial",
+      "competency": "ISO 17020"
+    },
+    {
+      "employee": "Ipmawan Hidayatullah",
+      "category": "Manajerial",
+      "competency": "ISO 17025"
+    },
+    {
+      "employee": "Ipmawan Hidayatullah",
+      "category": "Manajerial",
+      "competency": "POP"
+    },
+    {
+      "employee": "Irfan Hadi K",
+      "category": "Dukungan Bisnis",
+      "competency": "Awarness ISO 9001:2015"
+    },
+    {
+      "employee": "Irfan Hadi K",
+      "category": "Dukungan Bisnis",
+      "competency": "Certified Corporate Forensic Auditor"
+    },
+    {
+      "employee": "Irfan Hadi K",
+      "category": "Dukungan Bisnis",
+      "competency": "Certified Risk Management Officer (CRMO)"
+    },
+    {
+      "employee": "Muhammad Nurul Amin",
+      "category": "Dukungan Bisnis",
+      "competency": "AR dan Pajak"
+    },
+    {
+      "employee": "Agus Hendriawan",
+      "category": "Dukungan Bisnis",
+      "competency": "Certified Procurement Specialist by BNSP"
+    },
+    {
+      "employee": "Agus Hendriawan",
+      "category": "Dukungan Bisnis",
+      "competency": "Operator Genset"
+    },
+    {
+      "employee": "Agus Hendriawan",
+      "category": "Dukungan Bisnis",
+      "competency": "Ahli Pengadaan Barang & Jasa Pemerintah"
+    },
+    {
+      "employee": "Alan Priambodo",
+      "category": "Dukungan Bisnis",
+      "competency": "Brevet Konsultan Pajak"
+    },
+    {
+      "employee": "Alan Priambodo",
+      "category": "Dukungan Bisnis",
+      "competency": "Awarness ISO 9001:2015"
+    },
+    {
+      "employee": "Denny Dharminto",
+      "category": "Batubara & Laboratorium",
+      "competency": "Pengawas Operasional Pertama (POP)"
+    },
+    {
+      "employee": "Denny Dharminto",
+      "category": "SERCO",
+      "competency": "Awarness ISO/IEC 17025:2017"
+    },
+    {
+      "employee": "Denny Dharminto",
+      "category": "SERCO",
+      "competency": "Awarness ISO 19011:2018"
+    },
+    {
+      "employee": "Denny Dharminto",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Awarness ISO 9001:2015"
+    },
+    {
+      "employee": "Denny Dharminto",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Awarness ISO/IEC17020:2012"
+    },
+    {
+      "employee": "Denny Dharminto",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Auditor Halal"
+    },
+    {
+      "employee": "Bhumi Hardianto",
+      "category": "AEBT & Industri",
+      "competency": "Underwater NDT Lv II"
+    },
+    {
+      "employee": "Bhumi Hardianto",
+      "category": "Batubara & Laboratorium",
+      "competency": "Draught Survey"
+    },
+    {
+      "employee": "Bhumi Hardianto",
+      "category": "Batubara & Laboratorium",
+      "competency": "Training Sampling, Preparation and Analysis for Coal Laboratory"
+    },
+    {
+      "employee": "Bhumi Hardianto",
+      "category": "Batubara & Laboratorium",
+      "competency": "Validasi & Verifikasi Metode Pengujian Kimia"
+    },
+    {
+      "employee": "Bhumi Hardianto",
+      "category": "Batubara & Laboratorium",
+      "competency": "Evaluasi Ketidakpastian Pengukuran Pengujian Kimia"
+    },
+    {
+      "employee": "Bhumi Hardianto",
+      "category": "SERCO",
+      "competency": "Awarness ISO/IEC 17025:2017"
+    },
+    {
+      "employee": "Bhumi Hardianto",
+      "category": "SERCO",
+      "competency": "Awarness ISO 19011:2018"
+    },
+    {
+      "employee": "Bhumi Hardianto",
+      "category": "K3 & QSHE",
+      "competency": "Basic First Aid Training"
+    },
+    {
+      "employee": "Bhumi Hardianto",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Awarness ISO/IEC17020:2012"
+    },
+    {
+      "employee": "Bhumi Hardianto",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Awarness ISO/IEC 17025:2017"
+    },
+    {
+      "employee": "Lifia Dhiya A",
+      "category": "Umum dan Lainnya",
+      "competency": "Administrasi"
+    },
+    {
+      "employee": "Alif Yusril Ihza",
+      "category": "AEBT & Industri",
+      "competency": "Magnetic Tes Particle Test"
+    },
+    {
+      "employee": "Alif Yusril Ihza",
+      "category": "HMPM",
+      "competency": "Liquid Cargo Survey"
+    },
+    {
+      "employee": "Alif Yusril Ihza",
+      "category": "Batubara & Laboratorium",
+      "competency": "Verifikator Batubara dan Mineral by BNSP"
+    },
+    {
+      "employee": "Alif Yusril Ihza",
+      "category": "Batubara & Laboratorium",
+      "competency": "Draught Survey"
+    },
+    {
+      "employee": "Alif Yusril Ihza",
+      "category": "Batubara & Laboratorium",
+      "competency": "Pemahaman Persyaratan Lembaga Verifikasi Berdasarkan SNI ISO IEC 17029 2019"
+    },
+    {
+      "employee": "April Yanto Wibowo",
+      "category": "PIK",
+      "competency": "Vepik"
+    },
+    {
+      "employee": "April Yanto Wibowo",
+      "category": "HMPM",
+      "competency": "Liquid Cargo Survey"
+    },
+    {
+      "employee": "April Yanto Wibowo",
+      "category": "HMPM",
+      "competency": "Sea Survival"
+    },
+    {
+      "employee": "April Yanto Wibowo",
+      "category": "Batubara & Laboratorium",
+      "competency": "Draught Survey"
+    },
+    {
+      "employee": "April Yanto Wibowo",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Awarness ISO 9001:2015"
+    },
+    {
+      "employee": "April Yanto Wibowo",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Awarness ISO/IEC17020:2012"
+    },
+    {
+      "employee": "April Yanto Wibowo",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Awarness ISO/IEC 17025:2017"
+    },
+    {
+      "employee": "Annisa Permata Dinda",
+      "category": "Batubara & Laboratorium",
+      "competency": "AK3 Laboratorium"
+    },
+    {
+      "employee": "Annisa Permata Dinda",
+      "category": "Umum dan Lainnya",
+      "competency": "Petugas Pengambil Contoh (air)"
+    },
+    {
+      "employee": "Annisa Permata Dinda",
+      "category": "SERCO",
+      "competency": "Awarness ISO/IEC 17025:2017"
+    },
+    {
+      "employee": "Annisa Permata Dinda",
+      "category": "SERCO",
+      "competency": "awarness ISO 14001:2015"
+    },
+    {
+      "employee": "Annisa Permata Dinda",
+      "category": "SERCO",
+      "competency": "auditor ISO 14001:2015"
+    },
+    {
+      "employee": "Annisa Permata Dinda",
+      "category": "SERCO",
+      "competency": "Awarness ISO 45001"
+    },
+    {
+      "employee": "Annisa Permata Dinda",
+      "category": "SERCO",
+      "competency": "Auditor ISO 45001"
+    },
+    {
+      "employee": "Annisa Permata Dinda",
+      "category": "SERCO",
+      "competency": "Awarness ISO 19011:2018"
+    },
+    {
+      "employee": "Annisa Permata Dinda",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Awarness ISO 9001:2015"
+    },
+    {
+      "employee": "Annisa Permata Dinda",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Awarness ISO/IEC17020:2012"
+    },
+    {
+      "employee": "Annisa Permata Dinda",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Awarness ISO/IEC 17025:2017"
+    },
+    {
+      "employee": "Annisa Permata Dinda",
+      "category": "Sistem manajemen & Risk",
+      "competency": "ISO 19011:2018"
+    },
+    {
+      "employee": "Annisa Permata Dinda",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Auditor Halal"
+    },
+    {
+      "employee": "Aprillia Intan Saputri",
+      "category": "Batubara & Laboratorium",
+      "competency": "Administrator Batubara dan Mineral by BNSP"
+    },
+    {
+      "employee": "Aprillia Intan Saputri",
+      "category": "Batubara & Laboratorium",
+      "competency": "Awareness, Interpretation & Documentation Carbolite Instrument"
+    },
+    {
+      "employee": "Aprillia Intan Saputri",
+      "category": "Batubara & Laboratorium",
+      "competency": "Petugas Penanganan Gas (H2S)"
+    },
+    {
+      "employee": "Aprillia Intan Saputri",
+      "category": "Batubara & Laboratorium",
+      "competency": "Petugas Penguji Sampler Batubara (PERHAPI)"
+    },
+    {
+      "employee": "Aprillia Intan Saputri",
+      "category": "Batubara & Laboratorium",
+      "competency": "Good Laboratory Practice (GLP)"
+    },
+    {
+      "employee": "Aprillia Intan Saputri",
+      "category": "Umum dan Lainnya",
+      "competency": "Petugas Pengambil Contoh (air)"
+    },
+    {
+      "employee": "Aprillia Intan Saputri",
+      "category": "SERCO",
+      "competency": "Awarness ISO/IEC 17025:2017"
+    },
+    {
+      "employee": "Aprillia Intan Saputri",
+      "category": "SERCO",
+      "competency": "Awarness ISO 19011:2018"
+    },
+    {
+      "employee": "Aprillia Intan Saputri",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Awarness ISO 9001:2015"
+    },
+    {
+      "employee": "Aprillia Intan Saputri",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Awarness ISO/IEC 17025:2017"
+    },
+    {
+      "employee": "Aprillia Intan Saputri",
+      "category": "Sistem manajemen & Risk",
+      "competency": "ISO 370001:2018 SMAP"
+    },
+    {
+      "employee": "Vidhi Roesdi Arwah Pangestu",
+      "category": "AEBT & Industri",
+      "competency": "Total Quality Management"
+    },
+    {
+      "employee": "Vidhi Roesdi Arwah Pangestu",
+      "category": "Batubara & Laboratorium",
+      "competency": "Analisa Batubara dan Mineral by BNSP"
+    },
+    {
+      "employee": "Vidhi Roesdi Arwah Pangestu",
+      "category": "Batubara & Laboratorium",
+      "competency": "Draught Survey"
+    },
+    {
+      "employee": "Vidhi Roesdi Arwah Pangestu",
+      "category": "Batubara & Laboratorium",
+      "competency": "Validasi & Verifikasi Metode Pengujian Kimia"
+    },
+    {
+      "employee": "Vidhi Roesdi Arwah Pangestu",
+      "category": "Batubara & Laboratorium",
+      "competency": "Evaluasi Ketidakpastian Pengukuran Pengujian Kimia"
+    },
+    {
+      "employee": "Vidhi Roesdi Arwah Pangestu",
+      "category": "SERCO",
+      "competency": "Awarness ISO/IEC 17025:2017"
+    },
+    {
+      "employee": "Vidhi Roesdi Arwah Pangestu",
+      "category": "SERCO",
+      "competency": "Awarness ISO 19011:2018"
+    },
+    {
+      "employee": "Vidhi Roesdi Arwah Pangestu",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Awarness ISO 9001:2015"
+    },
+    {
+      "employee": "Surajiman",
+      "category": "AEBT & Industri",
+      "competency": "Welding Inspector"
+    },
+    {
+      "employee": "Surajiman",
+      "category": "AEBT & Industri",
+      "competency": "Magnetic Tes Particle Test"
+    },
+    {
+      "employee": "Surajiman",
+      "category": "AEBT & Industri",
+      "competency": "Inspector Katup Pengaman (PSV)"
+    },
+    {
+      "employee": "Surajiman",
+      "category": "AEBT & Industri",
+      "competency": "Radiografi Testing NDT Level 2"
+    },
+    {
+      "employee": "Surajiman",
+      "category": "AEBT & Industri",
+      "competency": "Inspektur Pesawat Angkat (Migas)"
+    },
+    {
+      "employee": "Surajiman",
+      "category": "AEBT & Industri",
+      "competency": "Inspektur Tangki Penimbun"
+    },
+    {
+      "employee": "Surajiman",
+      "category": "AEBT & Industri",
+      "competency": "Rope Access Training (IRATA) Level I"
+    },
+    {
+      "employee": "Amin Sugeng Purwanto",
+      "category": "AEBT & Industri",
+      "competency": "Welding Inspector"
+    },
+    {
+      "employee": "Amin Sugeng Purwanto",
+      "category": "AEBT & Industri",
+      "competency": "Operator Radiografi"
+    },
+    {
+      "employee": "Amin Sugeng Purwanto",
+      "category": "AEBT & Industri",
+      "competency": "Magnetic Tes Particle Test"
+    },
+    {
+      "employee": "Amin Sugeng Purwanto",
+      "category": "AEBT & Industri",
+      "competency": "Inspector Katup Pengaman (PSV)"
+    },
+    {
+      "employee": "Amin Sugeng Purwanto",
+      "category": "AEBT & Industri",
+      "competency": "Total Quality Management"
+    },
+    {
+      "employee": "Amin Sugeng Purwanto",
+      "category": "AEBT & Industri",
+      "competency": "Inspektur Peralatan Putar Migas"
+    },
+    {
+      "employee": "Amin Sugeng Purwanto",
+      "category": "AEBT & Industri",
+      "competency": "Ahli Radiografi"
+    },
+    {
+      "employee": "Amin Sugeng Purwanto",
+      "category": "AEBT & Industri",
+      "competency": "Ultrasonic Test"
+    },
+    {
+      "employee": "Ari Setiawan",
+      "category": "AEBT & Industri",
+      "competency": "Operator Radiografi"
+    },
+    {
+      "employee": "Ari Setiawan",
+      "category": "AEBT & Industri",
+      "competency": "Magnetic Tes Particle Test"
+    },
+    {
+      "employee": "Ari Setiawan",
+      "category": "AEBT & Industri",
+      "competency": "Total Quality Management"
+    },
+    {
+      "employee": "Ari Setiawan",
+      "category": "AEBT & Industri",
+      "competency": "NDT Ultrasonic Level 2"
+    },
+    {
+      "employee": "Ari Setiawan",
+      "category": "AEBT & Industri",
+      "competency": "Petugas Keamanan Sumber Radioaktif"
+    },
+    {
+      "employee": "Ari Setiawan",
+      "category": "AEBT & Industri",
+      "competency": "Inspector K3 Elevator & Eskalator"
+    },
+    {
+      "employee": "Ari Setiawan",
+      "category": "K3 & QSHE",
+      "competency": "Inspector K3 Elevator & Eskalator"
+    },
+    {
+      "employee": "Ari Setiawan",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Awarness ISO/IEC 17025:2017"
+    },
+    {
+      "employee": "Puspo Satrio Nugroho",
+      "category": "AEBT & Industri",
+      "competency": "Welding Inspector"
+    },
+    {
+      "employee": "Puspo Satrio Nugroho",
+      "category": "AEBT & Industri",
+      "competency": "Operator Radiografi"
+    },
+    {
+      "employee": "Puspo Satrio Nugroho",
+      "category": "AEBT & Industri",
+      "competency": "Total Quality Management"
+    },
+    {
+      "employee": "Puspo Satrio Nugroho",
+      "category": "AEBT & Industri",
+      "competency": "NDT Ultrasonic Level 2"
+    },
+    {
+      "employee": "Puspo Satrio Nugroho",
+      "category": "AEBT & Industri",
+      "competency": "Ultrasonic Test"
+    },
+    {
+      "employee": "Puspo Satrio Nugroho",
+      "category": "AEBT & Industri",
+      "competency": "Sertifikat bekerja di ketinggian tingkat 2"
+    },
+    {
+      "employee": "Riski Dwi Irawan",
+      "category": "AEBT & Industri",
+      "competency": "Welding Inspector"
+    },
+    {
+      "employee": "Riski Dwi Irawan",
+      "category": "AEBT & Industri",
+      "competency": "Operator Radiografi"
+    },
+    {
+      "employee": "Riski Dwi Irawan",
+      "category": "AEBT & Industri",
+      "competency": "Total Quality Management"
+    },
+    {
+      "employee": "Riski Dwi Irawan",
+      "category": "AEBT & Industri",
+      "competency": "Inspektur Pesawat Angkat (Migas)"
+    },
+    {
+      "employee": "Riski Dwi Irawan",
+      "category": "AEBT & Industri",
+      "competency": "Inspektur Kelistrikan (Migas)"
+    },
+    {
+      "employee": "Riski Dwi Irawan",
+      "category": "AEBT & Industri",
+      "competency": "Petugas Keamanan Sumber Radioaktif"
+    },
+    {
+      "employee": "Riski Dwi Irawan",
+      "category": "AEBT & Industri",
+      "competency": "Inspektur PLTS"
+    },
+    {
+      "employee": "Riski Dwi Irawan",
+      "category": "K3 & QSHE",
+      "competency": "Ahli K3 Crane/ Pesawat Angkat (KEMENAKER)"
+    },
+    {
+      "employee": "Rumkit Tubarkah",
+      "category": "HMPM",
+      "competency": "Liquid Cargo Survey"
+    },
+    {
+      "employee": "Rumkit Tubarkah",
+      "category": "HMPM",
+      "competency": "Sea Survival"
+    },
+    {
+      "employee": "Rumkit Tubarkah",
+      "category": "HMPM",
+      "competency": "Petugas Pengambil Contoh (Migas)"
+    },
+    {
+      "employee": "Rumkit Tubarkah",
+      "category": "Batubara & Laboratorium",
+      "competency": "Draught Survey"
+    },
+    {
+      "employee": "Rumkit Tubarkah",
+      "category": "KSP",
+      "competency": "Loading Master"
+    },
+    {
+      "employee": "Syabani Rais",
+      "category": "AEBT & Industri",
+      "competency": "Total Quality Management"
+    },
+    {
+      "employee": "Syabani Rais",
+      "category": "HMPM",
+      "competency": "Liquid Cargo Survey"
+    },
+    {
+      "employee": "Syabani Rais",
+      "category": "Batubara & Laboratorium",
+      "competency": "Pemahaman Persyaratan Lembaga Verifikasi Berdasarkan SNI ISO IEC 17029 2019"
+    },
+    {
+      "employee": "Syabani Rais",
+      "category": "SERCO",
+      "competency": "Auditor SMK3"
+    },
+    {
+      "employee": "Syabani Rais",
+      "category": "SERCO",
+      "competency": "Auditor VLEGAL"
+    },
+    {
+      "employee": "Syabani Rais",
+      "category": "SERCO",
+      "competency": "awarness ISO 14001:2015"
+    },
+    {
+      "employee": "Syabani Rais",
+      "category": "SERCO",
+      "competency": "Awarness ISO 45001"
+    },
+    {
+      "employee": "Syabani Rais",
+      "category": "SERCO",
+      "competency": "Auditor ISO 45001"
+    },
+    {
+      "employee": "Syabani Rais",
+      "category": "SERCO",
+      "competency": "Awarness ISO 19011:2018"
+    },
+    {
+      "employee": "Syabani Rais",
+      "category": "K3 & QSHE",
+      "competency": "Pemadam Kebakaran Kelas A"
+    },
+    {
+      "employee": "Syabani Rais",
+      "category": "K3 & QSHE",
+      "competency": "AK3 Umum"
+    },
+    {
+      "employee": "Kunta Yudhistira",
+      "category": "K3 & QSHE",
+      "competency": "Pemadam Kebakaran Kelas D"
+    },
+    {
+      "employee": "Kunta Yudhistira",
+      "category": "Umum dan Lainnya",
+      "competency": "Sertifikasi Pengadaan Barang & Jasa BNSP"
+    },
+    {
+      "employee": "Kunta Yudhistira",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Awarness ISO 9001:2015"
+    },
+    {
+      "employee": "Krisnanda Eka Trisnayudha",
+      "category": "Batubara & Laboratorium",
+      "competency": "Verifikator Batubara dan Mineral by BNSP"
+    },
+    {
+      "employee": "Krisnanda Eka Trisnayudha",
+      "category": "Batubara & Laboratorium",
+      "competency": "Draught Survey"
+    },
+    {
+      "employee": "Krisnanda Eka Trisnayudha",
+      "category": "Umum dan Lainnya",
+      "competency": "Petugas Pengambil Contoh (padatan)"
+    },
+    {
+      "employee": "Krisnanda Eka Trisnayudha",
+      "category": "KSP",
+      "competency": "Juru Timbang"
+    },
+    {
+      "employee": "Krisnanda Eka Trisnayudha",
+      "category": "SERCO",
+      "competency": "Awarness ISO 9001:2015"
+    },
+    {
+      "employee": "Krisnanda Eka Trisnayudha",
+      "category": "K3 & QSHE",
+      "competency": "AK3 Umum"
+    },
+    {
+      "employee": "Krisnanda Eka Trisnayudha",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Awarness ISO 9001:2015"
+    },
+    {
+      "employee": "Romi Irawan",
+      "category": "PIK",
+      "competency": "Vepik"
+    },
+    {
+      "employee": "Romi Irawan",
+      "category": "PIK",
+      "competency": "TKDN"
+    },
+    {
+      "employee": "Romi Irawan",
+      "category": "HMPM",
+      "competency": "Liquid Cargo Survey"
+    },
+    {
+      "employee": "Romi Irawan",
+      "category": "HMPM",
+      "competency": "Sea Survival"
+    },
+    {
+      "employee": "Romi Irawan",
+      "category": "Batubara & Laboratorium",
+      "competency": "Draught Survey"
+    },
+    {
+      "employee": "Romi Irawan",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Awarness ISO 9001:2015"
+    },
+    {
+      "employee": "Gati Prasetyo",
+      "category": "PIK",
+      "competency": "TKDN"
+    },
+    {
+      "employee": "Gati Prasetyo",
+      "category": "Sistem manajemen & Risk",
+      "competency": "Awarness ISO 9001:2015"
+    },
+    {
+      "employee": "Dhani Hapsari",
+      "category": "SERCO",
+      "competency": "UPL dan UKL"
+    },
+    {
+      "employee": "Dhani Hapsari",
+      "category": "SERCO",
+      "competency": "Auditor SMK3"
+    },
+    {
+      "employee": "Dhani Hapsari",
+      "category": "SERCO",
+      "competency": "Awarness ISO/IEC 17025:2017"
+    },
+    {
+      "employee": "Dhani Hapsari",
+      "category": "SERCO",
+      "competency": "Awarness ISO 9001:2015"
+    },
+    {
+      "employee": "Dhani Hapsari",
+      "category": "SERCO",
+      "competency": "Auditor ISO 9001:2015 - IRCA registed"
+    },
+    {
+      "employee": "Dhani Hapsari",
+      "category": "SERCO",
+      "competency": "awarness ISO 14001:2015"
+    },
+    {
+      "employee": "Dhani Hapsari",
+      "category": "SERCO",
+      "competency": "auditor ISO 14001:2015"
+    },
+    {
+      "employee": "Dhani Hapsari",
+      "category": "SERCO",
+      "competency": "Awarness ISO 45001"
+    },
+    {
+      "employee": "Dhani Hapsari",
+      "category": "SERCO",
+      "competency": "Auditor ISO 45001"
+    },
+    {
+      "employee": "Dhani Hapsari",
+      "category": "SERCO",
+      "competency": "Awarness ISO 19011:2018"
+    },
+    {
+      "employee": "Dhani Hapsari",
+      "category": "SERCO",
+      "competency": "Auditor ISO 45001:2018 - IRCA registed"
+    },
+    {
+      "employee": "Dhani Hapsari",
+      "category": "K3 & QSHE",
+      "competency": "AK3 Umum"
+    },
+    {
+      "employee": "Dhani Hapsari",
+      "category": "K3 & QSHE",
+      "competency": "AK3 Lingkungan Kerja"
+    },
+    {
+      "employee": "Dhani Hapsari",
+      "category": "Sistem manajemen & Risk",
+      "competency": "ISO 31000:2016"
+    },
+    {
+      "employee": "Dhani Hapsari",
+      "category": "Sistem manajemen & Risk",
+      "competency": "ISO 370001:2018 SMAP"
+    },
+    {
+      "employee": "Dhani Hapsari",
+      "category": "Sistem manajemen & Risk",
+      "competency": "ISO 19011:2018"
+    },
+    {
+      "employee": "Dhani Hapsari",
+      "category": "Sistem manajemen & Risk",
+      "competency": "CRMO"
+    }
+  ]
+}

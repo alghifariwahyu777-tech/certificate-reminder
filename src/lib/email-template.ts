@@ -32,18 +32,18 @@ export const PLACEHOLDER_TOKENS: { token: string; label: string }[] = [
   { token: "{{statusColor}}", label: "Warna sesuai urgensi (merah/oranye/teal) — pakai di style color:" },
 ];
 
-export const DEFAULT_SUBJECT = "[Certificate Reminder] Sertifikat Akan Berakhir";
+export const DEFAULT_SUBJECT = "[Reminder System] Sertifikat Akan Berakhir";
 
 export const DEFAULT_SIMPLE_FIELDS: SimpleTemplateFields = {
   companyName: "PT SUCOFINDO (Persero)",
-  systemName: "Certificate Reminder System",
+  systemName: "Reminder System",
   greeting: "Halo,",
   introText:
     "Sertifikat berikut akan segera mencapai atau telah melewati masa berlakunya. Mohon segera ditindaklanjuti.",
   closingText: "Mohon segera melakukan proses perpanjangan sertifikat sebelum masa berlaku berakhir.",
-  buttonText: "Lihat Detail di Certificate Reminder System",
+  buttonText: "Lihat Detail di Reminder System",
   footerText:
-    "Email ini dikirim otomatis oleh Certificate Reminder System — PT Sucofindo (Persero). Mohon tidak membalas email ini. Untuk pertanyaan, hubungi administrator sistem internal Anda.",
+    "Email ini dikirim otomatis oleh Reminder System — PT Sucofindo (Persero). Mohon tidak membalas email ini. Untuk pertanyaan, hubungi administrator sistem internal Anda.",
 };
 
 export const DEFAULT_BODY_HTML = `<!DOCTYPE html>
@@ -51,7 +51,7 @@ export const DEFAULT_BODY_HTML = `<!DOCTYPE html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Certificate Reminder</title>
+    <title>Reminder System</title>
   </head>
   <body style="margin:0;padding:0;background-color:#F7F7F4;font-family:Arial,Helvetica,sans-serif;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F7F7F4;padding:32px 16px;">
@@ -68,7 +68,7 @@ export const DEFAULT_BODY_HTML = `<!DOCTYPE html>
                     <td style="padding-left:12px;">
                       <span style="color:#ffffff;font-size:19px;font-weight:bold;letter-spacing:0.02em;">PT SUCOFINDO (Persero)</span>
                       <br />
-                      <span style="color:#0EA89B;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;">Certificate Reminder System</span>
+                      <span style="color:#0EA89B;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;">Reminder System</span>
                     </td>
                   </tr>
                 </table>
@@ -117,7 +117,7 @@ export const DEFAULT_BODY_HTML = `<!DOCTYPE html>
                   <tr>
                     <td style="border-radius:6px;background-color:#0F172A;">
                       <a href="{{appUrl}}/certificate" style="display:inline-block;padding:12px 24px;color:#ffffff;font-size:13px;font-weight:bold;text-decoration:none;">
-                        Lihat Detail di Certificate Reminder System
+                        Lihat Detail di Reminder System
                       </a>
                     </td>
                   </tr>
@@ -128,7 +128,7 @@ export const DEFAULT_BODY_HTML = `<!DOCTYPE html>
             <tr>
               <td style="padding:20px 32px;background-color:#F8FAFC;border-top:1px solid #E2E8F0;">
                 <p style="margin:0;color:#94A3B8;font-size:11px;line-height:1.6;">
-                  Email ini dikirim otomatis oleh Certificate Reminder System — PT Sucofindo (Persero).
+                  Email ini dikirim otomatis oleh Reminder System — PT Sucofindo (Persero).
                   Mohon tidak membalas email ini. Untuk pertanyaan, hubungi administrator sistem internal Anda.
                 </p>
               </td>

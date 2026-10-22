@@ -31,7 +31,7 @@ export const PERSONNEL_PLACEHOLDER_TOKENS: { token: string; label: string }[] = 
   { token: "{{statusColor}}", label: "Warna sesuai urgensi (merah/oranye/teal) — pakai di style color:" },
 ];
 
-export const DEFAULT_PERSONNEL_SUBJECT = "[Certificate Reminder] Sertifikasi Personil Akan Berakhir";
+export const DEFAULT_PERSONNEL_SUBJECT = "[Reminder System] Sertifikasi Personil Akan Berakhir";
 
 export const DEFAULT_PERSONNEL_SIMPLE_FIELDS: PersonnelSimpleTemplateFields = {
   companyName: "PT SUCOFINDO (Persero)",

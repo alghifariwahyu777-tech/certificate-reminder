@@ -416,6 +416,111 @@ export const projectAddendumSchema = z.object({
 });
 export type ProjectAddendumInput = z.infer<typeof projectAddendumSchema>;
 
+// --- Project Monitoring — realisasi ---
+
+const optionalDate = z
+  .string()
+  .optional()
+  .nullable()
+  .transform((v) => (v ? v : null))
+  .refine((v) => v === null || !isNaN(Date.parse(v)), "Format tanggal tidak valid");
+const requiredDate = (msg: string) => z.string().min(1, msg).refine((v) => !isNaN(Date.parse(v)), "Format tanggal tidak valid");
+const percent = (msg: string) =>
+  z.coerce.number({ invalid_type_error: msg }).min(0, "Minimal 0%").max(100, "Maksimal 100%");
+const money = (msg: string) => z.coerce.number({ invalid_type_error: msg }).min(0, "Nominal tidak boleh negatif");
+const optionalMoney = z
+  .union([z.string(), z.number()])
+  .optional()
+  .nullable()
+  .transform((v) => (v === "" || v === null || v === undefined ? null : Number(v)))
+  .refine((v) => v === null || (!isNaN(v) && v >= 0), "Nominal tidak valid");
+const fileFields = {
+  fileUrl: z.string().nullable().optional(),
+  driveFileId: z.string().nullable().optional(),
+  fileMimeType: z.string().nullable().optional(),
+};
+
+export const projectMilestoneSchema = z.object({
+  name: z.string().trim().min(1, "Nama milestone wajib diisi").max(200, "Maksimal 200 karakter"),
+  description: z.string().max(2000).optional().nullable(),
+  sequence: z.coerce.number().int().min(0).default(0),
+  weight: percent("Bobot harus berupa angka"),
+  plannedDate: optionalDate,
+  actualDate: optionalDate,
+  status: z.enum(["PENDING", "IN_PROGRESS", "DONE"]),
+  notes: z.string().max(2000).optional().nullable(),
+  ...fileFields,
+});
+export type ProjectMilestoneInput = z.infer<typeof projectMilestoneSchema>;
+
+export const projectProgressPlanSchema = z.object({
+  rows: z
+    .array(z.object({ periodDate: requiredDate("Tanggal periode wajib diisi"), plannedPercent: percent("Rencana % harus berupa angka") }))
+    .max(400, "Maksimal 400 baris rencana")
+    .refine((rows) => new Set(rows.map((r) => r.periodDate)).size === rows.length, "Tanggal periode tidak boleh duplikat"),
+});
+
+export const projectProgressReportSchema = z.object({
+  reportDate: requiredDate("Tanggal laporan wajib diisi"),
+  actualPercent: percent("Progres realisasi harus berupa angka"),
+  summary: z.string().max(5000).optional().nullable(),
+  nextPlan: z.string().max(5000).optional().nullable(),
+  ...fileFields,
+});
+
+export const projectTermSchema = z.object({
+  name: z.string().trim().min(1, "Nama termin wajib diisi").max(150, "Maksimal 150 karakter"),
+  sequence: z.coerce.number().int().min(0).default(0),
+  percent: optionalMoney,
+  amount: money("Nominal termin harus berupa angka"),
+  requirement: z.string().max(1000).optional().nullable(),
+  plannedDate: optionalDate,
+  status: z.enum(["PLANNED", "INVOICED", "PAID"]),
+  invoiceNumber: z.string().max(100).optional().nullable(),
+  invoiceDate: optionalDate,
+  dueDate: optionalDate,
+  paidDate: optionalDate,
+  paidAmount: optionalMoney,
+  notes: z.string().max(2000).optional().nullable(),
+  ...fileFields,
+});
+
+export const projectBudgetItemSchema = z.object({
+  category: z.string().trim().min(1, "Kategori biaya wajib diisi").max(100),
+  description: z.string().max(500).optional().nullable(),
+  amount: money("Nominal anggaran harus berupa angka"),
+});
+
+export const projectExpenseSchema = z.object({
+  expenseDate: requiredDate("Tanggal biaya wajib diisi"),
+  category: z.string().trim().min(1, "Kategori biaya wajib diisi").max(100),
+  description: z.string().trim().min(1, "Keterangan wajib diisi").max(500),
+  amount: money("Nominal biaya harus berupa angka"),
+  ...fileFields,
+});
+
+export const projectIssueSchema = z.object({
+  type: z.enum(["ISSUE", "RISK"]),
+  title: z.string().trim().min(1, "Judul wajib diisi").max(200, "Maksimal 200 karakter"),
+  description: z.string().max(5000).optional().nullable(),
+  impact: z.enum(["LOW", "MEDIUM", "HIGH"]),
+  owner: z.string().max(150).optional().nullable(),
+  targetDate: optionalDate,
+  status: z.enum(["OPEN", "CLOSED"]),
+  resolution: z.string().max(5000).optional().nullable(),
+});
+
+export const projectMonitoringSettingsSchema = z
+  .object({
+    projectDeviationWarning: z.coerce.number().min(0).max(100),
+    projectDeviationCritical: z.coerce.number().min(0).max(100),
+    projectProgressStaleDays: z.coerce.number().int().min(1).max(365),
+    projectInvoiceOverdueDays: z.coerce.number().int().min(1).max(365),
+  })
+  .refine((v) => v.projectDeviationCritical >= v.projectDeviationWarning, {
+    message: "Ambang kritis harus lebih besar atau sama dengan ambang waspada",
+  });
+
 // --- Equipment Calibration ---
 
 export const equipmentCategorySchema = z.object({
