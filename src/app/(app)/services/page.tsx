@@ -13,7 +13,7 @@ export default async function ServicesPage() {
   return (
     <>
       <Navbar
-        title="Services"
+        title="Layanan"
         subtitle="Katalog layanan sertifikasi & konfigurasinya"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}

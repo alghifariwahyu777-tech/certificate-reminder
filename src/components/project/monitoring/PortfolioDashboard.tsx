@@ -226,7 +226,58 @@ export function PortfolioDashboard({ rows, categories }: { rows: PortfolioRow[];
             </div>
           </div>
         )}
-        <div className="overflow-x-auto">
+        {/* phones: one card per project */}
+        <ul className="divide-y divide-line md:hidden dark:divide-slate-800">
+          {sorted.length === 0 && <li className="px-4 py-10 text-center text-sm text-slate-500">Tidak ada project yang cocok dengan filter.</li>}
+          {sorted.map((r) => {
+            const s = r.summary;
+            const m = r.margin;
+            const ongoing = r.status === "ONGOING";
+            return (
+              <li key={r.id}>
+                <Link href={`/projects/${r.id}`} className="block px-4 py-3.5 active:bg-slate-50 dark:active:bg-slate-800/40">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold leading-snug text-ink dark:text-slate-100">{r.projectName}</p>
+                      <p className="mt-0.5 text-[12.5px] text-slate-500">
+                        {r.clientName}
+                        {s.contractValue ? ` · ${formatRupiah(s.contractValue, true)}` : ""}
+                      </p>
+                    </div>
+                    <span className={cn("stamp-badge shrink-0", HEALTH_BADGE_CLASS[s.health])}>{HEALTH_LABEL[s.health]}</span>
+                  </div>
+                  <div className="mt-2.5 flex items-center gap-3">
+                    <p className="w-28 shrink-0 text-[13px]">
+                      <span className="font-bold text-accent">{formatPercent(s.actualPercent)}</span>
+                      {ongoing && <span className="text-slate-500"> / {formatPercent(s.plannedPercent)}</span>}
+                    </p>
+                    <ProgressBar value={s.actualPercent} marker={ongoing ? s.plannedPercent : undefined} tone={ongoing ? HEALTH_TONE[s.health] : "default"} className="flex-1" />
+                  </div>
+                  <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-[12.5px] text-slate-500">
+                    <ConditionRibbon signals={m.signals} showLetters={false} />
+                    <span>
+                      Margin{" "}
+                      {m.hasBudget && m.hasCost && m.forecastMarginPct !== null ? (
+                        <>
+                          <strong className={cn(m.signals.margin === "bad" ? "text-signal-expired" : m.signals.margin === "warn" ? "text-signal-soon" : "text-signal-active")}>
+                            {formatPercent(m.forecastMarginPct)}
+                          </strong>{" "}
+                          / {formatPercent(m.targetMarginPct)}
+                        </>
+                      ) : (
+                        "-"
+                      )}
+                    </span>
+                    <span className={cn(ongoing && s.daysRemaining < 0 && "font-semibold text-signal-expired")}>
+                      {ongoing ? (s.daysRemaining < 0 ? `Terlambat ${Math.abs(s.daysRemaining)} hari` : `${s.daysRemaining} hari lagi`) : shortDate(new Date(r.targetEndDate).getTime())}
+                    </span>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-line bg-slate-50/70 text-left text-[12px] text-slate-500 dark:border-slate-800 dark:bg-slate-800/30">
@@ -318,7 +369,7 @@ export function PortfolioDashboard({ rows, categories }: { rows: PortfolioRow[];
             </tbody>
           </table>
         </div>
-        <div className="flex flex-wrap gap-x-5 gap-y-1 rounded-b-lg border-t border-line bg-slate-50/70 px-5 py-2.5 text-[12px] text-slate-500 dark:border-slate-800 dark:bg-slate-800/30">
+        <div className="hidden flex-wrap gap-x-5 gap-y-1 rounded-b-lg border-t md:flex border-line bg-slate-50/70 px-5 py-2.5 text-[12px] text-slate-500 dark:border-slate-800 dark:bg-slate-800/30">
           <span>
             <strong className="text-ink dark:text-slate-200">Kondisi:</strong> W = Waktu, B = Biaya, L = Lingkup, M = Margin
           </span>

@@ -82,7 +82,7 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
-          <CardTitle>Milestone & Deliverable</CardTitle>
+          <CardTitle>Milestone</CardTitle>
           <p className="text-xs text-slate-500 mt-1">
             Bobot milestone yang selesai menjadi progres realisasi otomatis. Total bobot saat ini{" "}
             <span className={cn("font-medium", Math.abs(totalWeight - 100) > 0.05 ? "text-signal-soon" : "text-signal-active")}>
@@ -133,7 +133,7 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap">{fmtDate(m.actualDate)}</td>
                       <td className="px-3 py-3">
-                        <span className={cn("stamp-badge", STATUS_CLASS[m.status])}>{MILESTONE_STATUS_LABEL[m.status]}</span>
+                        <span className={cn("stamp-badge", STATUS_CLASS[m.status])}>{MILESTONE_STATUS_LABEL[m.status] ?? "Belum mulai"}</span>
                       </td>
                       {data.canManage && (
                         <td className="px-5 py-3">

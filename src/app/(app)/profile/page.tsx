@@ -12,7 +12,7 @@ export default async function ProfilePage() {
 
   return (
     <>
-      <Navbar title="Profile" subtitle="Informasi akun Anda" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
+      <Navbar title="Profil" subtitle="Informasi akun Anda" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
       <div className="p-5 md:p-8 max-w-xl space-y-5">
         <Card>
           <CardHeader className="flex flex-row items-center gap-4">

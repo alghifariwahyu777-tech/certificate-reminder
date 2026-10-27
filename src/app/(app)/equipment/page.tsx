@@ -17,7 +17,7 @@ export default async function EquipmentPage() {
   return (
     <>
       <Navbar
-        title="Equipment Calibration"
+        title="Kalibrasi Alat"
         subtitle="Pengingat kalibrasi alat milik internal Sucofindo"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}

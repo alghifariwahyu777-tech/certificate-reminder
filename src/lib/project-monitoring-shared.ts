@@ -18,14 +18,14 @@ export const DAY_MS = 24 * 60 * 60 * 1000;
 // ---------------------------------------------------------------------------
 
 export const MILESTONE_STATUS_LABEL: Record<string, string> = {
-  PENDING: "Belum Mulai",
+  PENDING: "Belum mulai",
   IN_PROGRESS: "Berjalan",
   DONE: "Selesai",
 };
 
 export const TERM_STATUS_LABEL: Record<string, string> = {
-  PLANNED: "Belum Ditagih",
-  INVOICED: "Sudah Ditagih",
+  PLANNED: "Belum ditagih",
+  INVOICED: "Sudah ditagih",
   PAID: "Dibayar",
 };
 

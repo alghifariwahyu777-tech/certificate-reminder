@@ -12,7 +12,7 @@ export default async function ClientsPage() {
 
   return (
     <>
-      <Navbar title="Clients" subtitle="Kelola data klien pengguna jasa" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
+      <Navbar title="Klien" subtitle="Kelola data klien pengguna jasa" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
       <div className="p-5 md:p-8 max-w-4xl">
         <ClientManager
           canManage={session?.role === "ADMIN"}

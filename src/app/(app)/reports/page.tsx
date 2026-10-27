@@ -115,7 +115,7 @@ export default async function ReportsPage() {
   return (
     <>
       <Navbar
-        title="Reports"
+        title="Laporan"
         subtitle="Ekspor laporan ke Excel atau PDF, dikelompokkan per kategori"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}

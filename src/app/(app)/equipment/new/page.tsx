@@ -16,7 +16,7 @@ export default async function NewEquipmentPage() {
 
   return (
     <>
-      <Navbar title="Add Equipment" subtitle="Daftarkan alat baru untuk dimonitor kalibrasinya" adminName={session.name} role={session.role} />
+      <Navbar title="Tambah Alat" subtitle="Daftarkan alat baru untuk dimonitor kalibrasinya" adminName={session.name} role={session.role} />
       <div className="p-5 md:p-8">
         <EquipmentForm
           employees={employees.map((e) => ({ id: e.id, name: e.name, employeeId: e.employeeId }))}

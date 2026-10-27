@@ -10,7 +10,7 @@ export default async function AuditLogPage() {
 
   return (
     <>
-      <Navbar title="Audit Log" subtitle="Riwayat seluruh aktivitas dalam sistem" adminName={session.name} role={session.role} />
+      <Navbar title="Log Audit" subtitle="Riwayat seluruh aktivitas dalam sistem" adminName={session.name} role={session.role} />
       <div className="p-5 md:p-8">
         <AuditLogViewer />
       </div>

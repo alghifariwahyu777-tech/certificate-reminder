@@ -15,7 +15,7 @@ export default async function ProjectEmailTemplatePage() {
   return (
     <>
       <Navbar
-        title="Project Email Template"
+        title="Template Email Project"
         subtitle="Sesuaikan isi email reminder untuk Project Monitoring"
         adminName={session.name}
         role={session.role}

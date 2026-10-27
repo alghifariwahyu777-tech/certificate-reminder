@@ -15,7 +15,7 @@ export default async function EquipmentEmailTemplatePage() {
   return (
     <>
       <Navbar
-        title="Equipment Email Template"
+        title="Template Email Kalibrasi Alat"
         subtitle="Sesuaikan isi email reminder untuk Equipment Calibration"
         adminName={session.name}
         role={session.role}

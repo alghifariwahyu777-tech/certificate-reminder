@@ -13,7 +13,7 @@ export default async function DocumentTypesPage() {
   return (
     <>
       <Navbar
-        title="Document Types"
+        title="Jenis Dokumen"
         subtitle="Master jenis dokumen persyaratan permohonan"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}

@@ -55,9 +55,9 @@ export function getDaysRemaining(expiryDate: Date | string): number {
 }
 
 export const STATUS_LABEL: Record<CertificateStatus, string> = {
-  ACTIVE: "Active",
-  EXPIRING_SOON: "Expiring Soon",
-  EXPIRED: "Expired",
+  ACTIVE: "Aktif",
+  EXPIRING_SOON: "Segera berakhir",
+  EXPIRED: "Berakhir",
 };
 
 export const STATUS_CLASSES: Record<CertificateStatus, string> = {

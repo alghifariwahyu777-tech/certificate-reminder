@@ -14,7 +14,7 @@ export default async function SettingsPage() {
   return (
     <>
       <Navbar
-        title="Settings"
+        title="Pengaturan"
         subtitle="Pengaturan umum aplikasi"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}

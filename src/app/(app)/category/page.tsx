@@ -12,7 +12,7 @@ export default async function CategoryPage() {
 
   return (
     <>
-      <Navbar title="Category" subtitle="Kelola kategori sertifikat" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
+      <Navbar title="Kategori Sertifikat" subtitle="Kelola kategori sertifikat" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
       <div className="p-5 md:p-8 max-w-3xl">
         <CategoryManager
           canManage={session?.role === "ADMIN"}

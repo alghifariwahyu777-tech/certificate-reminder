@@ -212,9 +212,9 @@ export function CertificateListClient({
           </Select>
           <Select value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">Semua Status</option>
-            <option value="ACTIVE">Active</option>
-            <option value="EXPIRING_SOON">Expiring Soon</option>
-            <option value="EXPIRED">Expired</option>
+            <option value="ACTIVE">Aktif</option>
+            <option value="EXPIRING_SOON">Segera berakhir</option>
+            <option value="EXPIRED">Berakhir</option>
           </Select>
           <Select value={year} onChange={(e) => setYear(e.target.value)}>
             <option value="">Semua Tahun</option>

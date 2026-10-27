@@ -12,7 +12,7 @@ export default async function DepartmentsPage() {
 
   return (
     <>
-      <Navbar title="Departments" subtitle="Kelola divisi internal" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
+      <Navbar title="Departemen" subtitle="Kelola divisi internal" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
       <div className="p-5 md:p-8 max-w-3xl">
         <DepartmentManager
           canManage={session?.role === "ADMIN"}

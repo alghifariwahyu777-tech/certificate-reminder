@@ -14,7 +14,7 @@ export default async function CertificatePage() {
   return (
     <>
       <Navbar
-        title="Certificate"
+        title="Sertifikat Klien"
         subtitle="Seluruh data sertifikat dalam registry"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}

@@ -11,7 +11,7 @@ export default async function TrashPage() {
   return (
     <>
       <Navbar
-        title="Trash"
+        title="Sampah"
         subtitle="Sertifikat, sertifikasi personil, project, & alat yang telah dihapus — bisa dipulihkan atau dihapus permanen"
         adminName={session.name}
         role={session.role}

@@ -8,7 +8,7 @@ export default async function NotificationsPage() {
   return (
     <>
       <Navbar
-        title="Notifications"
+        title="Notifikasi"
         subtitle="Sertifikat yang mendekati atau telah melewati masa berlaku"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}

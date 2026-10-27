@@ -31,6 +31,7 @@ import {
   FolderClock,
   Wrench,
   Users2,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SucofindoMark } from "@/components/brand/SucofindoLogo";
@@ -38,7 +39,10 @@ import { SucofindoMark } from "@/components/brand/SucofindoLogo";
 const ALL_NAV_HREFS = () => NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href));
 
 /** Exact match, or the longest nav href that prefixes the path (so /projects/dashboard doesn't also light up /projects). */
-function isNavActive(pathname: string, href: string) {
+function isNavActive(rawPath: string, href: string) {
+  // a single project's page belongs to "Monitoring Project" (its back link goes there), not to the list
+  const m = rawPath?.match(/^\/projects\/([^/]+)/);
+  const pathname = m && !["new", "dashboard", "personnel", "weekly-report"].includes(m[1]) && !rawPath.endsWith("/edit") ? "/projects/dashboard" : rawPath;
   if (pathname === href) return true;
   if (!pathname.startsWith(href + "/")) return false;
   return !ALL_NAV_HREFS().some((other) => other.length > href.length && (pathname === other || pathname.startsWith(other + "/")));
@@ -48,30 +52,30 @@ const NAV_GROUPS = [
   {
     label: null,
     items: [
-      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false },
-      { href: "/applications", label: "Applications", icon: ClipboardList, adminOnly: false },
-      { href: "/departments", label: "Departments", icon: Building, adminOnly: false },
+      { href: "/dashboard", label: "Dasbor", icon: LayoutDashboard, adminOnly: false },
+      { href: "/applications", label: "Permohonan", icon: ClipboardList, adminOnly: false },
+      { href: "/departments", label: "Departemen", icon: Building, adminOnly: false },
     ],
   },
   {
-    label: "Personnel",
+    label: "Personil",
     items: [
-      { href: "/employees", label: "Employees", icon: UserSquare2, adminOnly: false },
-      { href: "/personnel-certifications", label: "Certifications", icon: Award, adminOnly: false },
-      { href: "/personnel-categories", label: "Categories", icon: Tags, adminOnly: false },
-      { href: "/personnel-email-template", label: "Email Template", icon: Mail, adminOnly: true },
+      { href: "/employees", label: "Karyawan", icon: UserSquare2, adminOnly: false },
+      { href: "/personnel-certifications", label: "Sertifikasi", icon: Award, adminOnly: false },
+      { href: "/personnel-categories", label: "Kategori", icon: Tags, adminOnly: false },
+      { href: "/personnel-email-template", label: "Template Email", icon: Mail, adminOnly: true },
     ],
   },
   {
-    label: "Client",
+    label: "Klien",
     items: [
-      { href: "/certificate", label: "Certificate", icon: FileBadge2, adminOnly: false },
-      { href: "/monitoring", label: "Monitoring", icon: Gauge, adminOnly: false },
-      { href: "/services", label: "Services", icon: Layers, adminOnly: false },
-      { href: "/document-types", label: "Document Types", icon: FileType, adminOnly: false },
-      { href: "/clients", label: "Clients", icon: Building2, adminOnly: false },
-      { href: "/category", label: "Category", icon: Tags, adminOnly: false },
-      { href: "/email-template", label: "Email Template", icon: Mail, adminOnly: true },
+      { href: "/certificate", label: "Sertifikat", icon: FileBadge2, adminOnly: false },
+      { href: "/monitoring", label: "Monitoring Permohonan", icon: Gauge, adminOnly: false },
+      { href: "/services", label: "Layanan", icon: Layers, adminOnly: false },
+      { href: "/document-types", label: "Jenis Dokumen", icon: FileType, adminOnly: false },
+      { href: "/clients", label: "Daftar Klien", icon: Building2, adminOnly: false },
+      { href: "/category", label: "Kategori", icon: Tags, adminOnly: false },
+      { href: "/email-template", label: "Template Email", icon: Mail, adminOnly: true },
     ],
   },
   {
@@ -81,29 +85,29 @@ const NAV_GROUPS = [
       { href: "/projects", label: "Daftar Project", icon: FolderClock, adminOnly: false },
       { href: "/projects/personnel", label: "Mapping Personil", icon: Network, adminOnly: false },
       { href: "/projects/weekly-report", label: "Laporan Mingguan", icon: FileBarChart, adminOnly: false },
-      { href: "/project-categories", label: "Categories", icon: Tags, adminOnly: false },
-      { href: "/project-email-template", label: "Email Template", icon: Mail, adminOnly: true },
+      { href: "/project-categories", label: "Kategori", icon: Tags, adminOnly: false },
+      { href: "/project-email-template", label: "Template Email", icon: Mail, adminOnly: true },
     ],
   },
   {
-    label: "Equipment",
+    label: "Peralatan",
     items: [
-      { href: "/equipment", label: "Equipment Calibration", icon: Wrench, adminOnly: false },
-      { href: "/equipment-categories", label: "Categories", icon: Tags, adminOnly: false },
-      { href: "/equipment-email-template", label: "Email Template", icon: Mail, adminOnly: true },
+      { href: "/equipment", label: "Kalibrasi Alat", icon: Wrench, adminOnly: false },
+      { href: "/equipment-categories", label: "Kategori", icon: Tags, adminOnly: false },
+      { href: "/equipment-email-template", label: "Template Email", icon: Mail, adminOnly: true },
     ],
   },
   {
     label: null,
     items: [
-      { href: "/notifications", label: "Notifications", icon: Bell, adminOnly: false },
-      { href: "/reports", label: "Reports", icon: FileBarChart, adminOnly: false },
-      { href: "/users", label: "Users", icon: Users, adminOnly: true },
-      { href: "/supervisors", label: "Supervisors", icon: Users2, adminOnly: true },
-      { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
-      { href: "/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true },
-      { href: "/trash", label: "Trash", icon: Trash2, adminOnly: true },
-      { href: "/profile", label: "Profile", icon: UserCircle, adminOnly: false },
+      { href: "/notifications", label: "Notifikasi", icon: Bell, adminOnly: false },
+      { href: "/reports", label: "Laporan", icon: FileBarChart, adminOnly: false },
+      { href: "/users", label: "Pengguna", icon: Users, adminOnly: true },
+      { href: "/supervisors", label: "Atasan", icon: Users2, adminOnly: true },
+      { href: "/settings", label: "Pengaturan", icon: Settings, adminOnly: true },
+      { href: "/audit-log", label: "Log Audit", icon: ScrollText, adminOnly: true },
+      { href: "/trash", label: "Sampah", icon: Trash2, adminOnly: true },
+      { href: "/profile", label: "Profil", icon: UserCircle, adminOnly: false },
     ],
   },
 ];
@@ -123,6 +127,31 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" | "PIC" }) {
     if (saved === "1") setCollapsed(true);
     setHydrated(true);
   }, []);
+
+  // Collapsible groups: the group holding the current page is always open; others remember the user's choice.
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("sidebar-groups");
+      if (saved) setOpenGroups(JSON.parse(saved));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const groupHasActive = (g: { items: { href: string }[] }) => g.items.some((i) => isNavActive(pathname, i.href));
+  const isGroupOpen = (g: { label: string | null; items: { href: string }[] }) => groupHasActive(g) || (openGroups[g.label as string] ?? false);
+  function toggleGroup(label: string) {
+    setOpenGroups((prev) => {
+      const g = NAV_GROUPS.find((x) => x.label === label);
+      const next = { ...prev, [label]: !(g ? isGroupOpen(g) : false) };
+      try {
+        window.localStorage.setItem("sidebar-groups", JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }
 
   function toggleCollapsed() {
     setCollapsed((prev) => {
@@ -174,11 +203,17 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" | "PIC" }) {
         {groups.map((group, groupIndex) => (
           <div key={group.label || `group-${groupIndex}`} className={groupIndex > 0 ? "pt-3 mt-3 border-t border-white/10" : ""}>
             {group.label && !collapsed && (
-              <p className="px-3 pb-1.5 text-xs font-medium text-sky-200/60">
+              <button
+                type="button"
+                onClick={() => toggleGroup(group.label as string)}
+                aria-expanded={isGroupOpen(group)}
+                className="flex w-full items-center justify-between rounded-md px-3 pb-1.5 text-xs font-medium text-sky-200/60 hover:text-sky-100"
+              >
                 {group.label}
-              </p>
+                <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", !isGroupOpen(group) && "-rotate-90")} />
+              </button>
             )}
-            {group.items.map((item) => {
+            {(collapsed || !group.label || isGroupOpen(group)) && group.items.map((item) => {
               const active = isNavActive(pathname, item.href);
               const Icon = item.icon;
               return (
@@ -214,14 +249,14 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" | "PIC" }) {
       <form action="/api/auth/logout" method="POST" className="px-3 py-4 border-t border-white/10">
         <button
           type="submit"
-          title={collapsed ? "Logout" : undefined}
+          title={collapsed ? "Keluar" : undefined}
           className={cn(
             "flex w-full items-center gap-3 rounded px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors",
             collapsed && "justify-center px-0"
           )}
         >
           <LogOut className="h-4 w-4 shrink-0" />
-          {!collapsed && "Logout"}
+          {!collapsed && "Keluar"}
         </button>
       </form>
     </aside>

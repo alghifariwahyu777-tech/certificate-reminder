@@ -16,7 +16,7 @@ export default async function EquipmentCategoriesPage() {
   return (
     <>
       <Navbar
-        title="Equipment Categories"
+        title="Kategori Alat"
         subtitle="Kelompok jenis alat (mis. Alat Ukur Listrik, Alat Ukur Dimensi)"
         adminName={session.name}
         role={session.role}

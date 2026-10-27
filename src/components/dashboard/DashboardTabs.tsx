@@ -37,9 +37,9 @@ type DomainStats = {
 };
 
 function statusBadgeFor(days: number) {
-  if (days < 0) return <span className="stamp-badge bg-signal-expiredBg text-signal-expired border-signal-expiredBorder">Expired</span>;
-  if (days <= 30) return <span className="stamp-badge bg-signal-soonBg text-signal-soon border-signal-soonBorder">Expiring Soon</span>;
-  return <span className="stamp-badge bg-signal-activeBg text-signal-active border-signal-activeBorder">Active</span>;
+  if (days < 0) return <span className="stamp-badge bg-signal-expiredBg text-signal-expired border-signal-expiredBorder">Berakhir</span>;
+  if (days <= 30) return <span className="stamp-badge bg-signal-soonBg text-signal-soon border-signal-soonBorder">Segera berakhir</span>;
+  return <span className="stamp-badge bg-signal-activeBg text-signal-active border-signal-activeBorder">Aktif</span>;
 }
 
 function UpcomingTable({ items, emptyText, viewAllHref }: { items: UpcomingItem[]; emptyText: string; viewAllHref: string }) {

@@ -14,7 +14,7 @@ export default async function ApplicationsPage() {
   return (
     <>
       <Navbar
-        title="Applications"
+        title="Permohonan"
         subtitle="Permohonan sertifikasi dari klien"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}

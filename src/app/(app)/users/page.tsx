@@ -16,7 +16,7 @@ export default async function UsersPage() {
 
   return (
     <>
-      <Navbar title="Users" subtitle="Kelola pengguna & hak akses" adminName={session.name} role={session.role} />
+      <Navbar title="Pengguna" subtitle="Kelola pengguna & hak akses" adminName={session.name} role={session.role} />
       <div className="p-5 md:p-8 max-w-3xl">
         <UserManager
           currentUserId={session.userId}

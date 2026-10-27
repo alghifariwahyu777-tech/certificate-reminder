@@ -50,7 +50,7 @@ export default async function EquipmentDetailPage(context: { params: Promise<{ i
   return (
     <>
       <Navbar
-        title="Equipment Detail"
+        title="Detail Alat"
         subtitle={equipment.assetNumber || equipment.name}
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}

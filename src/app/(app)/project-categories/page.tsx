@@ -16,7 +16,7 @@ export default async function ProjectCategoriesPage() {
   return (
     <>
       <Navbar
-        title="Project Categories"
+        title="Kategori Project"
         subtitle="Kelompok portofolio project (mis. PIK, Serco)"
         adminName={session.name}
         role={session.role}

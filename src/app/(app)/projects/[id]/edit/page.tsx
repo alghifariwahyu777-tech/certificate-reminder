@@ -18,7 +18,7 @@ export default async function EditProjectPage(context: { params: Promise<{ id: s
 
   return (
     <>
-      <Navbar title="Edit Project" subtitle={project.projectName} adminName={session.name} role={session.role} />
+      <Navbar title="Ubah Project" subtitle={project.projectName} adminName={session.name} role={session.role} />
       <div className="p-5 md:p-8">
         <ProjectForm
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}

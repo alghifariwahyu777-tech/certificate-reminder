@@ -15,7 +15,7 @@ export function PicShell({ children, userName }: { children: React.ReactNode; us
             </span>
             <span className="min-w-0">
               <span className="block font-display font-semibold text-sm text-ink dark:text-slate-100 leading-tight">Reminder System</span>
-              <span className="block text-[11px] text-slate-500 leading-tight truncate">{userName ? `Update Progres · ${userName}` : "Update Progres Project"}</span>
+              <span className="block text-[11px] text-slate-500 leading-tight truncate">{userName ? `Update progres · ${userName}` : "Update progres project"}</span>
             </span>
           </Link>
           <div className="flex items-center gap-1">

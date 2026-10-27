@@ -16,7 +16,7 @@ export default async function EmployeesPage() {
   return (
     <>
       <Navbar
-        title="Personnel"
+        title="Karyawan"
         subtitle="Kelola daftar personil internal untuk pengingat sertifikasi/kompetensi"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}

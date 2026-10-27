@@ -84,7 +84,7 @@ function ReportsCard({ data }: { data: ProjectMonitoringDTO }) {
         {data.canManage && (
           <Button size="sm" onClick={() => openForm(null)}>
             <Plus className="h-4 w-4" />
-            Laporan Baru
+            Update progres
           </Button>
         )}
       </CardHeader>

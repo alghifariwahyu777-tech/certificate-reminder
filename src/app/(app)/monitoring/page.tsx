@@ -59,7 +59,7 @@ export default async function MonitoringPage() {
   return (
     <>
       <Navbar
-        title="Monitoring"
+        title="Monitoring Permohonan"
         subtitle="Ringkasan proses permohonan & nilai kontrak untuk manajemen"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}

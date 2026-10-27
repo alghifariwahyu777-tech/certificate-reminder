@@ -15,7 +15,7 @@ export default async function SupervisorsPage() {
   return (
     <>
       <Navbar
-        title="Supervisors"
+        title="Atasan (Supervisor)"
         subtitle="Direktori atasan terpusat untuk CC reminder di seluruh fitur"
         adminName={session.name}
         role={session.role}

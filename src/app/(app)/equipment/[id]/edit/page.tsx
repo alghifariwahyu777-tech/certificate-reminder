@@ -19,7 +19,7 @@ export default async function EditEquipmentPage(context: { params: Promise<{ id:
 
   return (
     <>
-      <Navbar title="Edit Equipment" subtitle={equipment.name} adminName={session.name} role={session.role} />
+      <Navbar title="Ubah Data Alat" subtitle={equipment.name} adminName={session.name} role={session.role} />
       <div className="p-5 md:p-8">
         <EquipmentForm
           employees={employees.map((e) => ({ id: e.id, name: e.name, employeeId: e.employeeId }))}

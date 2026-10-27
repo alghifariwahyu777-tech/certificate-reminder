@@ -141,7 +141,7 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div>
             <CardTitle>Termin & penagihan</CardTitle>
-            <p className="text-xs text-slate-500 mt-1">Alur: Belum Ditagih → Sudah Ditagih (invoice terbit) → Dibayar.</p>
+            <p className="text-xs text-slate-500 mt-1">Alur: belum ditagih, lalu sudah ditagih (invoice terbit), lalu dibayar.</p>
           </div>
           {data.canManage && (
             <Button size="sm" onClick={() => openForm(null)}>

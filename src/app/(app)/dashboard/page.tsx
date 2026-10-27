@@ -357,7 +357,7 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <Navbar title="Dashboard" subtitle="Ringkasan seluruh reminder — Certificate, Personnel, Project, Equipment" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
+      <Navbar title="Dasbor" subtitle="Ringkasan seluruh pengingat: sertifikat klien, sertifikasi personil, project, dan kalibrasi alat" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
 
       <div className="p-5 md:p-8 space-y-6">
         {attentionBreakdown.length > 0 && (

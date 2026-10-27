@@ -15,7 +15,7 @@ export default async function PersonnelEmailTemplatePage() {
   return (
     <>
       <Navbar
-        title="Personnel Email Template"
+        title="Template Email Sertifikasi Personil"
         subtitle="Sesuaikan isi email reminder untuk sertifikasi personil"
         adminName={session.name}
         role={session.role}
