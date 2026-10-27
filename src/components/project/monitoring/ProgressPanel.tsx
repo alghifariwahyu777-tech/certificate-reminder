@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { formatPercent, interpolate, plannedPoints, suggestPlanRows } from "@/lib/project-monitoring-shared";
-import { DeleteButton, EmptyState, FileLink, FileUploadField, FormError, fmtDate, todayInput, useMonitoringApi, EMPTY_FILE } from "./shared";
+import { DeleteButton, EmptyState, FileLink, FileUploadField, FormError, fmtDate, todayInput, useMonitoringApi, EMPTY_FILE, useOpenFromHash } from "./shared";
 import type { ProgressReportDTO, ProjectMonitoringDTO } from "./types";
 
 const iso = (ms: number) => new Date(ms).toISOString().slice(0, 10);
@@ -54,6 +54,11 @@ function ReportsCard({ data }: { data: ProjectMonitoringDTO }) {
     setOpen(true);
   }
 
+  useOpenFromHash("progres", () => {
+    if (data.canManage) openForm(null);
+  });
+
+
   async function save() {
     if (!form) return;
     if (form.actualPercent === "" || isNaN(Number(form.actualPercent))) return setError("Progres realisasi wajib diisi.");
@@ -71,7 +76,7 @@ function ReportsCard({ data }: { data: ProjectMonitoringDTO }) {
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
-          <CardTitle>Laporan Progres</CardTitle>
+          <CardTitle>Laporan progres</CardTitle>
           <p className="text-xs text-slate-500 mt-1">
             Isi progres kumulatif secara berkala. Laporan manual mengoreksi angka dari milestone sampai ada milestone selesai/laporan yang lebih baru.
           </p>
@@ -85,7 +90,7 @@ function ReportsCard({ data }: { data: ProjectMonitoringDTO }) {
       </CardHeader>
       <CardContent className="p-0">
         {data.reports.length === 0 ? (
-          <EmptyState icon={ClipboardList} text="Belum ada laporan progres." />
+          <EmptyState icon={ClipboardList} text="Belum ada laporan progres. Progres dapat diisi admin di sini atau oleh PIC melalui tautan email." action={data.canManage ? { label: "Update progres", onClick: () => openForm(null) } : undefined} />
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {data.reports.map((r) => {
@@ -133,7 +138,7 @@ function ReportsCard({ data }: { data: ProjectMonitoringDTO }) {
         )}
       </CardContent>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit Laporan Progres" : "Laporan Progres Baru"} maxWidth="max-w-lg">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit laporan progres" : "Update progres"} maxWidth="max-w-lg">
         {form && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
@@ -219,7 +224,7 @@ function PlanCard({ data }: { data: ProjectMonitoringDTO }) {
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
-          <CardTitle>Rencana Progres (Kurva S Rencana)</CardTitle>
+          <CardTitle>Rencana progres</CardTitle>
           <p className="text-xs text-slate-500 mt-1">
             {source === "MANUAL"
               ? `${data.plans.length} periode rencana diisi manual.`
@@ -231,13 +236,13 @@ function PlanCard({ data }: { data: ProjectMonitoringDTO }) {
         {data.canManage && (
           <Button size="sm" variant="outline" onClick={openEditor}>
             <Pencil className="h-4 w-4" />
-            Atur Rencana
+            Atur rencana
           </Button>
         )}
       </CardHeader>
       <CardContent className="p-0">
         {data.plans.length === 0 ? (
-          <EmptyState icon={LineChart} text="Belum ada rencana manual." />
+          <EmptyState icon={LineChart} text="Belum ada rencana manual. Selama kosong, rencana progres dihitung otomatis dari tanggal dan bobot milestone." />
         ) : (
           <div className="overflow-x-auto max-h-80">
             <table className="w-full text-sm">
@@ -260,7 +265,7 @@ function PlanCard({ data }: { data: ProjectMonitoringDTO }) {
         )}
       </CardContent>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title="Atur Rencana Progres" maxWidth="max-w-lg">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title="Atur rencana progres" maxWidth="max-w-lg">
         <div className="space-y-4">
           <p className="text-sm text-slate-600 dark:text-slate-300">
             Isi persentase <strong>kumulatif</strong> yang direncanakan tercapai pada akhir tiap periode. Gunakan isi otomatis sebagai titik awal lalu sesuaikan.

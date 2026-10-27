@@ -179,12 +179,12 @@ export function ProjectListClient({
             <SearchPopoverButton
               value={search}
               onChange={setSearch}
-              label="Cari Project"
+              label="Cari project"
               placeholder="Nama, nomor, klien, atau PIC..."
             />
           </div>
           <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-            <option value="">Semua Kategori</option>
+            <option value="">Semua kategori</option>
             {categories.map((c) => (
               <option key={c.id} value={c.name}>
                 {c.name}
@@ -192,13 +192,13 @@ export function ProjectListClient({
             ))}
           </Select>
           <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="">Semua Status</option>
+            <option value="">Semua status</option>
             <option value="ONGOING">Berjalan</option>
             <option value="COMPLETED">Selesai</option>
             <option value="CANCELLED">Dibatalkan</option>
           </Select>
           <Select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
-            <option value="">Semua Tahun</option>
+            <option value="">Semua tahun</option>
             {years.map((y) => (
               <option key={y} value={y}>
                 {y}
@@ -210,7 +210,7 @@ export function ProjectListClient({
           <Link href="/projects/new">
             <Button>
               <Plus className="h-4 w-4" />
-              Tambah Project
+              Project baru
             </Button>
           </Link>
         )}
@@ -228,7 +228,7 @@ export function ProjectListClient({
             </Button>
             <Button variant="danger" size="sm" onClick={() => setBulkDeleteOpen(true)}>
               <Trash2 className="h-3.5 w-3.5" />
-              Hapus Terpilih
+              Hapus terpilih
             </Button>
           </div>
         </div>
@@ -252,16 +252,14 @@ export function ProjectListClient({
                 <th className="px-4 py-3 font-medium">
                   <SortHeader label="Project" field="projectName" current={sortBy} dir={sortDir} onToggle={toggleSort} />
                 </th>
-                <th className="px-4 py-3 font-medium">Kategori</th>
                 <th className="px-4 py-3 font-medium">
                   <SortHeader label="Klien" field="clientName" current={sortBy} dir={sortDir} onToggle={toggleSort} />
                 </th>
-                <th className="px-4 py-3 font-medium">PIC</th>
                 <th className="px-4 py-3 font-medium">
-                  <SortHeader label="Target Selesai" field="targetEndDate" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                  <SortHeader label="Target selesai" field="targetEndDate" current={sortBy} dir={sortDir} onToggle={toggleSort} />
                 </th>
                 <th className="px-4 py-3 font-medium">
-                  <SortHeader label="Nilai Kontrak" field="contractValue" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                  <SortHeader label="Nilai kontrak" field="contractValue" current={sortBy} dir={sortDir} onToggle={toggleSort} />
                 </th>
                 <th className="px-4 py-3 font-medium">Progres</th>
                 <th className="px-4 py-3 font-medium">Status</th>
@@ -271,7 +269,7 @@ export function ProjectListClient({
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={canManage ? 10 : 9} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={canManage ? 8 : 7} className="px-4 py-10 text-center text-slate-400">
                     Belum ada project yang cocok.
                   </td>
                 </tr>
@@ -291,12 +289,14 @@ export function ProjectListClient({
                         </td>
                       )}
                       <td className="px-4 py-3">
-                        <p className="font-medium text-ink">{p.projectName}</p>
-                        <p className="text-xs text-slate-400 font-mono">{p.projectNumber}</p>
+                        <Link href={`/projects/${p.id}`} className="font-semibold text-ink hover:text-accent dark:text-slate-100">
+                          {p.projectName}
+                        </Link>
+                        <p className="text-xs text-slate-500">
+                          {p.projectNumber} · {p.categoryName} · PIC {p.pic}
+                        </p>
                       </td>
-                      <td className="px-4 py-3 text-slate-600">{p.categoryName}</td>
                       <td className="px-4 py-3 text-slate-600">{p.clientName}</td>
-                      <td className="px-4 py-3 text-slate-600">{p.pic}</td>
                       <td className="px-4 py-3 text-slate-600">
                         {formatDate(p.targetEndDate)}
                         {p.status === "ONGOING" && (
@@ -305,21 +305,22 @@ export function ProjectListClient({
                           </p>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-slate-600 font-mono text-xs">{formatRupiah(p.contractValue)}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-slate-600">{formatRupiah(p.contractValue)}</td>
                       <td className="px-4 py-3 min-w-[9rem]">
                         <div className="flex items-center justify-between text-xs mb-1">
                           <span className="tabular-nums text-ink font-medium">{formatPercent(p.actualPercent)}</span>
                           {p.status === "ONGOING" && (
-                            <span className="text-slate-400 tabular-nums">rcn {formatPercent(p.plannedPercent, 0)}</span>
+                            <span className="text-slate-400 tabular-nums">rencana {formatPercent(p.plannedPercent, 0)}</span>
                           )}
                         </div>
                         <ProgressBar value={p.actualPercent} marker={p.status === "ONGOING" ? p.plannedPercent : undefined} />
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-col items-start gap-1">
-                          <span className={`stamp-badge ${STATUS_CLASS[p.status]}`}>{STATUS_LABEL[p.status]}</span>
-                          {p.status === "ONGOING" && (
+                          {p.status === "ONGOING" ? (
                             <span className={`stamp-badge ${HEALTH_BADGE_CLASS[p.health]}`}>{HEALTH_LABEL[p.health]}</span>
+                          ) : (
+                            <span className={`stamp-badge ${STATUS_CLASS[p.status]}`}>{STATUS_LABEL[p.status]}</span>
                           )}
                         </div>
                       </td>

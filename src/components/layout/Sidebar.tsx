@@ -140,11 +140,11 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" | "PIC" }) {
   return (
     <aside
       className={cn(
-        "hidden md:flex md:flex-col bg-brand-blueDark text-slate-300 h-screen shrink-0 sticky top-0 z-20 transition-[width] duration-150",
+        "hidden md:flex md:flex-col bg-gradient-to-b from-[#1A5A8E] via-[#123F6B] to-[#0A2440] text-slate-300 h-screen shrink-0 sticky top-0 z-20 transition-[width] duration-150",
         hydrated ? (collapsed ? "md:w-[68px]" : "md:w-60") : "md:w-60"
       )}
     >
-      <div className="flex items-center gap-2.5 px-5 py-5 border-b border-white/10 relative">
+      <div className="flex items-center gap-2 pl-4 pr-5 py-5 border-b border-white/10 relative">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shrink-0 p-1">
           <SucofindoMark size={20} />
         </div>
@@ -153,8 +153,10 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" | "PIC" }) {
             <p className="font-display font-semibold text-white text-sm leading-tight">
               Reminder System
             </p>
-            <p className="font-mono text-[11px] text-sky-200/70 leading-tight mt-0.5">
-              Ensuring Quality, Protecting Trust
+            <p className="text-[11px] text-sky-200/80 leading-snug mt-0.5">
+              Ensuring Quality,
+              <br />
+              Protecting Trust
             </p>
           </div>
         )}
@@ -162,7 +164,7 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" | "PIC" }) {
           onClick={toggleCollapsed}
           aria-label={collapsed ? "Perluas sidebar" : "Perkecil sidebar"}
           title={collapsed ? "Perluas sidebar" : "Perkecil sidebar"}
-          className="absolute -right-3.5 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-brand-blue text-white border-2 border-brand-blueDark hover:bg-slate-600 hover:text-white shadow-md transition-colors"
+          className="absolute -right-3.5 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-brand-blue text-white border-2 border-[#16507F] hover:bg-[#1A5A8E] hover:text-white shadow-md transition-colors"
         >
           {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
         </button>

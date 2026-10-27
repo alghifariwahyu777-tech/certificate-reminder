@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { ProjectAddendumSection } from "@/components/project/ProjectAddendumSection";
 import { formatDate } from "@/lib/utils";
 import { getDaysRemaining } from "@/lib/status";
-import { Pencil, Download, ArrowLeft, FileWarning } from "lucide-react";
+import { Pencil, Download, ArrowLeft, FileWarning, TrendingUp } from "lucide-react";
 import { deviationTrend, getProjectWithMonitoring } from "@/lib/project-monitoring";
 import { PROJECT_COST_CATEGORIES, formatRupiah as formatRupiahShared, padSchedule } from "@/lib/project-monitoring-shared";
 import { buildCostCurve } from "@/lib/project-margin";
@@ -375,12 +375,22 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
             </p>
           </div>
           {session?.role === "ADMIN" && (
-            <Link href={`/projects/${project.id}/edit`} className="shrink-0">
-              <Button variant="outline" size="sm">
-                <Pencil className="h-4 w-4" />
-                Edit project
-              </Button>
-            </Link>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Link href={`/projects/${project.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Pencil className="h-4 w-4" />
+                  Edit project
+                </Button>
+              </Link>
+              {project.status === "ONGOING" && (
+                <a href="#jadwal/progres/baru">
+                  <Button size="sm">
+                    <TrendingUp className="h-4 w-4" />
+                    Update progres
+                  </Button>
+                </a>
+              )}
+            </div>
           )}
         </div>
 

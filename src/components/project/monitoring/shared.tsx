@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, Trash2, UploadCloud, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -245,9 +245,10 @@ export function ConditionRibbon({ signals, showLetters = true }: { signals: Reco
 }
 
 /** A constraint tile: coloured top edge, label + verdict, one figure, one line of context. */
-export function ConstraintTile({ label, tone, value, sub, children }: { label: string; tone: Tone; value: React.ReactNode; sub?: React.ReactNode; children?: React.ReactNode }) {
+export function ConstraintTile({ label, tone, value, sub, children, href }: { label: string; tone: Tone; value: React.ReactNode; sub?: React.ReactNode; children?: React.ReactNode; href?: string }) {
+  const Tag = href ? "a" : "div";
   return (
-    <div className={cn("rounded-lg border border-line dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3.5 border-t-4", {
+    <Tag href={href} className={cn("block rounded-lg border border-line dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3.5 border-t-4", href && "transition-shadow hover:shadow-panel", {
       "border-t-signal-activeBar": tone === "good",
       "border-t-signal-soonBar": tone === "warn",
       "border-t-signal-expiredBar": tone === "bad",
@@ -260,7 +261,8 @@ export function ConstraintTile({ label, tone, value, sub, children }: { label: s
       <div className="mt-2 text-[22px] font-bold leading-tight text-ink dark:text-slate-100">{value}</div>
       {sub && <p className="mt-1 text-[12.5px] text-slate-500 dark:text-slate-400">{sub}</p>}
       {children}
-    </div>
+      {href && <p className="mt-2 text-[12.5px] font-semibold text-accent">Lihat rincian</p>}
+    </Tag>
   );
 }
 
@@ -286,11 +288,20 @@ export function SubTabs<K extends string>({ items, value, onChange }: { items: {
   );
 }
 
-export function EmptyState({ icon: Icon, text }: { icon: React.ComponentType<{ className?: string }>; text: string }) {
+export function EmptyState({ icon: Icon, text, action }: { icon: React.ComponentType<{ className?: string }>; text: string; action?: { label: string; onClick: () => void } }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 py-10 text-slate-400">
+    <div className="flex flex-col items-center justify-center gap-3 px-5 py-10 text-slate-400">
       <Icon className="h-6 w-6" />
-      <p className="text-sm text-center">{text}</p>
+      <p className="max-w-md text-center text-sm text-slate-500">{text}</p>
+      {action && (
+        <button
+          type="button"
+          onClick={action.onClick}
+          className="rounded-md border border-accent/40 px-3 py-1.5 text-[13px] font-semibold text-accent hover:bg-accent/5"
+        >
+          {action.label}
+        </button>
+      )}
     </div>
   );
 }
@@ -326,4 +337,26 @@ export function fmtDate(d: string | null | undefined): string {
 export function todayInput(): string {
   const now = new Date(Date.now() + 7 * 60 * 60 * 1000); // WIB
   return now.toISOString().slice(0, 10);
+}
+
+/**
+ * Opens a form when the page is reached with "#<tab>/<section>/baru" (used by
+ * the shortcut buttons: "Update progres", "Unggah RAB", …). The "/baru" part is
+ * removed again so a refresh doesn't reopen the form.
+ */
+export function useOpenFromHash(section: string, open: () => void) {
+  const ref = useRef(open);
+  ref.current = open;
+  useEffect(() => {
+    const check = () => {
+      const parts = window.location.hash.slice(1).split("/");
+      if (parts[1] === section && parts[2] === "baru") {
+        history.replaceState(null, "", `#${parts[0]}/${parts[1]}`);
+        ref.current();
+      }
+    };
+    check();
+    window.addEventListener("hashchange", check);
+    return () => window.removeEventListener("hashchange", check);
+  }, [section]);
 }

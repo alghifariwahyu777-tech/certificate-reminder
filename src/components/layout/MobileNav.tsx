@@ -128,7 +128,7 @@ export function MobileNav({ role }: { role: "ADMIN" | "VIEWER" | "PIC" }) {
 
       {open && (
         <div className="fixed inset-0 z-50 flex">
-          <div className="w-64 bg-brand-blueDark text-slate-300 flex flex-col">
+          <div className="w-64 bg-gradient-to-b from-[#1A5A8E] via-[#123F6B] to-[#0A2440] text-slate-300 flex flex-col">
             <div className="flex items-center justify-between px-5 py-5 border-b border-white/10">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shrink-0 p-1">
@@ -136,8 +136,10 @@ export function MobileNav({ role }: { role: "ADMIN" | "VIEWER" | "PIC" }) {
                 </div>
                 <div>
                   <p className="font-display font-semibold text-white text-sm leading-tight">Reminder System</p>
-                  <p className="text-[11px] text-sky-200/70 leading-tight mt-0.5">
-                    Ensuring Quality, Protecting Trust
+                  <p className="text-[11px] text-sky-200/80 leading-snug mt-0.5">
+                    Ensuring Quality,
+                    <br />
+                    Protecting Trust
                   </p>
                 </div>
               </div>
@@ -163,7 +165,7 @@ export function MobileNav({ role }: { role: "ADMIN" | "VIEWER" | "PIC" }) {
                         onClick={() => setOpen(false)}
                         className={cn(
                           "flex items-center gap-3 rounded px-3 py-2.5 text-sm",
-                          active ? "bg-white/10 text-white font-medium" : "text-slate-400"
+                          active ? "bg-white/[0.13] text-white font-semibold" : "text-sky-100/75"
                         )}
                       >
                         <Icon className="h-4 w-4" />

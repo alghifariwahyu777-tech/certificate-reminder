@@ -16,7 +16,7 @@ export default async function NewProjectPage() {
   return (
     <>
       <Navbar
-        title="Add Project"
+        title="Project baru"
         subtitle="Daftarkan project/kontrak baru untuk dimonitor"
         adminName={session.name}
         role={session.role}

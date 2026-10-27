@@ -10,8 +10,8 @@ const config: Config = {
     extend: {
       colors: {
         ink: {
-          DEFAULT: "#15202E",
-          light: "#253447",
+          DEFAULT: "#0F172A",
+          light: "#1E293B",
           50: "#F1F5F9",
         },
         paper: "#F2F4F7",

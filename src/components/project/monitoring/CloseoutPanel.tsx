@@ -47,7 +47,7 @@ export function CloseoutPanel({ data }: { data: ProjectMonitoringDTO }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Penutupan Project</CardTitle>
+        <CardTitle>Penutupan project</CardTitle>
         <p className="text-xs text-slate-500 mt-1">
           {data.status === "COMPLETED"
             ? `Checklist ${done}/3 lengkap.`

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input, Label, Select } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
-import { DeleteButton, EmptyState, FormError, fmtDate, useMonitoringApi } from "./shared";
+import { DeleteButton, EmptyState, FormError, fmtDate, useMonitoringApi, useOpenFromHash } from "./shared";
 import type { ProjectMonitoringDTO, TeamMemberDTO } from "./types";
 
 const ROLE_SUGGESTIONS = ["Ketua Tim", "Inspektur", "Auditor", "Surveyor", "Tenaga Ahli", "Analis Laboratorium", "Pengawas Lapangan", "Admin Project"];
@@ -52,6 +52,11 @@ export function TeamPanel({ data }: { data: ProjectMonitoringDTO }) {
     setOpen(true);
   }
 
+  useOpenFromHash("personil", () => {
+    if (data.canManage) openForm(null);
+  });
+
+
   async function save() {
     if (!form.employeeId) return setError("Pilih personil.");
     if (!form.role.trim()) return setError("Isi peran personil di project ini.");
@@ -67,7 +72,7 @@ export function TeamPanel({ data }: { data: ProjectMonitoringDTO }) {
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
-          <CardTitle>Tim Project</CardTitle>
+          <CardTitle>Tim project</CardTitle>
           <p className="text-xs text-slate-500 mt-1">
             Personil yang ditugaskan. Beban kerja dihitung dari semua project berjalan —{" "}
             <Link href="/projects/personnel" className="text-accent hover:underline">
@@ -79,7 +84,7 @@ export function TeamPanel({ data }: { data: ProjectMonitoringDTO }) {
         {data.canManage && (
           <Button size="sm" onClick={() => openForm(null)}>
             <Plus className="h-4 w-4" />
-            Tambah
+            Tugaskan personil
           </Button>
         )}
       </CardHeader>
@@ -91,7 +96,7 @@ export function TeamPanel({ data }: { data: ProjectMonitoringDTO }) {
           </div>
         )}
         {data.team.length === 0 ? (
-          <EmptyState icon={Users} text="Belum ada personil yang ditugaskan ke project ini." />
+          <EmptyState icon={Users} text="Belum ada personil yang ditugaskan ke project ini." action={data.canManage ? { label: "Tugaskan personil", onClick: () => openForm(null) } : undefined} />
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {data.team.map((m) => (
@@ -128,7 +133,7 @@ export function TeamPanel({ data }: { data: ProjectMonitoringDTO }) {
         )}
       </CardContent>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit Penugasan" : "Tambah Personil"} maxWidth="max-w-lg">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit penugasan" : "Tugaskan personil"} maxWidth="max-w-lg">
         <div className="space-y-4">
           <div>
             <Label htmlFor="tm-emp">Personil</Label>

@@ -2,8 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { ProjectListClient } from "@/components/project/ProjectListClient";
-import { Card, CardContent } from "@/components/ui/Card";
-import { Wallet, TrendingUp, CheckCircle2, Gauge, LayoutDashboard } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { getProjectPortfolio } from "@/lib/project-monitoring";
@@ -32,9 +31,7 @@ export default async function ProjectsPage() {
   const ongoing = projects.filter((p) => p.status === "ONGOING");
   const completed = projects.filter((p) => p.status === "COMPLETED");
 
-  const totalContractValue = projects.reduce((sum, p) => sum + toNumber(p.contractValue), 0);
   const runningContractValue = ongoing.reduce((sum, p) => sum + toNumber(p.contractValue), 0);
-  const completedContractValue = completed.reduce((sum, p) => sum + toNumber(p.contractValue), 0);
 
   const completedWithDuration = completed.filter((p) => p.startDate && p.actualEndDate);
   const avgDays =
@@ -47,65 +44,24 @@ export default async function ProjectsPage() {
         )
       : 0;
 
-  const summaryCards = [
-    {
-      label: "Total Nilai Kontrak",
-      value: formatRupiah(totalContractValue),
-      icon: Wallet,
-      accent: "text-ink bg-ink/5 border-ink/10",
-    },
-    {
-      label: "Nilai Kontrak Berjalan",
-      value: formatRupiah(runningContractValue),
-      icon: TrendingUp,
-      accent: "text-signal-soon bg-signal-soonBg border-signal-soonBorder",
-    },
-    {
-      label: "Nilai Kontrak Selesai",
-      value: formatRupiah(completedContractValue),
-      icon: CheckCircle2,
-      accent: "text-signal-active bg-signal-activeBg border-signal-activeBorder",
-    },
-    {
-      label: "Rata-rata Lama Pengerjaan",
-      value: `${avgDays} hari`,
-      icon: Gauge,
-      accent: "text-accent bg-accent/5 border-accent/20",
-    },
-  ];
-
   return (
     <>
-      <Navbar
-        title="Project Monitoring"
-        subtitle="Database & pengingat durasi project internal perusahaan"
-        adminName={session?.name || "Admin"}
-        role={session?.role || "ADMIN"}
-      />
-      <div className="p-5 md:p-8 space-y-6">
-        <div className="flex flex-wrap justify-end gap-2 -mb-2">
-          {session?.role === "ADMIN" && <CostImportDialog />}
-          <Link href="/projects/dashboard">
-            <Button variant="outline" size="sm">
-              <LayoutDashboard className="h-4 w-4" />
-              Monitoring Project
-            </Button>
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {summaryCards.map((card) => (
-            <Card key={card.label}>
-              <CardContent className="flex items-center gap-3.5">
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border ${card.accent}`}>
-                  <card.icon className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-slate-500">{card.label}</p>
-                  <p className="text-lg font-semibold text-ink truncate">{card.value}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      <Navbar title="Daftar Project" subtitle="Kelola data project: tambah, ubah, atau hapus" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
+      <div className="p-5 md:p-8 space-y-5">
+        <div className="flex flex-col gap-3 rounded-lg border border-line bg-white px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700 dark:bg-slate-900">
+          <p className="text-[13.5px] text-slate-600 dark:text-slate-300">
+            {ongoing.length} project berjalan senilai <strong className="text-ink dark:text-slate-100">{formatRupiah(runningContractValue)}</strong>, {completed.length} project selesai
+            {avgDays ? ` (rata-rata ${avgDays} hari pengerjaan)` : ""}. Untuk melihat kondisi dan hal yang perlu ditindaklanjuti, buka Monitoring Project.
+          </p>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            {session?.role === "ADMIN" && <CostImportDialog label="Impor biaya (Excel)" />}
+            <Link href="/projects/dashboard">
+              <Button variant="outline" size="sm">
+                <LayoutDashboard className="h-4 w-4" />
+                Monitoring Project
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <ProjectListClient

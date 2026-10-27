@@ -8,7 +8,7 @@ import { Input, Label, Select, Textarea } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { ISSUE_IMPACT_LABEL, ISSUE_STATUS_LABEL, ISSUE_TYPE_LABEL } from "@/lib/project-monitoring-shared";
 import { cn } from "@/lib/utils";
-import { DeleteButton, EmptyState, FormError, fmtDate, todayInput, useMonitoringApi } from "./shared";
+import { DeleteButton, EmptyState, FormError, fmtDate, todayInput, useMonitoringApi, useOpenFromHash } from "./shared";
 import type { IssueDTO, ProjectMonitoringDTO } from "./types";
 
 const IMPACT_CLASS: Record<string, string> = {
@@ -50,6 +50,11 @@ export function IssuePanel({ data }: { data: ProjectMonitoringDTO }) {
     setOpen(true);
   }
 
+  useOpenFromHash("kendala", () => {
+    if (data.canManage) openForm(null);
+  });
+
+
   async function save() {
     if (!form.title.trim()) return setError("Judul wajib diisi.");
     const err = editing ? await send("PATCH", `${base}/${editing.id}`, form, "Data diperbarui.") : await send("POST", base, form, "Kendala/risiko dicatat.");
@@ -84,13 +89,13 @@ export function IssuePanel({ data }: { data: ProjectMonitoringDTO }) {
         {data.canManage && (
           <Button size="sm" onClick={() => openForm(null)}>
             <Plus className="h-4 w-4" />
-            Catat
+            Catat kendala
           </Button>
         )}
       </CardHeader>
       <CardContent className="p-0">
         {items.length === 0 ? (
-          <EmptyState icon={AlertOctagon} text={filter === "OPEN" ? "Tidak ada kendala/risiko terbuka." : "Belum ada kendala/risiko yang dicatat."} />
+          <EmptyState icon={AlertOctagon} text={filter === "OPEN" ? "Tidak ada kendala atau risiko yang masih terbuka." : "Belum ada kendala atau risiko yang dicatat."} action={data.canManage ? { label: "Catat kendala", onClick: () => openForm(null) } : undefined} />
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {items.map((i) => {
@@ -132,7 +137,7 @@ export function IssuePanel({ data }: { data: ProjectMonitoringDTO }) {
         )}
       </CardContent>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit Kendala/Risiko" : "Catat Kendala/Risiko"} maxWidth="max-w-lg">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit kendala/risiko" : "Catat kendala/risiko"} maxWidth="max-w-lg">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>

@@ -8,7 +8,7 @@ import { Input, Label, Select, Textarea } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { MILESTONE_STATUS_LABEL } from "@/lib/project-monitoring-shared";
 import { cn } from "@/lib/utils";
-import { DeleteButton, EmptyState, FileLink, FileUploadField, FormError, fmtDate, todayInput, useMonitoringApi, EMPTY_FILE } from "./shared";
+import { DeleteButton, EmptyState, FileLink, FileUploadField, FormError, fmtDate, todayInput, useMonitoringApi, EMPTY_FILE, useOpenFromHash } from "./shared";
 import type { MilestoneDTO, ProjectMonitoringDTO } from "./types";
 
 const STATUS_CLASS: Record<string, string> = {
@@ -51,6 +51,11 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
     setOpen(true);
   }
 
+  useOpenFromHash("milestone", () => {
+    if (data.canManage) openForm(null);
+  });
+
+
   const payload = (f: FormState) => ({
     ...f,
     weight: f.weight === "" ? 0 : f.weight,
@@ -89,13 +94,13 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
         {data.canManage && (
           <Button size="sm" onClick={() => openForm(null)}>
             <Plus className="h-4 w-4" />
-            Tambah
+            Tambah milestone
           </Button>
         )}
       </CardHeader>
       <CardContent className="p-0">
         {data.milestones.length === 0 ? (
-          <EmptyState icon={Flag} text="Belum ada milestone. Tambahkan tahapan pekerjaan beserta bobotnya, mis. Kick-off 5%, Pelaksanaan 60%, Laporan Final 30%, BAST 5%." />
+          <EmptyState icon={Flag} text="Belum ada milestone. Tambahkan tahapan pekerjaan beserta bobotnya, misalnya Kick-off 5%, Pelaksanaan 60%, Laporan final 30%, BAST 5%." action={data.canManage ? { label: "Tambah milestone", onClick: () => openForm(null) } : undefined} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -167,7 +172,7 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
         )}
       </CardContent>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit Milestone" : "Tambah Milestone"} maxWidth="max-w-lg">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit milestone" : "Tambah milestone"} maxWidth="max-w-lg">
         <div className="space-y-4">
           <div className="grid grid-cols-[1fr_5rem] gap-3">
             <div>

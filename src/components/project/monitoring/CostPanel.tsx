@@ -71,7 +71,7 @@ function BudgetCard({ data }: { data: ProjectMonitoringDTO }) {
       </CardHeader>
       <CardContent className="p-0">
         {data.budgetItems.length === 0 ? (
-          <EmptyState icon={Wallet} text="Belum ada anggaran biaya." />
+          <EmptyState icon={Wallet} text="Belum ada anggaran manual." action={data.canManage ? { label: "Tambah anggaran", onClick: () => openForm(null) } : undefined} />
         ) : (
           <table className="w-full text-sm">
             <tbody>
@@ -99,7 +99,7 @@ function BudgetCard({ data }: { data: ProjectMonitoringDTO }) {
         )}
       </CardContent>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit Anggaran" : "Tambah anggaran"}>
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit anggaran" : "Tambah anggaran"}>
         <div className="space-y-4">
           <div>
             <Label htmlFor="bg-cat">Kategori biaya</Label>
@@ -202,7 +202,7 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
       </CardHeader>
       <CardContent className="p-0">
         {data.expenses.length === 0 ? (
-          <EmptyState icon={Wallet} text="Belum ada realisasi biaya." />
+          <EmptyState icon={Wallet} text="Belum ada realisasi biaya. Catat satu per satu, atau impor dari Excel keuangan." action={data.canManage ? { label: "Catat biaya", onClick: () => openForm(null) } : undefined} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -252,7 +252,7 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
         )}
       </CardContent>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit Realisasi Biaya" : "Catat Realisasi Biaya"}>
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit realisasi biaya" : "Catat realisasi biaya"}>
         {form && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">

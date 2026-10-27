@@ -8,7 +8,7 @@ import { Input, Label, Select, Textarea } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { TERM_STATUS_LABEL, formatRupiah, isInvoiceOverdue } from "@/lib/project-monitoring-shared";
 import { cn } from "@/lib/utils";
-import { DeleteButton, EmptyState, FileLink, FileUploadField, FormError, Stat, fmtDate, todayInput, useMonitoringApi, EMPTY_FILE } from "./shared";
+import { DeleteButton, EmptyState, FileLink, FileUploadField, FormError, Stat, fmtDate, todayInput, useMonitoringApi, EMPTY_FILE, useOpenFromHash } from "./shared";
 import type { ProjectMonitoringDTO, TermDTO } from "./types";
 
 const STATUS_CLASS: Record<string, string> = {
@@ -94,6 +94,11 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
     setOpen(true);
   }
 
+  useOpenFromHash("termin", () => {
+    if (data.canManage) openForm(null);
+  });
+
+
   function setPercent(v: string) {
     setForm((f) => ({ ...f, percent: v, amount: contract > 0 && v !== "" ? String(Math.round((Number(v) / 100) * contract)) : f.amount }));
   }
@@ -135,19 +140,19 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
       <Card>
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div>
-            <CardTitle>Termin & Penagihan</CardTitle>
+            <CardTitle>Termin & penagihan</CardTitle>
             <p className="text-xs text-slate-500 mt-1">Alur: Belum Ditagih → Sudah Ditagih (invoice terbit) → Dibayar.</p>
           </div>
           {data.canManage && (
             <Button size="sm" onClick={() => openForm(null)}>
               <Plus className="h-4 w-4" />
-              Tambah Termin
+              Tambah termin
             </Button>
           )}
         </CardHeader>
         <CardContent className="p-0">
           {data.terms.length === 0 ? (
-            <EmptyState icon={Receipt} text="Belum ada termin pembayaran. Tambahkan sesuai pasal pembayaran di kontrak, mis. Uang Muka 20%, Termin 1 40%, Termin 2 40%." />
+            <EmptyState icon={Receipt} text="Belum ada termin pembayaran. Tambahkan sesuai pasal pembayaran di kontrak, misalnya Uang muka 20%, Termin 1 40%, Termin 2 40%." action={data.canManage ? { label: "Tambah termin", onClick: () => openForm(null) } : undefined} />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -234,7 +239,7 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
         </CardContent>
       </Card>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit Termin" : "Tambah Termin"} maxWidth="max-w-xl">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit termin" : "Tambah termin"} maxWidth="max-w-xl">
         <div className="space-y-4">
           <div className="grid grid-cols-[1fr_5rem] gap-3">
             <div>

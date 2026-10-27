@@ -10,7 +10,7 @@ import { useToast } from "@/components/ui/Toast";
 import { formatPercent, formatRupiah } from "@/lib/project-monitoring-shared";
 import type { RabData, RabPreview, RabProjectField } from "@/lib/project-rab-import";
 import { cn } from "@/lib/utils";
-import { FormError, ProgressBar, fmtDate, type Tone } from "./shared";
+import { FormError, ProgressBar, fmtDate, useOpenFromHash, type Tone } from "./shared";
 import type { ProjectMonitoringDTO } from "./types";
 
 const versionLabel = (v: number) => (v === 0 ? "RAB awal" : `Revisi ${v}`);
@@ -323,6 +323,7 @@ export function RabUploadDialog({ data }: { data: ProjectMonitoringDTO }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const isRevision = data.rab.revisions.length > 0;
+  useOpenFromHash("biaya", () => setOpen(true));
 
   function reset() {
     setFile(null);

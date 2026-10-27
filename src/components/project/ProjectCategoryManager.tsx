@@ -127,7 +127,7 @@ export function ProjectCategoryManager({
         {canManage && (
           <Button onClick={() => setAddOpen(true)}>
             <Plus className="h-4 w-4" />
-            Tambah Kategori
+            Tambah kategori
           </Button>
         )}
       </div>
@@ -174,7 +174,7 @@ export function ProjectCategoryManager({
         </div>
       </Card>
 
-      <Modal isOpen={addOpen} onClose={() => setAddOpen(false)} title="Tambah Kategori">
+      <Modal isOpen={addOpen} onClose={() => setAddOpen(false)} title="Tambah kategori">
         <Label htmlFor="new-category">Nama Kategori</Label>
         <Input
           id="new-category"

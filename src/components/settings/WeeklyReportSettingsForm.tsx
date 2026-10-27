@@ -17,7 +17,7 @@ export type WeeklySettings = {
   picUpdateRequestDay: number;
 };
 
-export function WeeklyReportSettingsForm({ canManage, initial }: { canManage: boolean; initial: WeeklySettings }) {
+export function WeeklyReportSettingsForm({ canManage, initial, embedded = false }: { canManage: boolean; initial: WeeklySettings; embedded?: boolean }) {
   const { showToast } = useToast();
   const [v, setV] = useState(initial);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +42,7 @@ export function WeeklyReportSettingsForm({ canManage, initial }: { canManage: bo
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Laporan Mingguan & Update PIC</CardTitle>
+        <CardTitle>Laporan mingguan dan permintaan update ke PIC</CardTitle>
         <p className="text-xs text-slate-500 mt-1">Dikirim otomatis oleh job harian (sekitar pukul 08.00 WIB) pada hari yang dipilih.</p>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -74,12 +74,14 @@ export function WeeklyReportSettingsForm({ canManage, initial }: { canManage: bo
             </Select>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href="/projects/weekly-report">
-              <Button size="sm" variant="outline">
-                <Eye className="h-4 w-4" />
-                Pratinjau
-              </Button>
-            </Link>
+            {!embedded && (
+              <Link href="/projects/weekly-report">
+                <Button size="sm" variant="outline">
+                  <Eye className="h-4 w-4" />
+                  Pratinjau
+                </Button>
+              </Link>
+            )}
             {canManage && (
               <>
                 <Button size="sm" variant="outline" isLoading={busy === "self"} onClick={() => call("self", "/api/weekly-report/send", "POST", { target: "self" }, "Laporan uji dikirim ke email Anda.")}>

@@ -80,11 +80,11 @@ export function ProjectAddendumSection({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Riwayat Addendum</CardTitle>
+        <CardTitle>Riwayat addendum</CardTitle>
         {canManage && (
           <Button size="sm" onClick={() => setOpen(true)}>
             <Plus className="h-4 w-4" />
-            Tambah Addendum
+            Tambah addendum
           </Button>
         )}
       </CardHeader>
@@ -113,7 +113,7 @@ export function ProjectAddendumSection({
         )}
       </CardContent>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title="Tambah Addendum">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title="Tambah addendum">
         <div className="space-y-4">
           <div>
             <Label htmlFor="add-number">Nomor/Nama Addendum</Label>

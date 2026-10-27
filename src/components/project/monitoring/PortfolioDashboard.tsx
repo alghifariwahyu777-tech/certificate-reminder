@@ -97,18 +97,18 @@ export function PortfolioDashboard({ rows, categories }: { rows: PortfolioRow[];
       base
         .filter((r) => r.status === "ONGOING" || r.closeoutComplete === false)
         .flatMap((r) => {
-          const out: { id: string; name: string; text: string; tone: "bad" | "warn" }[] = [];
+          const out: { id: string; name: string; text: string; tone: "bad" | "warn"; at?: string }[] = [];
           const s = r.summary;
-          if (r.closeoutComplete === false) return [{ id: r.id, name: r.projectName, tone: "warn" as const, text: "selesai, tetapi BAPP/BAST/laporan final belum lengkap" }];
-          if (s.isOverdue) out.push({ id: r.id, name: r.projectName, tone: "bad", text: `melewati target ${Math.abs(s.daysRemaining)} hari (progres ${formatPercent(s.actualPercent)})` });
-          else if (s.health === "KRITIS") out.push({ id: r.id, name: r.projectName, tone: "bad", text: s.healthReason.replace(/\.$/, "").toLowerCase() });
+          if (r.closeoutComplete === false) return [{ id: r.id, name: r.projectName, tone: "warn" as const, text: "selesai, tetapi BAPP/BAST/laporan final belum lengkap", at: "dokumen/penutupan" }];
+          if (s.isOverdue) out.push({ id: r.id, name: r.projectName, tone: "bad", text: `melewati target ${Math.abs(s.daysRemaining)} hari (progres ${formatPercent(s.actualPercent)})`, at: "jadwal/progres" });
+          else if (s.health === "KRITIS") out.push({ id: r.id, name: r.projectName, tone: "bad", text: s.healthReason.replace(/\.$/, "").toLowerCase(), at: "jadwal/progres" });
           if (r.margin.signals.margin === "bad")
-            out.push({ id: r.id, name: r.projectName, tone: "bad", text: `prakiraan margin ${formatPercent(r.margin.forecastMarginPct)}, target ${formatPercent(r.margin.targetMarginPct)}` });
-          if (s.overdueInvoiceCount) out.push({ id: r.id, name: r.projectName, tone: "bad", text: `${s.overdueInvoiceCount} invoice lewat jatuh tempo (${formatRupiah(s.overdueInvoiceAmount, true)})` });
-          if (s.openHighIssues) out.push({ id: r.id, name: r.projectName, tone: "bad", text: `${s.openHighIssues} kendala berdampak tinggi terbuka` });
-          if (r.trend !== null && r.trend <= -5) out.push({ id: r.id, name: r.projectName, tone: "warn", text: `deviasi memburuk ${Math.abs(r.trend)} poin dari minggu lalu` });
-          if (s.isStale) out.push({ id: r.id, name: r.projectName, tone: "warn", text: `data progres belum diperbarui ${s.daysSinceUpdate} hari` });
-          if (s.dueUnbilledCount) out.push({ id: r.id, name: r.projectName, tone: "warn", text: `${s.dueUnbilledCount} termin sudah waktunya ditagih` });
+            out.push({ id: r.id, name: r.projectName, tone: "bad", text: `prakiraan margin ${formatPercent(r.margin.forecastMarginPct)}, target ${formatPercent(r.margin.targetMarginPct)}`, at: "keuangan/margin" });
+          if (s.overdueInvoiceCount) out.push({ id: r.id, name: r.projectName, tone: "bad", text: `${s.overdueInvoiceCount} invoice lewat jatuh tempo (${formatRupiah(s.overdueInvoiceAmount, true)})`, at: "keuangan/termin" });
+          if (s.openHighIssues) out.push({ id: r.id, name: r.projectName, tone: "bad", text: `${s.openHighIssues} kendala berdampak tinggi terbuka`, at: "tim/kendala" });
+          if (r.trend !== null && r.trend <= -5) out.push({ id: r.id, name: r.projectName, tone: "warn", text: `progres makin tertinggal ${Math.abs(r.trend)} poin dari minggu lalu`, at: "jadwal/progres" });
+          if (s.isStale) out.push({ id: r.id, name: r.projectName, tone: "warn", text: `data progres belum diperbarui ${s.daysSinceUpdate} hari`, at: "jadwal/progres" });
+          if (s.dueUnbilledCount) out.push({ id: r.id, name: r.projectName, tone: "warn", text: `${s.dueUnbilledCount} termin sudah waktunya ditagih`, at: "keuangan/termin" });
           return out;
         })
         .sort((a, b) => (a.tone === b.tone ? 0 : a.tone === "bad" ? -1 : 1)),
@@ -144,6 +144,7 @@ export function PortfolioDashboard({ rows, categories }: { rows: PortfolioRow[];
       {/* four headline numbers */}
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <Headline
+          onClick={() => setHealth(k.kritis ? "KRITIS" : "WASPADA")}
           label="Perlu perhatian"
           value={`${k.kritis + k.waspada} project`}
           tone={k.kritis ? "bad" : k.waspada ? "warn" : "default"}
@@ -244,8 +245,17 @@ export function PortfolioDashboard({ rows, categories }: { rows: PortfolioRow[];
             <tbody>
               {sorted.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-slate-400">
-                    Tidak ada project yang cocok dengan filter.
+                  <td colSpan={6} className="px-5 py-12 text-center text-slate-500">
+                    {rows.length === 0 ? (
+                      <span className="flex flex-col items-center gap-3">
+                        Belum ada project. Tambahkan project pertama; data dapat diisi otomatis dari file RAB.
+                        <Link href="/projects/new">
+                          <Button size="sm">Project baru</Button>
+                        </Link>
+                      </span>
+                    ) : (
+                      "Tidak ada project yang cocok dengan filter."
+                    )}
                   </td>
                 </tr>
               )}
@@ -329,7 +339,7 @@ export function PortfolioDashboard({ rows, categories }: { rows: PortfolioRow[];
                 <li key={i} className="flex items-start gap-2.5 py-2.5 text-[13.5px]">
                   <span className={cn("mt-[7px] h-2 w-2 shrink-0 rounded-full", a.tone === "bad" ? "bg-signal-expiredBar" : "bg-signal-soonBar")} />
                   <span>
-                    <Link href={`/projects/${a.id}`} className="font-semibold text-ink hover:text-accent dark:text-slate-100">
+                    <Link href={`/projects/${a.id}${a.at ? `#${a.at}` : ""}`} className="font-semibold text-ink hover:text-accent dark:text-slate-100">
                       {a.name}
                     </Link>
                     <span className="text-slate-600 dark:text-slate-300">: {a.text}</span>
@@ -377,9 +387,10 @@ export function PortfolioDashboard({ rows, categories }: { rows: PortfolioRow[];
   );
 }
 
-function Headline({ label, value, sub, tone = "default" }: { label: string; value: string; sub: string; tone?: Tone }) {
+function Headline({ label, value, sub, tone = "default", onClick }: { label: string; value: string; sub: string; tone?: Tone; onClick?: () => void }) {
+  const Tag = onClick ? "button" : "div";
   return (
-    <div className="rounded-lg border border-line bg-white px-4 py-3.5 sm:px-5 sm:py-4 dark:border-slate-700 dark:bg-slate-900">
+    <Tag type={onClick ? "button" : undefined} onClick={onClick} className={cn("rounded-lg border border-line bg-white px-4 py-3.5 text-left sm:px-5 sm:py-4 dark:border-slate-700 dark:bg-slate-900", onClick && "transition-shadow hover:shadow-panel")}>
       <p className="text-[13px] font-medium text-slate-500">{label}</p>
       <p
         className={cn(
@@ -390,6 +401,6 @@ function Headline({ label, value, sub, tone = "default" }: { label: string; valu
         {value}
       </p>
       <p className="mt-1 text-[12.5px] text-slate-500">{sub}</p>
-    </div>
+    </Tag>
   );
 }

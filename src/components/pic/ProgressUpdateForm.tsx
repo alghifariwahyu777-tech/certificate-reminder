@@ -189,7 +189,7 @@ export function ProgressUpdateForm({
       <FormError message={error} />
       <Button className="w-full" size="lg" isLoading={saving} onClick={submit}>
         <Send className="h-4 w-4" />
-        Kirim Update
+        Kirim update
       </Button>
     </div>
   );
