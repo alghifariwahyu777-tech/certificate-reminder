@@ -1,5 +1,6 @@
 "use client";
 
+import { InfoTip } from "@/components/ui/InfoTip";
 import { CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardTitle } from "@/components/ui/Card";
 import { HEALTH_BADGE_CLASS, HEALTH_LABEL, formatPercent, formatRupiah, shortDate } from "@/lib/project-monitoring-shared";
@@ -141,8 +142,10 @@ export function SummaryPanel({ data }: { data: ProjectMonitoringDTO }) {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
         <Card>
           <div className="px-5 pt-4">
-            <CardTitle>Kurva S</CardTitle>
-            <p className="mt-0.5 text-[12.5px] text-slate-500">{PLAN_SOURCE_TEXT[s.planSource]}</p>
+            <CardTitle className="flex items-center gap-1.5">
+            Kurva S
+            <InfoTip label="Keterangan kurva s">{PLAN_SOURCE_TEXT[s.planSource]}</InfoTip>
+          </CardTitle>
           </div>
           <CardContent>
             <SCurveChart input={data.input} today={data.today} />

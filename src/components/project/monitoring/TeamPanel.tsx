@@ -1,5 +1,6 @@
 "use client";
 
+import { InfoTip } from "@/components/ui/InfoTip";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, Pencil, Plus, Users } from "lucide-react";
@@ -72,14 +73,14 @@ export function TeamPanel({ data }: { data: ProjectMonitoringDTO }) {
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
-          <CardTitle>Tim project</CardTitle>
-          <p className="text-xs text-slate-500 mt-1">
-            Personil yang ditugaskan. Beban kerja dihitung dari semua project berjalan —{" "}
+          <CardTitle className="flex items-center gap-1.5">
+            Tim project
+            <InfoTip label="Keterangan tim project">Personil yang ditugaskan. Beban kerja dihitung dari semua project berjalan —{" "}
             <Link href="/projects/personnel" className="text-accent hover:underline">
               lihat mapping personil
             </Link>
-            .
-          </p>
+            .</InfoTip>
+          </CardTitle>
         </div>
         {data.canManage && (
           <Button size="sm" onClick={() => openForm(null)}>

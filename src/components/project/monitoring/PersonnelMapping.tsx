@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input, Label, Select } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { SearchPopoverButton } from "@/components/ui/SearchPopoverButton";
+import { InfoTip } from "@/components/ui/InfoTip";
 import type { MappingRow } from "@/lib/personnel-mapping";
 import { cn } from "@/lib/utils";
 import { FormError, Stat, SubTabs, fmtDate, useMonitoringApi } from "./shared";
@@ -50,10 +51,13 @@ export function PersonnelMapping({ rows, projects, canManage }: { rows: MappingR
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <p className="max-w-2xl text-[13.5px] text-slate-600 dark:text-slate-300">
-          Satu personil dapat bertugas di beberapa project sekaligus (SDB). Halaman ini menunjukkan siapa bertugas di mana, siapa yang bebannya tinggi, dan sertifikasi yang
-          berakhir selama masa tugas.
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="flex items-center gap-1.5 text-[13.5px] font-semibold text-ink dark:text-slate-100">
+          Penugasan personil di project berjalan
+          <InfoTip label="Tentang mapping personil">
+            Satu personil dapat bertugas di beberapa project sekaligus (SDB). Halaman ini menunjukkan siapa bertugas di mana, siapa yang bebannya tinggi (3 project atau lebih),
+            dan sertifikasi yang berakhir selama masa tugas.
+          </InfoTip>
         </p>
         {canManage && (
           <Button onClick={() => setAssignFor({ employeeId: "" })} className="shrink-0">

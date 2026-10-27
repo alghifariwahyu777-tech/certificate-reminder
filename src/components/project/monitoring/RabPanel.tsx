@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/Toast";
 import { formatPercent, formatRupiah } from "@/lib/project-monitoring-shared";
 import type { RabData, RabPreview, RabProjectField } from "@/lib/project-rab-import";
 import { cn } from "@/lib/utils";
+import { InfoTip } from "@/components/ui/InfoTip";
 import { FormError, ProgressBar, fmtDate, useOpenFromHash, type Tone } from "./shared";
 import type { ProjectMonitoringDTO } from "./types";
 
@@ -97,8 +98,13 @@ export function RabCard({ data }: { data: ProjectMonitoringDTO }) {
 
         <div>
           <div className="mb-2 flex items-baseline justify-between gap-3">
-            <p className="text-[13px] font-semibold text-ink dark:text-slate-100">RAB dan realisasi per bagian</p>
-            <p className="text-[12px] text-slate-500">Garis tegak = porsi yang wajar pada progres {formatPercent(progress)}</p>
+            <p className="flex items-center gap-1.5 text-[13px] font-semibold text-ink dark:text-slate-100">
+              RAB dan realisasi per bagian
+              <InfoTip label="Keterangan RAB per bagian">
+                Angka tebal = biaya yang sudah keluar, angka abu-abu = RAB bagian tersebut. Garis tegak menunjukkan porsi yang wajar pada progres {formatPercent(progress)}. Bar
+                kuning = pemakaian jauh di atas progres; merah = melebihi RAB atau biaya di luar RAB.
+              </InfoTip>
+            </p>
           </div>
           <div className="space-y-3">
             {rows.map(([cat, v]) => {

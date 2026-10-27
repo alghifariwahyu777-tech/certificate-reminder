@@ -501,3 +501,23 @@ async function backfillSnapshots(today: number) {
   }
   if (rows.length) await prisma.projectSnapshot.createMany({ data: rows, skipDuplicates: true });
 }
+
+/**
+ * Fills the demo data once, automatically, the first time the Project dashboard
+ * is opened. The flag is claimed atomically so two simultaneous visits don't
+ * both seed, and data removed by the user is never re-created.
+ */
+export async function ensureDemoDataOnce(): Promise<boolean> {
+  try {
+    const current = await prisma.appSettings.findUnique({ where: { id: "default" }, select: { demoDataSeededAt: true } });
+    if (current?.demoDataSeededAt) return false;
+    if (!current) await prisma.appSettings.upsert({ where: { id: "default" }, update: {}, create: { id: "default" } });
+    const claimed = await prisma.appSettings.updateMany({ where: { id: "default", demoDataSeededAt: null }, data: { demoDataSeededAt: new Date() } });
+    if (claimed.count === 0) return false;
+    await createDemoData("Sistem");
+    return true;
+  } catch (e) {
+    console.error("demo data seeding failed", e);
+    return false;
+  }
+}

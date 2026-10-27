@@ -1,5 +1,6 @@
 "use client";
 
+import { InfoTip } from "@/components/ui/InfoTip";
 import { useState } from "react";
 import { ClipboardList, LineChart, Pencil, Plus, Trash2, Wand2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -76,10 +77,10 @@ function ReportsCard({ data }: { data: ProjectMonitoringDTO }) {
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
-          <CardTitle>Laporan progres</CardTitle>
-          <p className="text-xs text-slate-500 mt-1">
-            Isi progres kumulatif secara berkala. Laporan manual mengoreksi angka dari milestone sampai ada milestone selesai/laporan yang lebih baru.
-          </p>
+          <CardTitle className="flex items-center gap-1.5">
+            Laporan progres
+            <InfoTip label="Keterangan laporan progres">Isi progres kumulatif secara berkala. Laporan manual mengoreksi angka dari milestone sampai ada milestone selesai/laporan yang lebih baru.</InfoTip>
+          </CardTitle>
         </div>
         {data.canManage && (
           <Button size="sm" onClick={() => openForm(null)}>
@@ -224,14 +225,14 @@ function PlanCard({ data }: { data: ProjectMonitoringDTO }) {
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
-          <CardTitle>Rencana progres</CardTitle>
-          <p className="text-xs text-slate-500 mt-1">
-            {source === "MANUAL"
+          <CardTitle className="flex items-center gap-1.5">
+            Rencana progres
+            <InfoTip label="Keterangan rencana progres">{source === "MANUAL"
               ? `${data.plans.length} periode rencana diisi manual.`
               : source === "MILESTONE"
                 ? "Saat ini dihitung dari tanggal rencana dan bobot milestone. Isi tabel bila punya jadwal rencana resmi (mis. dari proposal/kontrak)."
-                : "Saat ini garis lurus dari tanggal mulai ke target selesai. Isi tabel atau tambahkan milestone bertanggal agar lebih akurat."}
-          </p>
+                : "Saat ini garis lurus dari tanggal mulai ke target selesai. Isi tabel atau tambahkan milestone bertanggal agar lebih akurat."}</InfoTip>
+          </CardTitle>
         </div>
         {data.canManage && (
           <Button size="sm" variant="outline" onClick={openEditor}>

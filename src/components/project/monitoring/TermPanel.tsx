@@ -1,5 +1,6 @@
 "use client";
 
+import { InfoTip } from "@/components/ui/InfoTip";
 import { useState } from "react";
 import { Pencil, Plus, Receipt } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -140,8 +141,10 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
       <Card>
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div>
-            <CardTitle>Termin & penagihan</CardTitle>
-            <p className="text-xs text-slate-500 mt-1">Alur: belum ditagih, lalu sudah ditagih (invoice terbit), lalu dibayar.</p>
+            <CardTitle className="flex items-center gap-1.5">
+            Termin & penagihan
+            <InfoTip label="Keterangan termin & penagihan">Alur: belum ditagih, lalu sudah ditagih (invoice terbit), lalu dibayar.</InfoTip>
+          </CardTitle>
           </div>
           {data.canManage && (
             <Button size="sm" onClick={() => openForm(null)}>

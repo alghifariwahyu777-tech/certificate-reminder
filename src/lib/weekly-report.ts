@@ -381,13 +381,14 @@ ${kpiCell("Piutang", formatRupiah(k.outstanding, true), `sudah ditagih, belum di
 ${kpiCell("PAD", formatRupiah(k.pad, true), `project berjalan ${formatRupiah(k.padOngoing, true)} · project selesai ${formatRupiah(k.padCompleted, true)}`)}
 </tr></table>`;
 
+  // numbered list; the number's colour carries the urgency (red = segera, amber = perlu dipantau) — no extra bullet
   const actions = r.actions.length
-    ? `<ol style="margin:6px 0 0;padding-left:20px;">${r.actions
+    ? `<table width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 0;font-size:14px;">${r.actions
         .map(
-          (a) =>
-            `<li style="margin:4px 0;"><span style="color:${a.tone === "bad" ? "#B91C1C" : "#B45309"};">●</span> ${a.project ? `<strong>${esc(a.project)}</strong>: ` : ""}${esc(a.text)}<br/><span style="font-size:12px;color:#475569;">&rarr; ${esc(a.suggestion)}</span></li>`
+          (a, i) =>
+            `<tr><td valign="top" width="24" style="padding:5px 0;font-weight:bold;color:${a.tone === "bad" ? "#C2362F" : "#B7791F"};">${i + 1}.</td><td valign="top" style="padding:5px 0;color:#15202E;">${a.project ? `<strong>${esc(a.project)}</strong>: ` : ""}${esc(a.text)}<br/><span style="font-size:12px;color:#475569;">Usulan: ${esc(a.suggestion)}</span></td></tr>`
         )
-        .join("")}</ol>${r.moreActions ? `<p style="font-size:12px;color:#64748B;margin:4px 0 0;">Terdapat ${r.moreActions} butir lainnya pada lampiran PDF.</p>` : ""}`
+        .join("")}</table>${r.moreActions ? `<p style="font-size:12px;color:#64748B;margin:4px 0 0;">Terdapat ${r.moreActions} butir lainnya pada lampiran PDF.</p>` : ""}`
     : `<p style="margin:6px 0 0;color:#15803D;">Tidak terdapat hal yang memerlukan keputusan pada minggu ini.</p>`;
 
   const certExpired = r.urgentCerts.filter((c) => c.days < 0).length;

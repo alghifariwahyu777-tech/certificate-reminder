@@ -12,6 +12,7 @@ import { HEALTH_BADGE_CLASS, HEALTH_LABEL, formatPercent, formatRupiah, mergePad
 import type { PortfolioRow } from "@/lib/project-monitoring";
 import { cn } from "@/lib/utils";
 import { ConditionRibbon, ProgressBar, type Tone } from "./shared";
+import { InfoTip } from "@/components/ui/InfoTip";
 
 type SortKey = "severity" | "name" | "progress" | "margin" | "end";
 
@@ -118,7 +119,7 @@ export function PortfolioDashboard({ rows, categories }: { rows: PortfolioRow[];
   const padBuckets = useMemo(() => mergePadSchedules(base.map((r) => r.padSchedule)).map((b) => ({ ...b, juta: Math.round(b.amount / 1e5) / 10 })), [base]);
   const exportHref = `/api/projects/portfolio/export?${new URLSearchParams({ status, categoryId, pic, health, q }).toString()}`;
 
-  function SortTh({ label, k: key, className, children }: { label: string; k: SortKey; className?: string; children?: React.ReactNode }) {
+  function SortTh({ label, k: key, className, children, tip }: { label: string; k: SortKey; className?: string; children?: React.ReactNode; tip?: React.ReactNode }) {
     const active = sort.key === key;
     return (
       <th className={cn("px-4 py-2.5 font-semibold", className)}>
@@ -133,6 +134,11 @@ export function PortfolioDashboard({ rows, categories }: { rows: PortfolioRow[];
           </span>
           {active && (sort.dir === 1 ? <ArrowUp className="h-3 w-3 shrink-0" /> : <ArrowDown className="h-3 w-3 shrink-0" />)}
         </button>
+        {tip && (
+          <InfoTip label={`Keterangan ${label.toLowerCase()}`} className="ml-1.5">
+            {tip}
+          </InfoTip>
+        )}
       </th>
     );
   }
@@ -282,13 +288,18 @@ export function PortfolioDashboard({ rows, categories }: { rows: PortfolioRow[];
             <thead>
               <tr className="border-b border-line bg-slate-50/70 text-left text-[12px] text-slate-500 dark:border-slate-800 dark:bg-slate-800/30">
                 <SortTh label="Project" k="name" className="pl-5" />
-                <SortTh label="Progres" k="progress">
-                  <span className="block font-normal">realisasi / rencana</span>
-                </SortTh>
-                <th className="px-4 py-2.5 font-semibold">Kondisi</th>
-                <SortTh label="Margin" k="margin">
-                  <span className="block font-normal">prakiraan / target</span>
-                </SortTh>
+                <SortTh label="Progres" k="progress" tip={<><strong>Angka biru</strong> = progres realisasi, angka abu-abu = rencana per hari ini. Garis tegak pada bar menunjukkan posisi rencana. Warna bar mengikuti status project.</>} />
+                <th className="px-4 py-2.5 font-semibold">
+                  <span className="inline-flex items-center gap-1.5">
+                    Kondisi
+                    <InfoTip label="Keterangan kondisi">
+                      Empat penanda, dari kiri: <strong>Waktu</strong> (progres dibanding rencana), <strong>Biaya</strong> (biaya terpakai dibanding pekerjaan selesai),{" "}
+                      <strong>Lingkup</strong> (pekerjaan tambahan yang belum tertutup addendum), dan <strong>Margin</strong> (prakiraan dibanding target). Hijau = baik, kuning =
+                      waspada, merah = kritis, abu-abu = belum ada data.
+                    </InfoTip>
+                  </span>
+                </th>
+                <SortTh label="Margin" k="margin" tip={<>Prakiraan margin akhir dibandingkan <strong>target margin project tersebut</strong> (dari RAB). Prakiraan = nilai kontrak dikurangi biaya yang sudah keluar dan sisa RAB.</>} />
                 <SortTh label="Target selesai" k="end" />
                 <SortTh label="Status" k="severity" className="pr-5" />
               </tr>
@@ -332,10 +343,10 @@ export function PortfolioDashboard({ rows, categories }: { rows: PortfolioRow[];
                         {ongoing && <span className="text-slate-500"> / {formatPercent(s.plannedPercent)}</span>}
                       </p>
                       <ProgressBar value={s.actualPercent} marker={ongoing ? s.plannedPercent : undefined} tone={ongoing ? HEALTH_TONE[s.health] : "default"} className="mt-1.5 max-w-[160px]" />
-                      {ongoing && s.isStale && <p className="mt-1 text-[11.5px] font-medium text-signal-soon">Data belum diperbarui {s.daysSinceUpdate} hari</p>}
+                      {ongoing && s.isStale && <p className="mt-1 text-[11.5px] font-medium text-signal-soon">Update terakhir {s.daysSinceUpdate} hari lalu</p>}
                     </td>
                     <td className="px-4 py-3.5">
-                      <ConditionRibbon signals={m.signals} />
+                      <ConditionRibbon signals={m.signals} showLetters={false} />
                     </td>
                     <td className="whitespace-nowrap px-4 py-3.5 text-[13px]" title={m.belowTarget ? m.cause : undefined}>
                       {marginShown ? (
@@ -369,20 +380,15 @@ export function PortfolioDashboard({ rows, categories }: { rows: PortfolioRow[];
             </tbody>
           </table>
         </div>
-        <div className="hidden flex-wrap gap-x-5 gap-y-1 rounded-b-lg border-t md:flex border-line bg-slate-50/70 px-5 py-2.5 text-[12px] text-slate-500 dark:border-slate-800 dark:bg-slate-800/30">
-          <span>
-            <strong className="text-ink dark:text-slate-200">Kondisi:</strong> W = Waktu, B = Biaya, L = Lingkup, M = Margin
-          </span>
-          <span>Garis tegak pada bar = posisi rencana</span>
-          <span>Margin = prakiraan margin akhir dibandingkan target project masing-masing</span>
-        </div>
       </Card>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <div className="px-5 pt-4">
-            <CardTitle>Perlu tindakan</CardTitle>
-            <p className="mt-0.5 text-[12.5px] text-slate-500">{attention.length ? `${attention.length} hal dari project yang ditampilkan` : "Tidak ada hal yang perlu ditindaklanjuti"}</p>
+            <CardTitle>
+              Perlu tindakan {attention.length > 0 && <span className="ml-1 rounded-full bg-signal-expiredBg px-2 py-0.5 text-[12px] font-semibold text-signal-expired">{attention.length}</span>}
+            </CardTitle>
+            {attention.length === 0 && <p className="mt-0.5 text-[12.5px] text-slate-500">Tidak ada hal yang perlu ditindaklanjuti.</p>}
           </div>
           <CardContent className="pt-2">
             <ul className="divide-y divide-line dark:divide-slate-800">
@@ -408,8 +414,13 @@ export function PortfolioDashboard({ rows, categories }: { rows: PortfolioRow[];
 
         <Card>
           <div className="px-5 pt-4">
-            <CardTitle>Proyeksi PAD per bulan</CardTitle>
-            <p className="mt-0.5 text-[12.5px] text-slate-500">Rp juta. Merah = tertunggak (lewat tanggalnya, belum diterima); abu-abu = belum terjadwal.</p>
+            <CardTitle className="flex items-center gap-1.5">
+              Proyeksi PAD per bulan
+              <InfoTip label="Keterangan PAD">
+                PAD (Pendapatan yang Akan Diterima) = nilai kontrak yang belum diterima, dikelompokkan menurut jatuh tempo invoice atau rencana tagih termin, dalam Rp juta.{" "}
+                <strong className="text-signal-expired">Merah</strong> = tertunggak (lewat tanggalnya, belum diterima); abu-abu = belum terjadwal.
+              </InfoTip>
+            </CardTitle>
           </div>
           <CardContent>
             {padBuckets.length === 0 ? (

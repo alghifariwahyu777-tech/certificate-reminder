@@ -1,5 +1,6 @@
 "use client";
 
+import { InfoTip } from "@/components/ui/InfoTip";
 import { useState } from "react";
 import { Lock, Pencil, Plus, Wallet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -321,10 +322,10 @@ function BaselineCard({ data }: { data: ProjectMonitoringDTO }) {
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
-          <CardTitle>Baseline (rencana awal)</CardTitle>
-          <p className="text-xs text-slate-500 mt-1">
-            Nilai kontrak, RAB, dan target selesai awal yang dikunci sebagai pembanding margin dan triple constraint.
-          </p>
+          <CardTitle className="flex items-center gap-1.5">
+            Baseline (rencana awal)
+            <InfoTip label="Keterangan baseline (rencana awal)">Nilai kontrak, RAB, dan target selesai awal yang dikunci sebagai pembanding margin dan triple constraint.</InfoTip>
+          </CardTitle>
         </div>
         {data.canManage && (
           <Button size="sm" variant="outline" onClick={() => (b ? setConfirm(true) : lock(false))} isLoading={busy && !confirm}>

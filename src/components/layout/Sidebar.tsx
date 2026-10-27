@@ -169,7 +169,7 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" | "PIC" }) {
   return (
     <aside
       className={cn(
-        "hidden md:flex md:flex-col bg-gradient-to-b from-[#1A5A8E] via-[#123F6B] to-[#0A2440] text-slate-300 h-screen shrink-0 sticky top-0 z-20 transition-[width] duration-150",
+        "hidden md:flex md:flex-col bg-gradient-to-b from-[#1A5A8E] via-[#123F6B] to-[#0A2440] text-slate-300 h-screen shrink-0 sticky top-0 z-40 transition-[width] duration-150",
         hydrated ? (collapsed ? "md:w-[68px]" : "md:w-60") : "md:w-60"
       )}
     >
@@ -193,7 +193,7 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" | "PIC" }) {
           onClick={toggleCollapsed}
           aria-label={collapsed ? "Perluas sidebar" : "Perkecil sidebar"}
           title={collapsed ? "Perluas sidebar" : "Perkecil sidebar"}
-          className="absolute -right-3.5 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-brand-blue text-white border-2 border-[#16507F] hover:bg-[#1A5A8E] hover:text-white shadow-md transition-colors"
+          className="absolute -right-3.5 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-brand-blue text-white border-2 border-white hover:bg-[#1A5A8E] hover:text-white shadow-md transition-colors"
         >
           {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
         </button>

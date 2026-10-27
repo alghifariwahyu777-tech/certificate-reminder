@@ -374,8 +374,15 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
               </span>
             </p>
           </div>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <a href={`/api/projects/${project.id}/report`}>
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4" />
+                Laporan project (PDF)
+              </Button>
+            </a>
           {session?.role === "ADMIN" && (
-            <div className="flex shrink-0 flex-wrap gap-2">
+            <>
               <Link href={`/projects/${project.id}/edit`}>
                 <Button variant="outline" size="sm">
                   <Pencil className="h-4 w-4" />
@@ -390,8 +397,9 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
                   </Button>
                 </a>
               )}
-            </div>
+            </>
           )}
+          </div>
         </div>
 
         <MonitoringTabs

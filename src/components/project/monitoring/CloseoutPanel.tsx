@@ -1,5 +1,6 @@
 "use client";
 
+import { InfoTip } from "@/components/ui/InfoTip";
 import { useState } from "react";
 import { CheckCircle2, Circle, Save, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -47,12 +48,12 @@ export function CloseoutPanel({ data }: { data: ProjectMonitoringDTO }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Penutupan project</CardTitle>
-        <p className="text-xs text-slate-500 mt-1">
-          {data.status === "COMPLETED"
+        <CardTitle className="flex items-center gap-1.5">
+            Penutupan project
+            <InfoTip label="Keterangan penutupan project">{data.status === "COMPLETED"
             ? `Checklist ${done}/3 lengkap.`
-            : "Diisi saat pekerjaan selesai. Bisa dicicil — tanggal dokumen diisi begitu dokumennya terbit."}
-        </p>
+            : "Diisi saat pekerjaan selesai. Bisa dicicil — tanggal dokumen diisi begitu dokumennya terbit."}</InfoTip>
+          </CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="space-y-2">

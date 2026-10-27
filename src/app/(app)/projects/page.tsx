@@ -1,3 +1,4 @@
+import { ensureDemoDataOnce } from "@/lib/demo-data";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
@@ -16,6 +17,7 @@ function formatRupiah(value: number): string {
 
 export default async function ProjectsPage() {
   const session = await getSession();
+  await ensureDemoDataOnce();
   const [projects, categories, portfolio] = await Promise.all([
     prisma.project.findMany({
       where: { deletedAt: null },

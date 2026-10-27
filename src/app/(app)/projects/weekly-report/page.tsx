@@ -1,3 +1,4 @@
+import { ensureDemoDataOnce } from "@/lib/demo-data";
 import { Download } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -11,6 +12,7 @@ import { WEEKDAY_LABEL } from "@/lib/week";
 /** This week's management report as recipients will get it, with its sending settings on the same page. */
 export default async function WeeklyReportPreviewPage() {
   const session = await getSession();
+  await ensureDemoDataOnce();
   const [data, settings] = await Promise.all([buildWeeklyReport(), prisma.appSettings.findUnique({ where: { id: "default" } })]);
   const html = renderWeeklyReportEmail(data, { logoSrc: LOGO_DATA_URI });
   const recipients = (settings?.weeklyReportRecipients || "").split(/[,\n]/).map((x) => x.trim()).filter(Boolean);

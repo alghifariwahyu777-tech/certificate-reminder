@@ -1,5 +1,6 @@
 "use client";
 
+import { InfoTip } from "@/components/ui/InfoTip";
 import { AlertTriangle, Info } from "lucide-react";
 import {
   Bar,
@@ -66,8 +67,13 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
 
       <Card>
         <div className="px-5 pt-4">
-          <CardTitle>Margin project</CardTitle>
-          <p className="mt-0.5 text-[12.5px] text-slate-500">Setiap project memiliki target margin sendiri, diambil dari RAB.</p>
+          <CardTitle className="flex items-center gap-1.5">
+            Margin project
+            <InfoTip label="Keterangan margin project">
+              Setiap project memiliki target margin sendiri, diambil dari RAB. Posisi kas project saat ini (uang diterima dikurangi biaya keluar) {formatRupiah(m.cashPosition, true)}; angka kas
+              dipengaruhi waktu penagihan sehingga tidak dipakai sebagai ukuran margin.
+            </InfoTip>
+          </CardTitle>
         </div>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -94,9 +100,9 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
           </div>
 
           {m.hasBudget && m.hasContract && (
-            <div className="rounded-lg bg-slate-50 px-4 py-3 text-[13px] dark:bg-slate-800/50">
-              <p className="font-semibold text-ink dark:text-slate-100">Cara menghitung prakiraan</p>
-              <p className="mt-1 text-slate-600 dark:text-slate-300">
+            <details className="group rounded-lg bg-slate-50 px-4 py-3 text-[13px] dark:bg-slate-800/50">
+              <summary className="cursor-pointer select-none font-semibold text-ink dark:text-slate-100">Cara menghitung prakiraan</summary>
+              <p className="mt-2 text-slate-600 dark:text-slate-300">
                 Prakiraan mengasumsikan <strong>sisa pekerjaan berjalan sesuai RAB</strong>: biaya yang sudah keluar ditambah anggaran RAB untuk pekerjaan yang belum selesai.
               </p>
               <div className="mt-2 grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 text-slate-700 dark:text-slate-300 sm:max-w-md">
@@ -115,7 +121,7 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
                   {formatRupiah(m.forecastMargin, true)} ({formatPercent(m.forecastMarginPct)})
                 </span>
               </div>
-            </div>
+            </details>
           )}
 
           {m.cause && (
@@ -124,9 +130,6 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
               {m.cause}
             </p>
           )}
-          <p className="text-[12px] text-slate-400">
-            Posisi kas project (uang diterima dikurangi biaya keluar): {formatRupiah(m.cashPosition, true)}. Angka ini dipengaruhi waktu penagihan, sehingga tidak dipakai sebagai ukuran margin.
-          </p>
         </CardContent>
       </Card>
 
@@ -134,10 +137,10 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
         {/* EV curve */}
         <Card>
           <CardHeader>
-            <CardTitle>Kurva biaya dan nilai pekerjaan</CardTitle>
-            <p className="text-xs text-slate-500 mt-1">
-              Bila garis merah (biaya aktual) berada di atas garis biru (nilai pekerjaan selesai), biaya yang keluar lebih besar dari anggaran untuk pekerjaan yang sudah dikerjakan.
-            </p>
+            <CardTitle className="flex items-center gap-1.5">
+            Kurva biaya dan nilai pekerjaan
+            <InfoTip label="Keterangan kurva biaya dan nilai pekerjaan">Bila garis merah (biaya aktual) berada di atas garis biru (nilai pekerjaan selesai), biaya yang keluar lebih besar dari anggaran untuk pekerjaan yang sudah dikerjakan.</InfoTip>
+          </CardTitle>
           </CardHeader>
           <CardContent>
             {!m.hasBudget ? (
@@ -177,8 +180,10 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
         {/* margin bridge */}
         <Card>
           <CardHeader>
-            <CardTitle>Jembatan margin</CardTitle>
-            <p className="text-xs text-slate-500 mt-1">Dari margin awal (baseline) ke prakiraan margin akhir: apa saja yang menambah dan mengurangi margin (Rp juta).</p>
+            <CardTitle className="flex items-center gap-1.5">
+            Jembatan margin
+            <InfoTip label="Keterangan jembatan margin">Dari margin awal (baseline) ke prakiraan margin akhir: apa saja yang menambah dan mengurangi margin (Rp juta).</InfoTip>
+          </CardTitle>
           </CardHeader>
           <CardContent>
             {!m.hasBudget || !m.hasContract ? (
@@ -234,8 +239,10 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
       {/* weekly margin trend */}
       <Card>
         <CardHeader>
-          <CardTitle>Tren prakiraan margin</CardTitle>
-          <p className="text-xs text-slate-500 mt-1">Prakiraan margin akhir setiap minggu dibandingkan target project, untuk melihat sejak kapan margin mulai tergerus.</p>
+          <CardTitle className="flex items-center gap-1.5">
+            Tren prakiraan margin
+            <InfoTip label="Keterangan tren prakiraan margin">Prakiraan margin akhir setiap minggu dibandingkan target project, untuk melihat sejak kapan margin mulai tergerus.</InfoTip>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {history.length < 2 ? (

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { FileText, Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { DemoDataButton } from "@/components/project/monitoring/DemoDataButton";
-import { DEMO_PREFIX } from "@/lib/demo-data";
+import { DEMO_PREFIX, ensureDemoDataOnce } from "@/lib/demo-data";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
@@ -11,6 +11,7 @@ import { PortfolioDashboard } from "@/components/project/monitoring/PortfolioDas
 
 export default async function ProjectPortfolioPage() {
   const session = await getSession();
+  await ensureDemoDataOnce();
   const [{ rows }, categories] = await Promise.all([
     getProjectPortfolio(),
     prisma.projectCategory.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
@@ -30,7 +31,7 @@ export default async function ProjectPortfolioPage() {
           </div>
         )}
         <div className="flex flex-wrap items-center justify-end gap-2">
-          {session?.role === "ADMIN" && <DemoDataButton hasDemo={hasDemo} />}
+          {session?.role === "ADMIN" && hasDemo && <DemoDataButton hasDemo />}
           <Link href="/projects/weekly-report">
             <Button variant="outline" size="sm">
               <FileText className="h-4 w-4" />

@@ -531,6 +531,7 @@ model AppSettings {
   picUpdateRequestEnabled   Boolean  @default(true)
   picUpdateRequestDay       Int      @default(1)
   projectMarginDropAlert    Float    @default(10) // margin aktual/prakiraan turun ≥ ini (poin %) dari rencana → masuk "perlu keputusan"
+  demoDataSeededAt          DateTime? // data contoh (project DEMO-…) sudah pernah diisi otomatis — tidak diisi ulang setelah dihapus
   updatedAt                 DateTime @updatedAt
 }
 
