@@ -79,7 +79,7 @@ export default async function PersonnelCertificationDetailPage(context: { params
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
             {fields.map((f) => (
               <div key={f.label}>
-                <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">{f.label}</p>
+                <p className="text-xs text-slate-500 mb-1">{f.label}</p>
                 <p className="text-sm text-ink font-medium">{f.value}</p>
               </div>
             ))}
@@ -89,7 +89,7 @@ export default async function PersonnelCertificationDetailPage(context: { params
         {certification.notes && (
           <Card>
             <CardContent>
-              <p className="text-xs uppercase tracking-wide text-slate-500 mb-1.5">Catatan</p>
+              <p className="text-xs text-slate-500 mb-1.5">Catatan</p>
               <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-line">{certification.notes}</p>
             </CardContent>
           </Card>

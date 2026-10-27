@@ -196,7 +196,7 @@ export function TrashViewer() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <Icon className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                      <span className="text-[10px] font-mono uppercase tracking-wide text-slate-400">
+                      <span className="text-[10px] font-mono text-slate-400">
                         {KIND_LABEL[item.kind]}
                       </span>
                     </div>

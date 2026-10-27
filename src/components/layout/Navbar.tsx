@@ -11,7 +11,7 @@ export function Navbar({
   title: string;
   subtitle?: string;
   adminName: string;
-  role?: "ADMIN" | "VIEWER";
+  role?: "ADMIN" | "VIEWER" | "PIC";
 }) {
   const initials = adminName
     .split(" ")
@@ -25,7 +25,7 @@ export function Navbar({
       <div className="flex items-center gap-3">
         <MobileNav role={role} />
         <div>
-          <h1 className="font-display font-semibold text-lg text-ink dark:text-slate-100 leading-tight">{title}</h1>
+          <h1 className="font-bold text-lg text-ink dark:text-slate-100 leading-tight">{title}</h1>
           {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>}
         </div>
       </div>
@@ -34,11 +34,11 @@ export function Navbar({
         <NotificationBell />
         <div className="hidden sm:block text-right">
           <p className="text-sm font-medium text-ink dark:text-slate-100 leading-tight">{adminName}</p>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight font-mono uppercase tracking-wide">
-            {role === "ADMIN" ? "Admin" : "Viewer"}
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight font-mono">
+            {role === "ADMIN" ? "Admin" : role === "PIC" ? "PIC" : "Viewer"}
           </p>
         </div>
-        <div className="h-9 w-9 rounded-full bg-ink text-white flex items-center justify-center text-xs font-semibold font-mono">
+        <div className="h-9 w-9 rounded-full bg-brand-blueDark text-white flex items-center justify-center text-xs font-semibold">
           {initials || "AD"}
         </div>
       </div>

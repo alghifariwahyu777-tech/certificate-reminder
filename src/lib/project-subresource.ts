@@ -33,6 +33,8 @@ export type SubresourceDef<S extends z.ZodTypeAny> = {
   findOwner: (id: string) => Promise<{ projectId: string } | null>;
 };
 
+const isUniqueViolation = (err: unknown) => typeof err === "object" && err !== null && (err as { code?: string }).code === "P2002";
+
 export const toDate = (v: string | null | undefined): Date | null => (v ? new Date(v) : null);
 export const emptyToNull = (v: string | null | undefined): string | null => (v && v.trim() ? v.trim() : null);
 
@@ -77,7 +79,13 @@ export function collectionHandlers<S extends z.ZodTypeAny>(def: SubresourceDef<S
       if ("error" in g) return g.error;
       const p = await parse(request, def.schema);
       if ("error" in p) return p.error;
-      const item = await def.create({ projectId: g.project.id, ...def.toData(p.data, { session: g.session, isCreate: true }) });
+      let item: { id: string };
+      try {
+        item = await def.create({ projectId: g.project.id, ...def.toData(p.data, { session: g.session, isCreate: true }) });
+      } catch (err) {
+        if (isUniqueViolation(err)) return NextResponse.json({ message: `Data ${def.label} yang sama sudah ada.` }, { status: 409 });
+        throw err;
+      }
       await audit(g.session, g.project, "CREATE", item.id, `Menambahkan ${def.label} "${def.describe(p.data)}"`);
       return NextResponse.json({ item }, { status: 201 });
     },
@@ -99,7 +107,13 @@ export function itemHandlers<S extends z.ZodTypeAny>(def: SubresourceDef<S>) {
       if (!(await owned(g))) return notFound();
       const p = await parse(request, def.schema);
       if ("error" in p) return p.error;
-      const item = await def.update(g.itemId as string, def.toData(p.data, { session: g.session, isCreate: false }));
+      let item: { id: string };
+      try {
+        item = await def.update(g.itemId as string, def.toData(p.data, { session: g.session, isCreate: false }));
+      } catch (err) {
+        if (isUniqueViolation(err)) return NextResponse.json({ message: `Data ${def.label} yang sama sudah ada.` }, { status: 409 });
+        throw err;
+      }
       await audit(g.session, g.project, "UPDATE", item.id, `Mengubah ${def.label} "${def.describe(p.data)}"`);
       return NextResponse.json({ item });
     },

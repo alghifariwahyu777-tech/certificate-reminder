@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import {
+  projectAssignmentSchema,
   projectBudgetItemSchema,
   projectExpenseSchema,
   projectIssueSchema,
@@ -110,6 +111,8 @@ export const expenseDef: SubresourceDef<typeof projectExpenseSchema> = {
     category: v.category,
     description: v.description,
     amount: v.amount,
+    cause: v.cause,
+    referenceNo: emptyToNull(v.referenceNo),
     ...files(v),
     ...(isCreate ? { createdBy: session.name } : {}),
   }),
@@ -139,4 +142,21 @@ export const issueDef: SubresourceDef<typeof projectIssueSchema> = {
   update: (id, data) => prisma.projectIssue.update({ where: { id }, data }),
   remove: (id) => prisma.projectIssue.delete({ where: { id } }),
   findOwner: (id) => prisma.projectIssue.findUnique({ where: { id }, select: { projectId: true } }),
+};
+
+export const assignmentDef: SubresourceDef<typeof projectAssignmentSchema> = {
+  label: "penugasan personil",
+  schema: projectAssignmentSchema,
+  describe: (v) => v.role,
+  toData: (v) => ({
+    employeeId: v.employeeId,
+    role: v.role,
+    startDate: toDate(v.startDate),
+    endDate: toDate(v.endDate),
+    notes: emptyToNull(v.notes),
+  }),
+  create: (data) => prisma.projectAssignment.create({ data: data as any }),
+  update: (id, data) => prisma.projectAssignment.update({ where: { id }, data }),
+  remove: (id) => prisma.projectAssignment.delete({ where: { id } }),
+  findOwner: (id) => prisma.projectAssignment.findUnique({ where: { id }, select: { projectId: true } }),
 };

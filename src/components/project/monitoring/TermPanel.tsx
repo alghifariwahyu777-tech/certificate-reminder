@@ -152,7 +152,7 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs uppercase tracking-wide text-slate-500 border-b border-slate-100 dark:border-slate-800">
+                  <tr className="text-left text-xs text-slate-500 border-b border-slate-100 dark:border-slate-800">
                     <th className="px-5 py-2.5 font-medium">Termin</th>
                     <th className="px-3 py-2.5 font-medium text-right">Nominal</th>
                     <th className="px-3 py-2.5 font-medium">Rencana tagih</th>

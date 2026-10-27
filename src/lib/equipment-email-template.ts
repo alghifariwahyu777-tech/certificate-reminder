@@ -95,8 +95,8 @@ export function buildEquipmentSimpleTemplateHtml(
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Equipment Calibration Reminder</title>
   </head>
-  <body style="margin:0;padding:0;background-color:#F7F7F4;font-family:Arial,Helvetica,sans-serif;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F7F7F4;padding:32px 16px;">
+  <body style="margin:0;padding:0;background-color:#F2F4F7;font-family:'Plus Jakarta Sans','Segoe UI',Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F2F4F7;padding:32px 16px;">
       <tr>
         <td align="center">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#ffffff;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;">
@@ -110,7 +110,7 @@ export function buildEquipmentSimpleTemplateHtml(
                     <td style="padding-left:12px;">
                       <span style="color:#ffffff;font-size:19px;font-weight:bold;letter-spacing:0.02em;">${companyName}</span>
                       <br />
-                      <span style="color:#0EA89B;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;">${systemName}</span>
+                      <span style="color:#0EA89B;font-size:13px;">${systemName}</span>
                     </td>
                   </tr>
                 </table>
@@ -173,8 +173,8 @@ export const DEFAULT_EQUIPMENT_BODY_HTML = `<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Equipment Calibration Reminder</title>
   </head>
-  <body style="margin:0;padding:0;background-color:#F7F7F4;font-family:Arial,Helvetica,sans-serif;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F7F7F4;padding:32px 16px;">
+  <body style="margin:0;padding:0;background-color:#F2F4F7;font-family:'Plus Jakarta Sans','Segoe UI',Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F2F4F7;padding:32px 16px;">
       <tr>
         <td align="center">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#ffffff;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;">
@@ -188,7 +188,7 @@ export const DEFAULT_EQUIPMENT_BODY_HTML = `<!DOCTYPE html>
                     <td style="padding-left:12px;">
                       <span style="color:#ffffff;font-size:19px;font-weight:bold;letter-spacing:0.02em;">PT SUCOFINDO (Persero)</span>
                       <br />
-                      <span style="color:#0EA89B;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;">Equipment Calibration Reminder</span>
+                      <span style="color:#0EA89B;font-size:13px;">Equipment Calibration Reminder</span>
                     </td>
                   </tr>
                 </table>

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   TrendingUp,
+  Network,
   FileBadge2,
   Building2,
   Building,
@@ -76,8 +77,10 @@ const NAV_GROUPS = [
   {
     label: "Project",
     items: [
-      { href: "/projects/dashboard", label: "Dashboard Realisasi", icon: TrendingUp, adminOnly: false },
-      { href: "/projects", label: "Project Monitoring", icon: FolderClock, adminOnly: false },
+      { href: "/projects/dashboard", label: "Monitoring Project", icon: TrendingUp, adminOnly: false },
+      { href: "/projects", label: "Daftar Project", icon: FolderClock, adminOnly: false },
+      { href: "/projects/personnel", label: "Mapping Personil", icon: Network, adminOnly: false },
+      { href: "/projects/weekly-report", label: "Laporan Mingguan", icon: FileBarChart, adminOnly: false },
       { href: "/project-categories", label: "Categories", icon: Tags, adminOnly: false },
       { href: "/project-email-template", label: "Email Template", icon: Mail, adminOnly: true },
     ],
@@ -107,7 +110,7 @@ const NAV_GROUPS = [
 
 const COLLAPSE_STORAGE_KEY = "sidebar-collapsed";
 
-export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" }) {
+export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" | "PIC" }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -137,7 +140,7 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" }) {
   return (
     <aside
       className={cn(
-        "hidden md:flex md:flex-col bg-ink text-slate-300 h-screen shrink-0 sticky top-0 z-20 transition-[width] duration-150",
+        "hidden md:flex md:flex-col bg-brand-blueDark text-slate-300 h-screen shrink-0 sticky top-0 z-20 transition-[width] duration-150",
         hydrated ? (collapsed ? "md:w-[68px]" : "md:w-60") : "md:w-60"
       )}
     >
@@ -150,7 +153,7 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" }) {
             <p className="font-display font-semibold text-white text-sm leading-tight">
               Reminder System
             </p>
-            <p className="font-mono text-[9px] tracking-[0.1em] text-brand-teal uppercase leading-tight mt-0.5">
+            <p className="font-mono text-[11px] text-sky-200/70 leading-tight mt-0.5">
               Ensuring Quality, Protecting Trust
             </p>
           </div>
@@ -159,7 +162,7 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" }) {
           onClick={toggleCollapsed}
           aria-label={collapsed ? "Perluas sidebar" : "Perkecil sidebar"}
           title={collapsed ? "Perluas sidebar" : "Perkecil sidebar"}
-          className="absolute -right-3.5 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-slate-200 border-2 border-ink hover:bg-slate-600 hover:text-white shadow-md transition-colors"
+          className="absolute -right-3.5 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-brand-blue text-white border-2 border-brand-blueDark hover:bg-slate-600 hover:text-white shadow-md transition-colors"
         >
           {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
         </button>
@@ -169,7 +172,7 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" }) {
         {groups.map((group, groupIndex) => (
           <div key={group.label || `group-${groupIndex}`} className={groupIndex > 0 ? "pt-3 mt-3 border-t border-white/10" : ""}>
             {group.label && !collapsed && (
-              <p className="px-3 pb-1.5 text-[10px] font-mono uppercase tracking-[0.12em] text-slate-500">
+              <p className="px-3 pb-1.5 text-xs font-medium text-sky-200/60">
                 {group.label}
               </p>
             )}
@@ -182,11 +185,11 @@ export function Sidebar({ role }: { role: "ADMIN" | "VIEWER" }) {
                   href={item.href}
                   title={collapsed ? item.label : undefined}
                   className={cn(
-                    "flex items-center gap-3 rounded px-3 py-2.5 text-sm transition-colors",
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-[13.5px] transition-colors",
                     collapsed && "justify-center px-0",
                     active
-                      ? "bg-white/10 text-white font-medium"
-                      : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                      ? "bg-white/[0.13] text-white font-semibold"
+                      : "text-sky-100/75 hover:bg-white/[0.07] hover:text-white"
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" />

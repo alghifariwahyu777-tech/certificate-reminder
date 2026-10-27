@@ -33,7 +33,7 @@ export function CategoryChart({ data }: { data: { name: string; total: number }[
               fontFamily: "var(--font-body)",
             }}
           />
-          <Bar dataKey="total" fill="#1D4ED8" radius={[4, 4, 0, 0]} maxBarSize={36} />
+          <Bar dataKey="total" fill="#1671B8" radius={[4, 4, 0, 0]} maxBarSize={36} />
         </BarChart>
       </ResponsiveContainer>
     </div>

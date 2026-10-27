@@ -39,7 +39,7 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
           <SucofindoLogo height={40} className="mb-2" />
-          <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-brand-blue dark:text-brand-teal">
+          <span className="font-mono text-[10px] text-brand-blue dark:text-brand-teal">
             Ensuring Quality, Protecting Trust
           </span>
         </div>

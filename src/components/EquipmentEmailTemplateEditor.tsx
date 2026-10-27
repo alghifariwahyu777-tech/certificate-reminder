@@ -302,7 +302,7 @@ export function EquipmentEmailTemplateEditor({
           </CardHeader>
           <CardContent className="p-0">
             <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800">
-              <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Subjek</p>
+              <p className="text-xs text-slate-500 mb-1">Subjek</p>
               <p className="text-sm text-ink font-medium">{previewSubject || "(kosong)"}</p>
             </div>
             <iframe title="Email preview" srcDoc={previewHtml} className="w-full h-[600px] border-0" sandbox="" />

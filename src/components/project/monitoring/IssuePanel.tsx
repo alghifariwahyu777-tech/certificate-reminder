@@ -99,7 +99,7 @@ export function IssuePanel({ data }: { data: ProjectMonitoringDTO }) {
                 <div key={i.id} className="px-5 py-3 flex items-start gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-mono uppercase text-slate-400">{ISSUE_TYPE_LABEL[i.type]}</span>
+                      <span className="text-xs font-mono text-slate-400">{ISSUE_TYPE_LABEL[i.type]}</span>
                       <p className={cn("font-medium text-ink dark:text-slate-100", i.status === "CLOSED" && "line-through opacity-60")}>{i.title}</p>
                       <span className={cn("stamp-badge", IMPACT_CLASS[i.impact])}>Dampak {ISSUE_IMPACT_LABEL[i.impact]}</span>
                       {i.status === "CLOSED" && <span className="stamp-badge bg-signal-activeBg text-signal-active border-signal-activeBorder">{ISSUE_STATUS_LABEL.CLOSED}</span>}

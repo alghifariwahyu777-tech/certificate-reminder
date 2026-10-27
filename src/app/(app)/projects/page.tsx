@@ -7,6 +7,7 @@ import { Wallet, TrendingUp, CheckCircle2, Gauge, LayoutDashboard } from "lucide
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { getProjectPortfolio } from "@/lib/project-monitoring";
+import { CostImportDialog } from "@/components/project/monitoring/CostImportDialog";
 
 function formatRupiah(value: number): string {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(
@@ -82,11 +83,12 @@ export default async function ProjectsPage() {
         role={session?.role || "ADMIN"}
       />
       <div className="p-5 md:p-8 space-y-6">
-        <div className="flex justify-end -mb-2">
+        <div className="flex flex-wrap justify-end gap-2 -mb-2">
+          {session?.role === "ADMIN" && <CostImportDialog />}
           <Link href="/projects/dashboard">
             <Button variant="outline" size="sm">
               <LayoutDashboard className="h-4 w-4" />
-              Dashboard Realisasi
+              Monitoring Project
             </Button>
           </Link>
         </div>

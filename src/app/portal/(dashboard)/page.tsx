@@ -59,7 +59,7 @@ export default async function PortalDashboardPage() {
           <Card key={s.label}>
             <CardContent className="flex items-start justify-between">
               <div>
-                <p className="text-xs uppercase tracking-wide text-slate-500 font-medium mb-1.5">{s.label}</p>
+                <p className="text-xs text-slate-500 font-medium mb-1.5">{s.label}</p>
                 <p className="font-display text-2xl font-semibold text-ink dark:text-slate-100 font-mono">{s.value}</p>
               </div>
               <div className={`h-9 w-9 rounded flex items-center justify-center border ${s.accent}`}>

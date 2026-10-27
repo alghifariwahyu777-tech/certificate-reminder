@@ -70,7 +70,7 @@ export function UserManager({
 
   function openEdit(user: UserItem) {
     setServerError(null);
-    editForm.reset({ name: user.name, role: user.role as "ADMIN" | "VIEWER", isActive: user.isActive, password: "" });
+    editForm.reset({ name: user.name, role: user.role as "ADMIN" | "VIEWER" | "PIC", isActive: user.isActive, password: "" });
     setEditTarget(user);
   }
 
@@ -139,7 +139,7 @@ export function UserManager({
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-ink truncate">{user.name}</p>
                     {user.id === currentUserId && (
-                      <span className="text-[10px] uppercase tracking-wide text-slate-400 font-mono">(Anda)</span>
+                      <span className="text-[10px] text-slate-400 font-mono">(Anda)</span>
                     )}
                     {!user.isActive && (
                       <span className="stamp-badge text-signal-expired bg-signal-expiredBg border-signal-expiredBorder">
@@ -159,7 +159,7 @@ export function UserManager({
                   }`}
                 >
                   {user.role === "ADMIN" ? <ShieldCheck className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                  {user.role === "ADMIN" ? "Administrator" : "Viewer"}
+                  {user.role === "ADMIN" ? "Administrator" : user.role === "PIC" ? "PIC Project" : "Viewer"}
                 </span>
                 <button
                   onClick={() => openEdit(user)}
@@ -220,6 +220,7 @@ export function UserManager({
             <Select id="add-role" error={addForm.formState.errors.role?.message} {...addForm.register("role")}>
               <option value="VIEWER">Viewer</option>
               <option value="ADMIN">Administrator</option>
+              <option value="PIC">PIC Project (hanya update progres project miliknya)</option>
             </Select>
           </div>
           {serverError && (
@@ -269,6 +270,7 @@ export function UserManager({
             >
               <option value="VIEWER">Viewer</option>
               <option value="ADMIN">Administrator</option>
+              <option value="PIC">PIC Project (hanya update progres project miliknya)</option>
             </Select>
           </div>
           <label className="flex items-center gap-2 text-sm text-slate-600">

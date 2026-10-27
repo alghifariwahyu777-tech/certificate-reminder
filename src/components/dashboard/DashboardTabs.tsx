@@ -57,7 +57,7 @@ function UpcomingTable({ items, emptyText, viewAllHref }: { items: UpcomingItem[
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-slate-500 border-b border-slate-100 dark:border-slate-800">
+            <tr className="text-left text-xs text-slate-500 border-b border-slate-100 dark:border-slate-800">
               <th className="px-5 py-2.5 font-medium">Item</th>
               <th className="px-5 py-2.5 font-medium">Keterangan</th>
               <th className="px-5 py-2.5 font-medium">Tanggal</th>
@@ -129,7 +129,7 @@ function StatCards({ stats, labels }: { stats: DomainStats; labels: { total: str
         <Card key={c.label} className="h-full">
           <CardContent className="flex items-start justify-between h-full">
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500 font-medium mb-1.5 leading-snug min-h-[2rem]">
+              <p className="text-xs text-slate-500 font-medium mb-1.5 leading-snug min-h-[2rem]">
                 {c.label}
               </p>
               <p className="font-display text-2xl font-semibold text-ink dark:text-slate-100 font-mono">{c.value}</p>

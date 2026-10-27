@@ -35,21 +35,21 @@ export default async function ProfilePage() {
             <div className="flex items-center gap-3 text-sm">
               <Mail className="h-4 w-4 text-slate-400" />
               <div>
-                <p className="text-xs uppercase tracking-wide text-slate-500">Email</p>
+                <p className="text-xs text-slate-500">Email</p>
                 <p className="text-ink font-medium">{user?.email}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 text-sm">
               <UserCircle className="h-4 w-4 text-slate-400" />
               <div>
-                <p className="text-xs uppercase tracking-wide text-slate-500">Role</p>
+                <p className="text-xs text-slate-500">Role</p>
                 <p className="text-ink font-medium">{user?.role === "ADMIN" ? "Administrator" : "Viewer"}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 text-sm">
               <CalendarDays className="h-4 w-4 text-slate-400" />
               <div>
-                <p className="text-xs uppercase tracking-wide text-slate-500">Bergabung Sejak</p>
+                <p className="text-xs text-slate-500">Bergabung Sejak</p>
                 <p className="text-ink font-medium">{user ? formatDate(user.createdAt) : "-"}</p>
               </div>
             </div>

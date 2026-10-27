@@ -70,6 +70,7 @@ export async function GET(request: NextRequest) {
     { header: "Progres Rencana", width: 11, fmt: PCT },
     { header: "Progres Realisasi", width: 11, fmt: PCT },
     { header: "Deviasi (poin)", width: 10, fmt: "0.0" },
+    { header: "Tren vs Minggu Lalu", width: 10, fmt: "+0.0;-0.0;0" },
     { header: "SPI", width: 8, fmt: "0.00" },
     { header: "Update Progres Terakhir", width: 13, fmt: "dd/mm/yyyy" },
     { header: "Milestone Selesai", width: 11 },
@@ -78,11 +79,19 @@ export async function GET(request: NextRequest) {
     { header: "Dibayar", width: 18, fmt: RUPIAH },
     { header: "Piutang", width: 18, fmt: RUPIAH },
     { header: "Invoice Lewat JT", width: 10 },
+    { header: "PAD", width: 18, fmt: RUPIAH },
     { header: "Pekerjaan Belum Ditagih", width: 18, fmt: RUPIAH },
     { header: "Anggaran Biaya", width: 18, fmt: RUPIAH },
     { header: "Realisasi Biaya", width: 18, fmt: RUPIAH },
     { header: "CPI", width: 8, fmt: "0.00" },
     { header: "Kendala Terbuka", width: 10 },
+    { header: "Margin Rencana (%)", width: 11, fmt: PCT },
+    { header: "Margin Aktual (%)", width: 11, fmt: PCT },
+    { header: "Prakiraan Margin Akhir (%)", width: 12, fmt: PCT },
+    { header: "Prakiraan Biaya Akhir", width: 18, fmt: RUPIAH },
+    { header: "Biaya Akibat Keterlambatan", width: 18, fmt: RUPIAH },
+    { header: "Biaya Pekerjaan Tambahan", width: 18, fmt: RUPIAH },
+    { header: "Penyebab Margin Tergerus", width: 60 },
   ];
   styleHeader(ws.addRow(columns.map((c) => c.header)));
   columns.forEach((c, i) => {
@@ -108,6 +117,7 @@ export async function GET(request: NextRequest) {
       s.plannedPercent,
       s.actualPercent,
       ongoing ? s.deviation : null,
+      r.trend,
       ongoing ? s.spi : null,
       s.lastProgressUpdate ? new Date(s.lastProgressUpdate) : null,
       s.milestoneTotal ? `${s.milestoneDone}/${s.milestoneTotal}` : "-",
@@ -116,11 +126,19 @@ export async function GET(request: NextRequest) {
       s.paid,
       s.outstanding,
       s.overdueInvoiceCount,
+      s.pad,
       ongoing ? s.unbilledEarned : null,
       s.budgetTotal || null,
       s.costActual || null,
       s.cpi,
       s.openIssues,
+      r.margin.plannedMarginPct,
+      r.margin.actualMarginPct,
+      r.margin.hasCost ? r.margin.forecastMarginPct : null,
+      r.margin.hasBudget ? Math.round(r.margin.eac) : null,
+      r.margin.delayCost || null,
+      r.margin.extraScopeCost || null,
+      r.margin.signals.margin === "bad" || r.margin.signals.margin === "warn" ? r.margin.cause : "",
     ]);
     const color = { KRITIS: "FFFEE2E2", WASPADA: "FFFEF3C7", ON_TRACK: "FFDCFCE7", SELESAI: "FFDBEAFE", BATAL: "FFF1F5F9" }[s.health];
     row.getCell(7).fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
@@ -131,7 +149,7 @@ export async function GET(request: NextRequest) {
   if (filtered.length > 0) {
     const total = ws.addRow(["", "TOTAL"]);
     total.font = { bold: true };
-    for (const col of [18, 19, 20, 21, 23, 24, 25]) {
+    for (const col of columns.flatMap((c, i) => (c.fmt === RUPIAH ? [i + 1] : []))) {
       const letter = ws.getColumn(col).letter;
       total.getCell(col).value = { formula: `SUM(${letter}${first}:${letter}${last})` };
     }

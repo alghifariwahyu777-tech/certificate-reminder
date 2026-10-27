@@ -2,34 +2,28 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, Download, Search } from "lucide-react";
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { ArrowDown, ArrowUp, Download, SlidersHorizontal } from "lucide-react";
+import { SearchPopoverButton } from "@/components/ui/SearchPopoverButton";
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Card, CardContent, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Input, Select } from "@/components/ui/Input";
-import {
-  HEALTH_BADGE_CLASS,
-  HEALTH_LABEL,
-  formatPercent,
-  formatRupiah,
-  shortDate,
-  type ProjectHealth,
-} from "@/lib/project-monitoring-shared";
+import { Select } from "@/components/ui/Input";
+import { HEALTH_BADGE_CLASS, HEALTH_LABEL, formatPercent, formatRupiah, mergePadSchedules, shortDate, type ProjectHealth } from "@/lib/project-monitoring-shared";
 import type { PortfolioRow } from "@/lib/project-monitoring";
 import { cn } from "@/lib/utils";
-import { ProgressBar, Stat } from "./shared";
+import { ConditionRibbon, ProgressBar, type Tone } from "./shared";
 
-type SortKey = "deviation" | "actual" | "daysRemaining" | "contract" | "outstanding" | "name";
+type SortKey = "severity" | "name" | "progress" | "margin" | "end";
 
-const HEALTH_ORDER: ProjectHealth[] = ["KRITIS", "WASPADA", "ON_TRACK", "SELESAI", "BATAL"];
-const HEALTH_COLOR: Record<ProjectHealth, string> = {
-  KRITIS: "#B91C1C",
-  WASPADA: "#B45309",
-  ON_TRACK: "#15803D",
-  SELESAI: "#1D4ED8",
-  BATAL: "#94A3B8",
-};
-const tooltipStyle = { borderRadius: 6, border: "1px solid #E2E8F0", fontSize: 12, fontFamily: "var(--font-body)" };
+const SEVERITY: Record<ProjectHealth, number> = { KRITIS: 0, WASPADA: 1, ON_TRACK: 2, SELESAI: 3, BATAL: 4 };
+const HEALTH_TONE: Record<ProjectHealth, Tone> = { KRITIS: "bad", WASPADA: "warn", ON_TRACK: "default", SELESAI: "default", BATAL: "none" };
+const tooltipStyle = { borderRadius: 8, border: "1px solid #E3E8EF", fontSize: 12, fontFamily: "var(--font-body)" };
+const CHIPS: { key: string; label: string }[] = [
+  { key: "", label: "Semua" },
+  { key: "KRITIS", label: "Kritis" },
+  { key: "WASPADA", label: "Waspada" },
+  { key: "ON_TRACK", label: "Sesuai rencana" },
+];
 
 export function PortfolioDashboard({ rows, categories }: { rows: PortfolioRow[]; categories: { id: string; name: string }[] }) {
   const [status, setStatus] = useState("ONGOING");
@@ -37,37 +31,38 @@ export function PortfolioDashboard({ rows, categories }: { rows: PortfolioRow[];
   const [pic, setPic] = useState("");
   const [health, setHealth] = useState("");
   const [q, setQ] = useState("");
-  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "deviation", dir: 1 });
+  const [more, setMore] = useState(false);
+  const [showAllAttention, setShowAllAttention] = useState(false);
+  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "severity", dir: 1 });
 
   const pics = useMemo(() => [...new Set(rows.map((r) => r.pic))].sort(), [rows]);
 
-  const filtered = useMemo(() => {
+  // filters other than the condition chips — the chips show counts within this set
+  const base = useMemo(() => {
     const term = q.trim().toLowerCase();
     return rows.filter(
       (r) =>
         (!status || r.status === status) &&
         (!categoryId || r.categoryId === categoryId) &&
         (!pic || r.pic === pic) &&
-        (!health || r.summary.health === health) &&
         (!term || [r.projectName, r.projectNumber, r.clientName, r.pic].some((v) => v.toLowerCase().includes(term)))
     );
-  }, [rows, status, categoryId, pic, health, q]);
+  }, [rows, status, categoryId, pic, q]);
+  const filtered = useMemo(() => base.filter((r) => !health || r.summary.health === health), [base, health]);
 
   const sorted = useMemo(() => {
     const val = (r: PortfolioRow): number | string => {
       switch (sort.key) {
-        case "deviation":
-          return r.status === "ONGOING" ? r.summary.deviation : 999;
-        case "actual":
-          return r.summary.actualPercent;
-        case "daysRemaining":
-          return r.summary.daysRemaining;
-        case "contract":
-          return r.summary.contractValue;
-        case "outstanding":
-          return r.summary.outstanding;
-        default:
+        case "name":
           return r.projectName.toLowerCase();
+        case "progress":
+          return r.status === "ONGOING" ? r.summary.deviation : 999;
+        case "margin":
+          return r.margin.forecastMarginPct !== null && r.margin.targetMarginPct !== null && r.margin.hasCost ? r.margin.forecastMarginPct - r.margin.targetMarginPct : 999;
+        case "end":
+          return new Date(r.targetEndDate).getTime();
+        default:
+          return SEVERITY[r.summary.health] * 1000 + (r.status === "ONGOING" ? r.summary.deviation : 0);
       }
     };
     return [...filtered].sort((a, b) => {
@@ -78,323 +73,323 @@ export function PortfolioDashboard({ rows, categories }: { rows: PortfolioRow[];
   }, [filtered, sort]);
 
   const k = useMemo(() => {
-    const sum = (f: (r: PortfolioRow) => number) => filtered.reduce((s, r) => s + f(r), 0);
-    const ongoing = filtered.filter((r) => r.status === "ONGOING");
-    const contract = sum((r) => r.summary.contractValue);
-    const ongoingContract = ongoing.reduce((s, r) => s + r.summary.contractValue, 0);
-    // contract-weighted progress (falls back to a plain average when values are missing)
-    const weighted = (key: "actualPercent" | "plannedPercent") =>
-      ongoing.length === 0
-        ? null
-        : ongoingContract > 0
-          ? ongoing.reduce((s, r) => s + r.summary[key] * r.summary.contractValue, 0) / ongoingContract
-          : ongoing.reduce((s, r) => s + r.summary[key], 0) / ongoing.length;
+    const ongoing = base.filter((r) => r.status === "ONGOING");
+    const below = ongoing.filter((r) => r.margin.belowTarget);
+    const overduePad = base.reduce((a, r) => a + r.padSchedule.filter((b) => b.kind === "OVERDUE").reduce((x, b) => x + b.amount, 0), 0);
     return {
-      count: filtered.length,
       ongoing: ongoing.length,
-      contract,
-      invoiced: sum((r) => r.summary.invoiced),
-      paid: sum((r) => r.summary.paid),
-      outstanding: sum((r) => r.summary.outstanding),
-      overdueInvoices: sum((r) => r.summary.overdueInvoiceCount),
-      overdueAmount: sum((r) => r.summary.overdueInvoiceAmount),
       kritis: ongoing.filter((r) => r.summary.health === "KRITIS").length,
       waspada: ongoing.filter((r) => r.summary.health === "WASPADA").length,
-      stale: ongoing.filter((r) => r.summary.isStale).length,
-      overdue: ongoing.filter((r) => r.summary.isOverdue).length,
-      actual: weighted("actualPercent"),
-      planned: weighted("plannedPercent"),
-      unbilled: sum((r) => (r.status === "ONGOING" ? r.summary.unbilledEarned : 0)),
-      cost: sum((r) => r.summary.costActual),
-      budget: sum((r) => r.summary.budgetTotal),
-      openHigh: sum((r) => r.summary.openHighIssues),
+      below: below.length,
+      tracked: ongoing.filter((r) => r.margin.signals.margin !== "none").length,
+      gap: below.reduce((a, r) => a + r.margin.targetGap, 0),
+      pad: base.reduce((a, r) => a + r.summary.pad, 0),
+      overduePad,
+      contract: base.reduce((a, r) => a + r.summary.contractValue, 0),
+      clients: new Set(base.map((r) => r.clientName.trim().toLowerCase())).size,
+      count: base.length,
     };
-  }, [filtered]);
-
-  const byCategory = useMemo(() => {
-    type CatRow = { name: string; kontrak: number; ditagih: number; dibayar: number } & Record<ProjectHealth, number>;
-    const m = new Map<string, CatRow>();
-    for (const r of filtered) {
-      const row: CatRow = m.get(r.categoryName) || {
-        name: r.categoryName,
-        kontrak: 0,
-        ditagih: 0,
-        dibayar: 0,
-        KRITIS: 0,
-        WASPADA: 0,
-        ON_TRACK: 0,
-        SELESAI: 0,
-        BATAL: 0,
-      };
-      row.kontrak += r.summary.contractValue / 1e6;
-      row.ditagih += r.summary.invoiced / 1e6;
-      row.dibayar += r.summary.paid / 1e6;
-      row[r.summary.health] += 1;
-      m.set(r.categoryName, row);
-    }
-    return [...m.values()];
-  }, [filtered]);
+  }, [base]);
+  const chipCount = (h: string) => (h ? base.filter((r) => r.summary.health === h).length : base.length);
 
   const attention = useMemo(
     () =>
-      filtered
-        .filter((r) => r.status === "ONGOING")
+      base
+        .filter((r) => r.status === "ONGOING" || r.closeoutComplete === false)
         .flatMap((r) => {
           const out: { id: string; name: string; text: string; tone: "bad" | "warn" }[] = [];
           const s = r.summary;
-          if (s.isOverdue) out.push({ id: r.id, name: r.projectName, tone: "bad", text: `lewat target ${Math.abs(s.daysRemaining)} hari (progres ${formatPercent(s.actualPercent)})` });
-          else if (s.health === "KRITIS") out.push({ id: r.id, name: r.projectName, tone: "bad", text: s.healthReason });
+          if (r.closeoutComplete === false) return [{ id: r.id, name: r.projectName, tone: "warn" as const, text: "selesai, tetapi BAPP/BAST/laporan final belum lengkap" }];
+          if (s.isOverdue) out.push({ id: r.id, name: r.projectName, tone: "bad", text: `melewati target ${Math.abs(s.daysRemaining)} hari (progres ${formatPercent(s.actualPercent)})` });
+          else if (s.health === "KRITIS") out.push({ id: r.id, name: r.projectName, tone: "bad", text: s.healthReason.replace(/\.$/, "").toLowerCase() });
+          if (r.margin.signals.margin === "bad")
+            out.push({ id: r.id, name: r.projectName, tone: "bad", text: `prakiraan margin ${formatPercent(r.margin.forecastMarginPct)}, target ${formatPercent(r.margin.targetMarginPct)}` });
           if (s.overdueInvoiceCount) out.push({ id: r.id, name: r.projectName, tone: "bad", text: `${s.overdueInvoiceCount} invoice lewat jatuh tempo (${formatRupiah(s.overdueInvoiceAmount, true)})` });
           if (s.openHighIssues) out.push({ id: r.id, name: r.projectName, tone: "bad", text: `${s.openHighIssues} kendala berdampak tinggi terbuka` });
-          if (s.isStale) out.push({ id: r.id, name: r.projectName, tone: "warn", text: `progres belum diperbarui ${s.daysSinceUpdate} hari` });
+          if (r.trend !== null && r.trend <= -5) out.push({ id: r.id, name: r.projectName, tone: "warn", text: `deviasi memburuk ${Math.abs(r.trend)} poin dari minggu lalu` });
+          if (s.isStale) out.push({ id: r.id, name: r.projectName, tone: "warn", text: `data progres belum diperbarui ${s.daysSinceUpdate} hari` });
           if (s.dueUnbilledCount) out.push({ id: r.id, name: r.projectName, tone: "warn", text: `${s.dueUnbilledCount} termin sudah waktunya ditagih` });
           return out;
         })
         .sort((a, b) => (a.tone === b.tone ? 0 : a.tone === "bad" ? -1 : 1)),
-    [filtered]
+    [base]
   );
 
+  const padBuckets = useMemo(() => mergePadSchedules(base.map((r) => r.padSchedule)).map((b) => ({ ...b, juta: Math.round(b.amount / 1e5) / 10 })), [base]);
   const exportHref = `/api/projects/portfolio/export?${new URLSearchParams({ status, categoryId, pic, health, q }).toString()}`;
 
-  function SortTh({ label, k: key, className }: { label: string; k: SortKey; className?: string }) {
+  function SortTh({ label, k: key, className, children }: { label: string; k: SortKey; className?: string; children?: React.ReactNode }) {
     const active = sort.key === key;
     return (
-      <th className={cn("px-3 py-2.5 font-medium", className)}>
+      <th className={cn("px-4 py-2.5 font-semibold", className)}>
         <button
           type="button"
-          className={cn("inline-flex items-center gap-1 uppercase", active && "text-ink dark:text-slate-100")}
+          className={cn("inline-flex items-center gap-1 text-left", active && "text-ink dark:text-slate-100")}
           onClick={() => setSort((s) => ({ key, dir: s.key === key ? ((-s.dir) as 1 | -1) : 1 }))}
         >
-          {label}
-          {active && (sort.dir === 1 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+          <span>
+            {label}
+            {children}
+          </span>
+          {active && (sort.dir === 1 ? <ArrowUp className="h-3 w-3 shrink-0" /> : <ArrowDown className="h-3 w-3 shrink-0" />)}
         </button>
       </th>
     );
   }
 
+  const attentionShown = showAllAttention ? attention : attention.slice(0, 6);
+
   return (
-    <div className="space-y-6">
-      {/* Filters */}
-      <div className="flex flex-col lg:flex-row gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari nama/nomor project, klien, PIC…" className="pl-9" />
-        </div>
-        <Select value={status} onChange={(e) => setStatus(e.target.value)} className="lg:w-40" aria-label="Status">
-          <option value="">Semua status</option>
-          <option value="ONGOING">Berjalan</option>
-          <option value="COMPLETED">Selesai</option>
-          <option value="CANCELLED">Dibatalkan</option>
-        </Select>
-        <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="lg:w-44" aria-label="Kategori">
-          <option value="">Semua kategori</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </Select>
-        <Select value={pic} onChange={(e) => setPic(e.target.value)} className="lg:w-44" aria-label="PIC">
-          <option value="">Semua PIC</option>
-          {pics.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </Select>
-        <Select value={health} onChange={(e) => setHealth(e.target.value)} className="lg:w-40" aria-label="Kesehatan">
-          <option value="">Semua kondisi</option>
-          {HEALTH_ORDER.map((h) => (
-            <option key={h} value={h}>
-              {HEALTH_LABEL[h]}
-            </option>
-          ))}
-        </Select>
-        <a href={exportHref}>
-          <Button variant="outline" className="w-full lg:w-auto">
-            <Download className="h-4 w-4" />
-            Excel
-          </Button>
-        </a>
+    <div className="space-y-5">
+      {/* four headline numbers */}
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <Headline
+          label="Perlu perhatian"
+          value={`${k.kritis + k.waspada} project`}
+          tone={k.kritis ? "bad" : k.waspada ? "warn" : "default"}
+          sub={k.kritis + k.waspada ? `${k.kritis} kritis, ${k.waspada} waspada` : "Semua project sesuai rencana"}
+        />
+        <Headline
+          label="Di bawah target margin"
+          value={k.tracked ? `${k.below} project` : "-"}
+          tone={k.below ? "warn" : "default"}
+          sub={k.tracked ? (k.below ? `Kurang ${formatRupiah(k.gap, true)} dari target` : `Dari ${k.tracked} project dengan data biaya`) : "Belum ada data RAB dan biaya"}
+        />
+        <Headline label="PAD" value={formatRupiah(k.pad, true)} sub={k.overduePad ? `${formatRupiah(k.overduePad, true)} tertunggak` : "Tidak ada yang tertunggak"} />
+        <Headline label="Nilai kontrak" value={formatRupiah(k.contract, true)} sub={`${k.count} project, ${k.clients} klien`} />
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Stat label="Project" value={k.count} hint={`${k.ongoing} berjalan`} />
-        <Stat label="Nilai kontrak" value={formatRupiah(k.contract, true)} hint={`Belum ditagih ± ${formatRupiah(k.unbilled, true)} dari pekerjaan selesai`} />
-        <div className="col-span-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3">
-          <p className="text-[11px] uppercase tracking-wide text-slate-500">Progres portofolio berjalan (tertimbang nilai kontrak)</p>
-          <div className="mt-1 flex items-baseline gap-3">
-            <span className="font-display text-2xl font-semibold tabular-nums">{formatPercent(k.actual)}</span>
-            <span className="text-sm text-slate-500">rencana {formatPercent(k.planned)}</span>
+      {/* the one table */}
+      <Card>
+        <div className="flex flex-col gap-3 border-b border-line px-4 py-3 lg:flex-row lg:items-center dark:border-slate-800">
+          <div className="flex flex-wrap gap-1.5">
+            {CHIPS.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                onClick={() => setHealth(c.key)}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-[12.5px] font-semibold transition-colors",
+                  health === c.key ? "border-ink bg-ink text-white dark:border-slate-100 dark:bg-slate-100 dark:text-ink" : "border-line text-slate-500 hover:text-ink dark:border-slate-700"
+                )}
+              >
+                {c.label} {chipCount(c.key)}
+              </button>
+            ))}
           </div>
-          <ProgressBar value={k.actual ?? 0} marker={k.planned ?? undefined} className="mt-2" />
+          <div className="flex flex-1 flex-wrap items-center gap-2 lg:flex-nowrap lg:justify-end">
+            <div className="w-full sm:w-56">
+              <SearchPopoverButton value={q} onChange={setQ} label="Cari project" placeholder="Nama/nomor project, klien, atau PIC" />
+            </div>
+            <div className="w-36 shrink-0">
+              <Select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
+                <option value="ONGOING">Berjalan</option>
+                <option value="COMPLETED">Selesai</option>
+                <option value="CANCELLED">Dibatalkan</option>
+                <option value="">Semua status</option>
+              </Select>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setMore((v) => !v)} aria-expanded={more}>
+              <SlidersHorizontal className="h-4 w-4" />
+              Filter{categoryId || pic ? " (aktif)" : ""}
+            </Button>
+            <a href={exportHref}>
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4" />
+                Excel
+              </Button>
+            </a>
+          </div>
         </div>
-        <Stat label="Kritis / Waspada" tone={k.kritis ? "bad" : k.waspada ? "warn" : "good"} value={`${k.kritis} / ${k.waspada}`} hint={`${k.overdue} lewat target · ${k.stale} progres tidak diperbarui`} />
-        <Stat label="Tertagih / Terbayar" value={formatRupiah(k.invoiced, true)} hint={`Dibayar ${formatRupiah(k.paid, true)}${k.contract ? ` (${Math.round((k.paid / k.contract) * 100)}% kontrak)` : ""}`} />
-        <Stat label="Piutang" tone={k.overdueInvoices ? "bad" : "default"} value={formatRupiah(k.outstanding, true)} hint={k.overdueInvoices ? `${k.overdueInvoices} invoice lewat jatuh tempo (${formatRupiah(k.overdueAmount, true)})` : "tidak ada yang lewat jatuh tempo"} />
-        <Stat label="Biaya vs anggaran" tone={k.budget && k.cost > k.budget ? "bad" : "default"} value={formatRupiah(k.cost, true)} hint={k.budget ? `dari anggaran ${formatRupiah(k.budget, true)}` : "anggaran belum diisi"} />
-      </div>
-
-      {/* Charts */}
-      {byCategory.length > 0 && (
-        <div className="grid lg:grid-cols-2 gap-5">
-          <Card>
-            <CardHeader>
-              <CardTitle>Kondisi Project per Kategori</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={byCategory} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748B" }} axisLine={{ stroke: "#E2E8F0" }} tickLine={false} />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} />
-                    <Tooltip cursor={{ fill: "#F1F5F9" }} contentStyle={tooltipStyle} />
-                    <Legend wrapperStyle={{ fontSize: 12 }} />
-                    {HEALTH_ORDER.filter((h) => byCategory.some((c) => c[h] > 0)).map((h) => (
-                      <Bar key={h} dataKey={h} name={HEALTH_LABEL[h]} stackId="h" fill={HEALTH_COLOR[h]} maxBarSize={40} />
-                    ))}
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Kontrak, Tagihan & Pembayaran per Kategori (Rp juta)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={byCategory} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748B" }} axisLine={{ stroke: "#E2E8F0" }} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} tickFormatter={(v: number) => v.toLocaleString("id-ID")} />
-                    <Tooltip
-                      cursor={{ fill: "#F1F5F9" }}
-                      contentStyle={tooltipStyle}
-                      formatter={(v) => `Rp ${Number(v).toLocaleString("id-ID", { maximumFractionDigits: 1 })} jt`}
-                    />
-                    <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="kontrak" name="Kontrak" fill="#CBD5E1" radius={[3, 3, 0, 0]} maxBarSize={28} />
-                    <Bar dataKey="ditagih" name="Ditagih" fill="#3B82F6" radius={[3, 3, 0, 0]} maxBarSize={28} />
-                    <Bar dataKey="dibayar" name="Dibayar" fill="#15803D" radius={[3, 3, 0, 0]} maxBarSize={28} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+        {more && (
+          <div className="flex flex-wrap gap-2 border-b border-line bg-slate-50/60 px-4 py-3 dark:border-slate-800 dark:bg-slate-800/30">
+            <div className="w-48">
+            <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} aria-label="Kategori">
+              <option value="">Semua kategori</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </Select>
+            </div>
+            <div className="w-48">
+            <Select value={pic} onChange={(e) => setPic(e.target.value)} aria-label="PIC">
+              <option value="">Semua PIC</option>
+              {pics.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </Select>
+            </div>
+          </div>
+        )}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-line bg-slate-50/70 text-left text-[12px] text-slate-500 dark:border-slate-800 dark:bg-slate-800/30">
+                <SortTh label="Project" k="name" className="pl-5" />
+                <SortTh label="Progres" k="progress">
+                  <span className="block font-normal">realisasi / rencana</span>
+                </SortTh>
+                <th className="px-4 py-2.5 font-semibold">Kondisi</th>
+                <SortTh label="Margin" k="margin">
+                  <span className="block font-normal">prakiraan / target</span>
+                </SortTh>
+                <SortTh label="Target selesai" k="end" />
+                <SortTh label="Status" k="severity" className="pr-5" />
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-5 py-12 text-center text-slate-400">
+                    Tidak ada project yang cocok dengan filter.
+                  </td>
+                </tr>
+              )}
+              {sorted.map((r) => {
+                const s = r.summary;
+                const m = r.margin;
+                const ongoing = r.status === "ONGOING";
+                const marginShown = m.hasBudget && m.hasCost && m.forecastMarginPct !== null;
+                return (
+                  <tr key={r.id} className="border-b border-line/70 last:border-0 hover:bg-slate-50/70 dark:border-slate-800/60 dark:hover:bg-slate-800/30">
+                    <td className="min-w-[16rem] py-3.5 pl-5 pr-4">
+                      <Link href={`/projects/${r.id}`} className="font-semibold text-ink hover:text-accent dark:text-slate-100">
+                        {r.projectName}
+                      </Link>
+                      <p className="mt-0.5 text-[12.5px] text-slate-500">
+                        {r.clientName}
+                        {s.contractValue ? ` · ${formatRupiah(s.contractValue, true)}` : ""} · {r.pic}
+                      </p>
+                    </td>
+                    <td className="min-w-[10rem] px-4 py-3.5">
+                      <p className="text-[13px]">
+                        <span className="font-bold text-accent">{formatPercent(s.actualPercent)}</span>
+                        {ongoing && <span className="text-slate-500"> / {formatPercent(s.plannedPercent)}</span>}
+                      </p>
+                      <ProgressBar value={s.actualPercent} marker={ongoing ? s.plannedPercent : undefined} tone={ongoing ? HEALTH_TONE[s.health] : "default"} className="mt-1.5 max-w-[160px]" />
+                      {ongoing && s.isStale && <p className="mt-1 text-[11.5px] font-medium text-signal-soon">Data belum diperbarui {s.daysSinceUpdate} hari</p>}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <ConditionRibbon signals={m.signals} />
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-[13px]" title={m.belowTarget ? m.cause : undefined}>
+                      {marginShown ? (
+                        <>
+                          <span className={cn("font-bold", m.signals.margin === "bad" ? "text-signal-expired" : m.signals.margin === "warn" ? "text-signal-soon" : "text-signal-active")}>
+                            {formatPercent(m.forecastMarginPct)}
+                          </span>
+                          <span className="text-slate-500"> / {formatPercent(m.targetMarginPct)}</span>
+                        </>
+                      ) : (
+                        <span className="text-[12px] text-slate-400">{m.hasBudget ? "Belum ada biaya" : "Belum ada RAB"}</span>
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-[13px]">
+                      {shortDate(new Date(r.targetEndDate).getTime())}
+                      {ongoing && (
+                        <span className={cn("block text-[12px]", s.daysRemaining < 0 ? "font-semibold text-signal-expired" : "text-slate-500")}>
+                          {s.daysRemaining < 0 ? `terlambat ${Math.abs(s.daysRemaining)} hari` : `${s.daysRemaining} hari lagi`}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3.5 pl-4 pr-5">
+                      <span className={cn("stamp-badge", HEALTH_BADGE_CLASS[s.health])}>
+                        <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                        {HEALTH_LABEL[s.health]}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-      )}
+        <div className="flex flex-wrap gap-x-5 gap-y-1 rounded-b-lg border-t border-line bg-slate-50/70 px-5 py-2.5 text-[12px] text-slate-500 dark:border-slate-800 dark:bg-slate-800/30">
+          <span>
+            <strong className="text-ink dark:text-slate-200">Kondisi:</strong> W = Waktu, B = Biaya, L = Lingkup, M = Margin
+          </span>
+          <span>Garis tegak pada bar = posisi rencana</span>
+          <span>Margin = prakiraan margin akhir dibandingkan target project masing-masing</span>
+        </div>
+      </Card>
 
-      {/* Attention */}
-      {attention.length > 0 && (
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle>Perlu Perhatian ({attention.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <ul className="divide-y divide-slate-100 dark:divide-slate-800 max-h-72 overflow-y-auto">
-              {attention.map((a, i) => (
-                <li key={i} className="px-5 py-2.5 text-sm flex items-start gap-2">
-                  <span className={cn("mt-1.5 h-2 w-2 rounded-full shrink-0", a.tone === "bad" ? "bg-signal-expired" : "bg-signal-soon")} />
+          <div className="px-5 pt-4">
+            <CardTitle>Perlu tindakan</CardTitle>
+            <p className="mt-0.5 text-[12.5px] text-slate-500">{attention.length ? `${attention.length} hal dari project yang ditampilkan` : "Tidak ada hal yang perlu ditindaklanjuti"}</p>
+          </div>
+          <CardContent className="pt-2">
+            <ul className="divide-y divide-line dark:divide-slate-800">
+              {attentionShown.map((a, i) => (
+                <li key={i} className="flex items-start gap-2.5 py-2.5 text-[13.5px]">
+                  <span className={cn("mt-[7px] h-2 w-2 shrink-0 rounded-full", a.tone === "bad" ? "bg-signal-expiredBar" : "bg-signal-soonBar")} />
                   <span>
-                    <Link href={`/projects/${a.id}`} className="font-medium text-ink dark:text-slate-100 hover:text-accent">
+                    <Link href={`/projects/${a.id}`} className="font-semibold text-ink hover:text-accent dark:text-slate-100">
                       {a.name}
-                    </Link>{" "}
-                    <span className="text-slate-600 dark:text-slate-300">— {a.text}</span>
+                    </Link>
+                    <span className="text-slate-600 dark:text-slate-300">: {a.text}</span>
                   </span>
                 </li>
               ))}
             </ul>
+            {attention.length > 6 && (
+              <button type="button" onClick={() => setShowAllAttention((v) => !v)} className="mt-2 text-[13px] font-semibold text-accent hover:underline">
+                {showAllAttention ? "Tampilkan lebih sedikit" : `Tampilkan semua (${attention.length})`}
+              </button>
+            )}
           </CardContent>
         </Card>
-      )}
 
-      {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Semua Project ({sorted.length})</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs tracking-wide text-slate-500 border-b border-slate-100 dark:border-slate-800">
-                  <SortTh label="Project" k="name" className="px-5" />
-                  <SortTh label="Progres" k="actual" />
-                  <SortTh label="Deviasi" k="deviation" className="text-right" />
-                  <th className="px-3 py-2.5 font-medium uppercase text-right">SPI</th>
-                  <SortTh label="Sisa hari" k="daysRemaining" className="text-right" />
-                  <SortTh label="Kontrak" k="contract" className="text-right" />
-                  <th className="px-3 py-2.5 font-medium uppercase">Tagih / Bayar</th>
-                  <SortTh label="Piutang" k="outstanding" className="text-right" />
-                  <th className="px-3 py-2.5 font-medium uppercase">Kondisi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.length === 0 && (
-                  <tr>
-                    <td colSpan={9} className="px-5 py-10 text-center text-slate-400">
-                      Tidak ada project yang cocok dengan filter.
-                    </td>
-                  </tr>
-                )}
-                {sorted.map((r) => {
-                  const s = r.summary;
-                  const ongoing = r.status === "ONGOING";
-                  const billPct = s.contractValue ? (s.invoiced / s.contractValue) * 100 : null;
-                  const paidPct = s.contractValue ? (s.paid / s.contractValue) * 100 : null;
-                  return (
-                    <tr key={r.id} className="border-b border-slate-50 dark:border-slate-800/60 hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                      <td className="px-5 py-3 min-w-[14rem]">
-                        <Link href={`/projects/${r.id}`} className="font-medium text-ink dark:text-slate-100 hover:text-accent">
-                          {r.projectName}
-                        </Link>
-                        <p className="text-xs text-slate-400">
-                          <span className="font-mono">{r.projectNumber}</span> · {r.categoryName} · {r.pic}
-                        </p>
-                      </td>
-                      <td className="px-3 py-3 min-w-[8rem]">
-                        <p className="text-xs tabular-nums mb-1">
-                          {formatPercent(s.actualPercent)}
-                          {ongoing && <span className="text-slate-400"> / {formatPercent(s.plannedPercent, 0)}</span>}
-                        </p>
-                        <ProgressBar value={s.actualPercent} marker={ongoing ? s.plannedPercent : undefined} />
-                      </td>
-                      <td
-                        className={cn(
-                          "px-3 py-3 text-right tabular-nums",
-                          ongoing && s.health === "KRITIS" && "text-signal-expired font-medium",
-                          ongoing && s.health === "WASPADA" && "text-signal-soon font-medium"
-                        )}
-                      >
-                        {ongoing ? `${s.deviation > 0 ? "+" : ""}${s.deviation.toLocaleString("id-ID")}` : "-"}
-                      </td>
-                      <td className="px-3 py-3 text-right tabular-nums">{ongoing && s.spi !== null ? s.spi.toLocaleString("id-ID") : "-"}</td>
-                      <td className={cn("px-3 py-3 text-right tabular-nums whitespace-nowrap", ongoing && s.daysRemaining < 0 && "text-signal-expired")}>
-                        {ongoing ? s.daysRemaining : "-"}
-                        <span className="block text-[11px] text-slate-400">{shortDate(new Date(r.targetEndDate).getTime())}</span>
-                      </td>
-                      <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{formatRupiah(s.contractValue || null, true)}</td>
-                      <td className="px-3 py-3 text-xs tabular-nums whitespace-nowrap text-slate-600 dark:text-slate-300">
-                        {billPct === null ? "-" : `${Math.round(billPct)}% / ${Math.round(paidPct ?? 0)}%`}
-                      </td>
-                      <td className={cn("px-3 py-3 text-right tabular-nums whitespace-nowrap", s.overdueInvoiceCount > 0 && "text-signal-expired font-medium")}>
-                        {s.outstanding ? formatRupiah(s.outstanding, true) : "-"}
-                      </td>
-                      <td className="px-3 py-3">
-                        <span className={cn("stamp-badge", HEALTH_BADGE_CLASS[s.health])}>{HEALTH_LABEL[s.health]}</span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        <Card>
+          <div className="px-5 pt-4">
+            <CardTitle>Proyeksi PAD per bulan</CardTitle>
+            <p className="mt-0.5 text-[12.5px] text-slate-500">Rp juta. Merah = tertunggak (lewat tanggalnya, belum diterima); abu-abu = belum terjadwal.</p>
           </div>
-        </CardContent>
-      </Card>
+          <CardContent>
+            {padBuckets.length === 0 ? (
+              <p className="py-12 text-center text-sm text-slate-400">Belum ada PAD.</p>
+            ) : (
+              <div className="h-60">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={padBuckets} margin={{ top: 8, right: 4, left: -6, bottom: 0 }}>
+                    <CartesianGrid stroke="#E9EDF2" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#5B6B7F" }} axisLine={{ stroke: "#E3E8EF" }} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: "#5B6B7F" }} axisLine={false} tickLine={false} tickFormatter={(v: number) => v.toLocaleString("id-ID")} />
+                    <Tooltip cursor={{ fill: "#F2F4F7" }} contentStyle={tooltipStyle} formatter={(v) => `Rp ${Number(v).toLocaleString("id-ID", { maximumFractionDigits: 1 })} jt`} />
+                    <Bar dataKey="juta" name="PAD" radius={[4, 4, 0, 0]} maxBarSize={34}>
+                      {padBuckets.map((b) => (
+                        <Cell key={b.key} fill={b.kind === "OVERDUE" ? "#C2362F" : b.kind === "UNSCHEDULED" ? "#B8C3D0" : "#1671B8"} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function Headline({ label, value, sub, tone = "default" }: { label: string; value: string; sub: string; tone?: Tone }) {
+  return (
+    <div className="rounded-lg border border-line bg-white px-4 py-3.5 sm:px-5 sm:py-4 dark:border-slate-700 dark:bg-slate-900">
+      <p className="text-[13px] font-medium text-slate-500">{label}</p>
+      <p
+        className={cn(
+          "mt-1 text-[19px] font-bold leading-tight sm:text-[24px]",
+          tone === "bad" ? "text-signal-expired" : tone === "warn" ? "text-signal-soon" : "text-ink dark:text-slate-100"
+        )}
+      >
+        {value}
+      </p>
+      <p className="mt-1 text-[12.5px] text-slate-500">{sub}</p>
     </div>
   );
 }

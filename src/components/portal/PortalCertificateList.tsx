@@ -47,7 +47,7 @@ export function PortalCertificateList({ certificates }: { certificates: PortalCe
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-slate-500 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40">
+              <tr className="text-left text-xs text-slate-500 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40">
                 <th className="px-4 py-3 font-medium">Nomor</th>
                 <th className="px-4 py-3 font-medium">Nama Sertifikat</th>
                 <th className="px-4 py-3 font-medium">Kategori</th>

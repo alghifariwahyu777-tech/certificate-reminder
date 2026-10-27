@@ -68,6 +68,50 @@ Keduanya diterapkan otomatis oleh `prisma migrate deploy` saat build/deploy. Ke 
 `npx prisma migrate dev --name <nama>` untuk setiap perubahan skema (jangan `db push`) agar folder
 migration tetap lengkap.
 
+### Project Monitoring — Margin & Triple Constraint (Oktober 2026)
+
+- **Tab "Margin & Triple Constraint"** di detail project: kartu Waktu (SPI), Biaya (CPI), Lingkup
+  (perubahan nilai kontrak & pekerjaan tambahan), dan Margin; tiga angka margin — **rencana**
+  (baseline), **aktual saat ini** (nilai pekerjaan selesai − biaya keluar), **prakiraan akhir**
+  (nilai kontrak − prakiraan biaya akhir/EAC) — plus posisi kas (terpisah, bukan margin).
+  Grafik: kurva biaya & nilai pekerjaan (PV/EV/AC + prakiraan), **jembatan margin** (penyebab
+  margin naik/turun), tren margin mingguan, dan kategori biaya yang melebihi RAB.
+- **Baseline**: nilai kontrak, RAB, dan target selesai awal dikunci (tombol di tab Biaya, atau
+  otomatis saat RAB pertama kali diimpor). Addendum/revisi RAB sesudahnya dibandingkan terhadap baseline.
+- **Penyebab biaya** (opsional) pada setiap realisasi biaya: Normal / Akibat keterlambatan /
+  Pekerjaan tambahan — dasar jembatan margin. Prakiraan biaya sisa memakai laju biaya rutin saja.
+- **Import Excel biaya & RAB** (daftar project & tab Biaya): template diunduh dari aplikasi; satu file
+  boleh berisi banyak project; kolom dikenali dari judulnya (urutan bebas); pratinjau sebelum
+  disimpan; baris yang sudah pernah diimpor otomatis dilewati.
+- Dashboard Realisasi, export Excel, dan laporan mingguan (PDF & email) memuat margin aktual/
+  prakiraan dan penyebabnya; project dengan margin tergerus ≥ ambang (Settings, default 10 poin)
+  masuk "Hal yang memerlukan keputusan" beserta usulan tindak lanjut.
+- Migration: `20261023100000_project_margin_baseline`.
+
+### Project Monitoring — PIC, Laporan Mingguan, SDB, PAD (Oktober 2026)
+
+- **Update progres oleh PIC** — dua cara, form yang sama (±2 menit): (1) **link di email** tanpa
+  login, dikirim tiap minggu ke setiap PIC (satu email berisi semua project berjalannya, link
+  berlaku 21 hari dan otomatis tidak berlaku bila PIC project diganti); (2) **akun PIC** — buat user
+  dengan role *PIC Project* dan email yang **sama dengan Email PIC di project**; setelah login ia
+  hanya melihat `/pic` (project miliknya), tidak bisa membuka halaman lain.
+- **Riwayat mingguan** — job harian menyimpan potret progres/deviasi/keuangan per minggu
+  (`ProjectSnapshot`). Tampil sebagai grafik di detail project dan tren ▲▼ di dashboard & laporan.
+- **Penutupan project** — tab *Penutupan*: tanggal BAPP, BAST, laporan final, nilai kepuasan klien
+  (1–5), lessons learned, dokumen. Project selesai yang belum lengkap ditandai di dashboard & laporan.
+- **Mapping personil (SDB)** — tab *Tim* di tiap project (pilih personil + peran) dan halaman
+  `/projects/personnel`: beban tiap orang (jumlah project aktif) dan sertifikasi yang habis
+  sebelum penugasannya selesai.
+- **PAD (Pendapatan yang Akan Diterima)** = nilai kontrak yang belum diterima (piutang + belum
+  ditagih), diproyeksikan per bulan dari jatuh tempo invoice & rencana tagih termin.
+- **Laporan mingguan manajemen** — email ringkas (headline, 4 angka utama, maks. 5 hal yang perlu
+  keputusan, sertifikasi & kalibrasi mendesak, project kritis/waspada) + **lampiran PDF** berisi
+  detail lengkap. Penerima & hari kirim diatur di **Settings → Laporan Mingguan & Update PIC**;
+  pratinjau di `/projects/weekly-report`.
+- Semua pengiriman mingguan berjalan dari job harian `/api/reminders/run` (Vercel Cron, ±08.00 WIB)
+  pada hari yang dipilih dan hanya sekali per minggu (`MailingLog`).
+- Migration: `20261022100000_monitoring_pic_report_sdb`.
+
 ### Penyempurnaan Terbaru
 - **Data riil Cabang Cilacap diimpor ke struktur sistem** lewat dua script satu-kali di
   `prisma/import-competency.ts` dan `prisma/import-equipment-calibration.ts` (jalankan dengan

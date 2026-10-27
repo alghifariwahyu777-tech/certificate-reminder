@@ -9,9 +9,11 @@ interface ModalProps {
   title: string;
   children: ReactNode;
   maxWidth?: string;
+  /** "top" pins the dialog near the top of the screen — used by search so the typed term stays visible above an on-screen keyboard. */
+  position?: "center" | "top";
 }
 
-export function Modal({ isOpen, onClose, title, children, maxWidth = "max-w-md" }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, maxWidth = "max-w-md", position = "center" }: ModalProps) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -24,18 +26,20 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = "max-w-md" 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-[2px] p-4"
+      className={`fixed inset-0 z-50 flex justify-center bg-ink/40 backdrop-blur-[2px] p-4 ${
+        position === "top" ? "items-start pt-[12vh] sm:pt-[15vh]" : "items-center"
+      }`}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={title}
     >
       <div
-        className={`w-full ${maxWidth} rounded-md bg-white shadow-panel border border-slate-200 dark:bg-slate-900 dark:border-slate-700`}
+        className={`w-full ${maxWidth} rounded-lg bg-white shadow-panel border border-line dark:bg-slate-900 dark:border-slate-700`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
-          <h2 className="font-display font-semibold text-ink dark:text-slate-100">{title}</h2>
+          <h2 className="font-bold text-[15px] text-ink dark:text-slate-100">{title}</h2>
           <button
             onClick={onClose}
             aria-label="Tutup"

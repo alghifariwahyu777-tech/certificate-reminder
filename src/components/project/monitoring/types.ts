@@ -1,4 +1,7 @@
-import type { MonitoringInput, MonitoringSummary, MonitoringThresholds } from "@/lib/project-monitoring-shared";
+import type { RabData, RabRevisionSummary } from "@/lib/project-rab-import";
+import type { MonitoringInput, MonitoringSummary, MonitoringThresholds, PadBucket } from "@/lib/project-monitoring-shared";
+import type { CertWarning } from "@/lib/personnel-mapping";
+import type { CostCurveRow, MarginAnalysis } from "@/lib/project-margin";
 
 /** Dates are "YYYY-MM-DD" strings (date-only), amounts are plain numbers. */
 export type MilestoneDTO = {
@@ -58,6 +61,8 @@ export type ExpenseDTO = {
   category: string;
   description: string;
   amount: number;
+  cause: string;
+  referenceNo: string | null;
   createdBy: string | null;
   fileUrl: string | null;
   driveFileId: string | null;
@@ -97,4 +102,49 @@ export type ProjectMonitoringDTO = {
   budgetItems: BudgetItemDTO[];
   expenses: ExpenseDTO[];
   issues: IssueDTO[];
+  // batch 2
+  trend: number | null;
+  padSchedule: PadBucket[];
+  snapshots: { weekKey: string; actualPercent: number; plannedPercent: number; deviation: number }[];
+  closeout: CloseoutDTO | null;
+  team: TeamMemberDTO[];
+  employees: { id: string; name: string; nip: string | null; position: string | null }[];
+  // margin / triple constraint
+  margin: MarginAnalysis;
+  costCurve: CostCurveRow[];
+  categorySuggestions: string[];
+  baseline: { lockedAt: string; lockedBy: string | null; contractValue: number | null; budget: number | null; endDate: string | null } | null;
+  marginHistory: { weekKey: string; actualMarginPct: number | null; forecastMarginPct: number | null; plannedMarginPct: number | null }[];
+  /** RAB Sucofindo: every uploaded version (newest first) and the full content of the current one */
+  rab: { revisions: RabRevisionSummary[]; latest: RabData | null };
+  targetMarginPct: number | null;
+};
+
+export type CloseoutDTO = {
+  bappDate: string | null;
+  bastDate: string | null;
+  finalReportDate: string | null;
+  satisfaction: number | null;
+  lessonsLearned: string | null;
+  notes: string | null;
+  fileUrl: string | null;
+  driveFileId: string | null;
+  fileMimeType: string | null;
+  updatedBy: string | null;
+  updatedAt: string;
+};
+
+export type TeamMemberDTO = {
+  id: string;
+  employeeId: string;
+  name: string;
+  nip: string | null;
+  position: string | null;
+  role: string;
+  startDate: string | null;
+  endDate: string | null;
+  notes: string | null;
+  /** number of running projects this person is assigned to (SDB load) */
+  activeProjects: number;
+  warnings: CertWarning[];
 };

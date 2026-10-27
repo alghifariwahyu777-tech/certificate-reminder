@@ -3,6 +3,12 @@ import { getSession } from "@/lib/auth";
 import { runReminderCheck } from "@/lib/reminder";
 import { logAudit } from "@/lib/audit";
 
+// The daily run now also renders the weekly report PDF (pdfkit) and sends
+// the weekly emails — needs Node.js and more than the 10s serverless default
+// (60s is the maximum on the Vercel Hobby plan).
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 /**
  * /api/reminders/run — GET and POST both run the same check.
  *

@@ -1,92 +1,40 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Pencil, Plus, Wallet } from "lucide-react";
+import { useState } from "react";
+import { Lock, Pencil, Plus, Wallet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Select } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { PROJECT_COST_CATEGORIES, formatPercent, formatRupiah } from "@/lib/project-monitoring-shared";
-import { cn } from "@/lib/utils";
-import { DeleteButton, EmptyState, FileLink, FileUploadField, FormError, ProgressBar, Stat, fmtDate, todayInput, useMonitoringApi, EMPTY_FILE } from "./shared";
+import { DeleteButton, EmptyState, FileLink, FileUploadField, FormError, fmtDate, todayInput, useMonitoringApi, EMPTY_FILE } from "./shared";
 import type { BudgetItemDTO, ExpenseDTO, ProjectMonitoringDTO } from "./types";
+import { CostImportDialog } from "./CostImportDialog";
+import { RabCard } from "./RabPanel";
+import { CAUSE_LABEL } from "@/lib/project-margin";
 
 export function CostPanel({ data }: { data: ProjectMonitoringDTO }) {
-  const sm = data.summary;
-  const byCategory = useMemo(() => {
-    const map = new Map<string, { budget: number; actual: number }>();
-    for (const b of data.budgetItems) {
-      const r = map.get(b.category) || { budget: 0, actual: 0 };
-      r.budget += b.amount;
-      map.set(b.category, r);
-    }
-    for (const e of data.expenses) {
-      const r = map.get(e.category) || { budget: 0, actual: 0 };
-      r.actual += e.amount;
-      map.set(e.category, r);
-    }
-    return [...map.entries()].sort((a, b) => b[1].budget - a[1].budget);
-  }, [data.budgetItems, data.expenses]);
-
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Stat label="Anggaran (RAB)" value={formatRupiah(sm.budgetTotal, true)} />
-        <Stat
-          label="Realisasi biaya"
-          tone={sm.budgetUsedPercent !== null && sm.budgetUsedPercent > 100 ? "bad" : "default"}
-          value={formatRupiah(sm.costActual, true)}
-          hint={sm.budgetUsedPercent !== null ? `${formatPercent(sm.budgetUsedPercent)} anggaran terpakai` : undefined}
-        />
-        <Stat
-          label="CPI"
-          tone={sm.cpi === null ? "default" : sm.cpi >= 1 ? "good" : sm.cpi >= 0.9 ? "warn" : "bad"}
-          value={sm.cpi === null ? "-" : sm.cpi.toLocaleString("id-ID")}
-          hint="(progres × anggaran) ÷ biaya aktual; ≥ 1 = hemat"
-        />
-        <Stat
-          label="Estimasi margin"
-          tone={sm.plannedMargin !== null && sm.plannedMargin < 0 ? "bad" : "default"}
-          value={formatRupiah(sm.plannedMargin, true)}
-          hint={sm.plannedMargin !== null && sm.contractValue ? `${formatPercent((sm.plannedMargin / sm.contractValue) * 100)} dari kontrak (rencana)` : "butuh nilai kontrak & anggaran"}
-        />
-      </div>
-
-      {byCategory.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Anggaran vs Realisasi per Kategori</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {byCategory.map(([cat, v]) => {
-              const pct = v.budget > 0 ? (v.actual / v.budget) * 100 : null;
-              return (
-                <div key={cat}>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-ink dark:text-slate-100">{cat}</span>
-                    <span className={cn("tabular-nums text-slate-600 dark:text-slate-300", pct !== null && pct > 100 && "text-signal-expired font-medium")}>
-                      {formatRupiah(v.actual, true)} / {v.budget ? formatRupiah(v.budget, true) : "tanpa anggaran"}
-                    </span>
-                  </div>
-                  <ProgressBar value={pct ?? 100} className="mt-1.5" />
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
-
-      <BudgetCard data={data} />
+    <div className="space-y-4">
+      <RabCard data={data} />
+      <datalist id="cost-categories">
+        {data.categorySuggestions.map((c) => (
+          <option key={c} value={c} />
+        ))}
+      </datalist>
       <ExpenseCard data={data} />
+      <details className="group rounded-lg border border-line bg-white dark:border-slate-700 dark:bg-slate-900">
+        <summary className="cursor-pointer select-none px-5 py-3.5 text-[13.5px] font-semibold text-slate-600 hover:text-ink dark:text-slate-300">
+          Pengaturan lanjutan: baseline dan anggaran manual
+        </summary>
+        <div className="space-y-4 border-t border-line px-4 py-4 dark:border-slate-800">
+          <BaselineCard data={data} />
+          <BudgetCard data={data} />
+        </div>
+      </details>
     </div>
   );
 }
-
-const categoryOptions = (current?: string) => {
-  const list: string[] = [...PROJECT_COST_CATEGORIES];
-  if (current && !list.includes(current)) list.push(current);
-  return list;
-};
 
 function BudgetCard({ data }: { data: ProjectMonitoringDTO }) {
   const { send, busy } = useMonitoringApi();
@@ -113,11 +61,11 @@ function BudgetCard({ data }: { data: ProjectMonitoringDTO }) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-4">
-        <CardTitle>Anggaran Biaya (RAB)</CardTitle>
+        <CardTitle>Anggaran manual</CardTitle>
         {data.canManage && (
           <Button size="sm" variant="outline" onClick={() => openForm(null)}>
             <Plus className="h-4 w-4" />
-            Tambah Anggaran
+            Tambah anggaran
           </Button>
         )}
       </CardHeader>
@@ -151,17 +99,11 @@ function BudgetCard({ data }: { data: ProjectMonitoringDTO }) {
         )}
       </CardContent>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit Anggaran" : "Tambah Anggaran"}>
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit Anggaran" : "Tambah anggaran"}>
         <div className="space-y-4">
           <div>
             <Label htmlFor="bg-cat">Kategori biaya</Label>
-            <Select id="bg-cat" value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}>
-              {categoryOptions(form.category).map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </Select>
+            <Input id="bg-cat" list="cost-categories" value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} placeholder="Pilih atau ketik kategori baru" />
           </div>
           <div>
             <Label htmlFor="bg-desc">Keterangan</Label>
@@ -186,7 +128,17 @@ function BudgetCard({ data }: { data: ProjectMonitoringDTO }) {
   );
 }
 
-type ExpenseForm = { expenseDate: string; category: string; description: string; amount: string; fileUrl: string | null; driveFileId: string | null; fileMimeType: string | null };
+type ExpenseForm = {
+  expenseDate: string;
+  category: string;
+  description: string;
+  amount: string;
+  cause: string;
+  referenceNo: string;
+  fileUrl: string | null;
+  driveFileId: string | null;
+  fileMimeType: string | null;
+};
 
 function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
   const { send, busy } = useMonitoringApi();
@@ -200,8 +152,18 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
     setEditing(e);
     setForm(
       e
-        ? { expenseDate: e.expenseDate, category: e.category, description: e.description, amount: String(e.amount), fileUrl: e.fileUrl, driveFileId: e.driveFileId, fileMimeType: e.fileMimeType }
-        : { expenseDate: todayInput(), category: PROJECT_COST_CATEGORIES[0], description: "", amount: "", ...EMPTY_FILE }
+        ? {
+            expenseDate: e.expenseDate,
+            category: e.category,
+            description: e.description,
+            amount: String(e.amount),
+            cause: e.cause,
+            referenceNo: e.referenceNo || "",
+            fileUrl: e.fileUrl,
+            driveFileId: e.driveFileId,
+            fileMimeType: e.fileMimeType,
+          }
+        : { expenseDate: todayInput(), category: PROJECT_COST_CATEGORIES[0], description: "", amount: "", cause: "NORMAL", referenceNo: "", ...EMPTY_FILE }
     );
     setError(null);
     setOpen(true);
@@ -209,7 +171,7 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
 
   async function save() {
     if (!form) return;
-    if (!form.description.trim() || form.amount === "") return setError("Keterangan dan nominal wajib diisi.");
+    if (!form.category.trim() || !form.description.trim() || form.amount === "") return setError("Kategori, keterangan, dan nominal wajib diisi.");
     const err = editing ? await send("PATCH", `${base}/${editing.id}`, form, "Realisasi biaya diperbarui.") : await send("POST", base, form, "Realisasi biaya dicatat.");
     if (err) setError(err);
     else setOpen(false);
@@ -220,12 +182,22 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-4">
-        <CardTitle>Realisasi Biaya</CardTitle>
+        <div>
+          <CardTitle>Realisasi biaya</CardTitle>
+          <p className="mt-0.5 text-[12.5px] text-slate-500">
+            {data.expenses.length
+              ? `${data.expenses.length} transaksi, total ${formatRupiah(data.summary.costActual, true)}`
+              : "Catat satu per satu atau impor dari Excel keuangan (kolom Akun otomatis dicocokkan dengan RAB)."}
+          </p>
+        </div>
         {data.canManage && (
-          <Button size="sm" onClick={() => openForm(null)}>
-            <Plus className="h-4 w-4" />
-            Catat Biaya
-          </Button>
+          <div className="flex flex-wrap justify-end gap-2">
+            <CostImportDialog projectId={data.projectId} label="Impor Excel" />
+            <Button size="sm" onClick={() => openForm(null)}>
+              <Plus className="h-4 w-4" />
+              Catat biaya
+            </Button>
+          </div>
         )}
       </CardHeader>
       <CardContent className="p-0">
@@ -235,7 +207,7 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-slate-500 border-b border-slate-100 dark:border-slate-800">
+                <tr className="text-left text-xs text-slate-500 border-b border-slate-100 dark:border-slate-800">
                   <th className="px-5 py-2.5 font-medium">Tanggal</th>
                   <th className="px-3 py-2.5 font-medium">Keterangan</th>
                   <th className="px-3 py-2.5 font-medium">Kategori</th>
@@ -253,7 +225,14 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
                         <FileLink url={e.fileUrl} label="Bukti" />
                       </div>
                     </td>
-                    <td className="px-3 py-2.5 text-slate-500">{e.category}</td>
+                    <td className="px-3 py-2.5 text-slate-500">
+                      {e.category}
+                      {e.cause !== "NORMAL" && (
+                        <span className="block mt-0.5">
+                          <span className="stamp-badge bg-signal-soonBg text-signal-soon border-signal-soonBorder">{CAUSE_LABEL[e.cause]}</span>
+                        </span>
+                      )}
+                    </td>
                     <td className="px-3 py-2.5 text-right tabular-nums whitespace-nowrap">{formatRupiah(e.amount)}</td>
                     {data.canManage && (
                       <td className="px-5 py-2.5">
@@ -288,13 +267,16 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
             </div>
             <div>
               <Label htmlFor="ex-cat">Kategori biaya</Label>
-              <Select id="ex-cat" value={form.category} onChange={(e) => set("category", e.target.value)}>
-                {categoryOptions(form.category).map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
+              <Input id="ex-cat" list="cost-categories" value={form.category} onChange={(e) => set("category", e.target.value)} placeholder="Pilih atau ketik kategori baru" />
+            </div>
+            <div>
+              <Label htmlFor="ex-cause">Penyebab biaya</Label>
+              <Select id="ex-cause" value={form.cause} onChange={(e) => set("cause", e.target.value)}>
+                <option value="NORMAL">Normal (sesuai rencana kerja)</option>
+                <option value="DELAY">Akibat keterlambatan</option>
+                <option value="EXTRA_SCOPE">Pekerjaan tambahan (di luar kontrak awal)</option>
               </Select>
+              <p className="mt-1 text-xs text-slate-500">Dipakai untuk menjelaskan penyebab margin tergerus.</p>
             </div>
             <div>
               <Label htmlFor="ex-desc">Keterangan</Label>
@@ -316,6 +298,89 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
             </div>
           </div>
         )}
+      </Modal>
+    </Card>
+  );
+}
+
+function BaselineCard({ data }: { data: ProjectMonitoringDTO }) {
+  const { send, busy } = useMonitoringApi();
+  const [confirm, setConfirm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const b = data.baseline;
+  const m = data.margin;
+
+  async function lock(reset: boolean) {
+    setError(null);
+    const err = await send("POST", `/api/projects/${data.projectId}/baseline`, { reset }, reset ? "Baseline diatur ulang." : "Baseline dikunci.");
+    if (err) setError(err);
+    else setConfirm(false);
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-start justify-between gap-4">
+        <div>
+          <CardTitle>Baseline (rencana awal)</CardTitle>
+          <p className="text-xs text-slate-500 mt-1">
+            Nilai kontrak, RAB, dan target selesai awal yang dikunci sebagai pembanding margin dan triple constraint.
+          </p>
+        </div>
+        {data.canManage && (
+          <Button size="sm" variant="outline" onClick={() => (b ? setConfirm(true) : lock(false))} isLoading={busy && !confirm}>
+            <Lock className="h-4 w-4" />
+            {b ? "Atur ulang" : "Kunci baseline"}
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent>
+        {b ? (
+          <div className="grid sm:grid-cols-4 gap-3 text-sm">
+            <div>
+              <p className="text-xs text-slate-500">Nilai kontrak awal</p>
+              <p className="font-medium">{formatRupiah(b.contractValue)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500">RAB awal</p>
+              <p className="font-medium">{formatRupiah(b.budget)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500">Target selesai awal</p>
+              <p className="font-medium">{fmtDate(b.endDate)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500">Margin awal</p>
+              <p className="font-medium">
+                {formatRupiah(m.plannedMargin, true)} ({formatPercent(m.plannedMarginPct)})
+              </p>
+            </div>
+            <p className="sm:col-span-4 text-xs text-slate-400">
+              Dikunci {fmtDate(b.lockedAt)}
+              {b.lockedBy ? ` oleh ${b.lockedBy}` : ""}
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm text-signal-soon">
+            Baseline belum dikunci; perbandingan memakai nilai kontrak dan RAB saat ini. Baseline terkunci otomatis saat RAB pertama kali diunggah.
+          </p>
+        )}
+        <FormError message={error} />
+      </CardContent>
+      <Modal isOpen={confirm} onClose={() => setConfirm(false)} title="Atur ulang baseline?">
+        <div className="space-y-4 text-sm">
+          <p className="text-slate-600 dark:text-slate-300">
+            Baseline akan diganti dengan nilai kontrak, RAB, dan target selesai <strong>saat ini</strong>. Gunakan hanya untuk memperbaiki baseline yang terkunci terlalu dini;
+            perubahan dari addendum seharusnya tetap dibandingkan dengan rencana awal. Tindakan ini tercatat di Audit Log.
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setConfirm(false)}>
+              Batal
+            </Button>
+            <Button variant="danger" isLoading={busy} onClick={() => lock(true)}>
+              Atur ulang
+            </Button>
+          </div>
+        </div>
       </Modal>
     </Card>
   );

@@ -26,10 +26,10 @@ type AlertType = "DEVIATION_CRITICAL" | "PROGRESS_STALE" | "TERM_DUE" | "INVOICE
 type Alert = { type: AlertType; refKey: string; text: string };
 
 const ALERT_TITLE: Record<AlertType, string> = {
-  DEVIATION_CRITICAL: "Progres kritis",
+  DEVIATION_CRITICAL: "Progres berstatus kritis",
   PROGRESS_STALE: "Progres belum diperbarui",
-  TERM_DUE: "Termin sudah waktunya ditagih",
-  INVOICE_OVERDUE: "Invoice lewat jatuh tempo",
+  TERM_DUE: "Termin telah memasuki jadwal penagihan",
+  INVOICE_OVERDUE: "Invoice telah melewati jatuh tempo",
 };
 
 export async function runProjectMonitoringAlerts(summary: ReminderRunSummary, supervisorCc: string | undefined): Promise<void> {
@@ -47,7 +47,7 @@ export async function runProjectMonitoringAlerts(summary: ReminderRunSummary, su
       candidates.push({
         type: "DEVIATION_CRITICAL",
         refKey: `dev:${s.lastProgressUpdate ?? "none"}`,
-        text: `Progres realisasi ${formatPercent(s.actualPercent)} vs rencana ${formatPercent(s.plannedPercent)} (terlambat ${formatPercent(s.plannedPercent - s.actualPercent)} poin).`,
+        text: `Progres realisasi ${formatPercent(s.actualPercent)} dibandingkan rencana ${formatPercent(s.plannedPercent)}, tertinggal ${(s.plannedPercent - s.actualPercent).toLocaleString("id-ID", { maximumFractionDigits: 1 })} poin.`,
       });
     }
     if (s.isStale) {
@@ -55,8 +55,8 @@ export async function runProjectMonitoringAlerts(summary: ReminderRunSummary, su
         type: "PROGRESS_STALE",
         refKey: `stale:${s.lastProgressUpdate ?? "start"}`,
         text: s.lastProgressUpdate
-          ? `Progres terakhir diperbarui ${shortDate(s.lastProgressUpdate)} (${s.daysSinceUpdate} hari lalu). Mohon perbarui laporan progres.`
-          : `Belum ada laporan progres sejak project dimulai (${s.daysSinceUpdate} hari).`,
+          ? `Data progres yang tersaji saat ini belum diperbarui selama ${s.daysSinceUpdate} hari (pembaruan terakhir ${shortDate(s.lastProgressUpdate)}). Mohon segera memperbarui progres project.`
+          : `Data progres belum pernah diperbarui sejak project dimulai (${s.daysSinceUpdate} hari). Mohon segera memperbarui progres project.`,
       });
     }
     for (const t of project.terms) {
@@ -64,7 +64,7 @@ export async function runProjectMonitoringAlerts(summary: ReminderRunSummary, su
         candidates.push({
           type: "TERM_DUE",
           refKey: `term:${t.id}:${t.plannedDate.toISOString().slice(0, 10)}`,
-          text: `${t.name} (${formatRupiah(Number(t.amount))}) direncanakan ditagih ${shortDate(t.plannedDate.getTime())} tetapi belum ditagih.`,
+          text: `${t.name} (${formatRupiah(Number(t.amount))}) dijadwalkan untuk ditagih pada ${shortDate(t.plannedDate.getTime())}, namun belum ditagihkan.`,
         });
       }
       const inv = { status: t.status, invoiceDate: t.invoiceDate?.getTime() ?? null, dueDate: t.dueDate?.getTime() ?? null };
@@ -72,7 +72,7 @@ export async function runProjectMonitoringAlerts(summary: ReminderRunSummary, su
         candidates.push({
           type: "INVOICE_OVERDUE",
           refKey: `inv:${t.id}:${(t.dueDate ?? t.invoiceDate)?.toISOString().slice(0, 10)}`,
-          text: `Invoice ${t.invoiceNumber || t.name} (${formatRupiah(Number(t.amount))}) ${t.dueDate ? `jatuh tempo ${shortDate(t.dueDate.getTime())}` : `diterbitkan ${shortDate(inv.invoiceDate as number)}`} belum dibayar.`,
+          text: `Invoice ${t.invoiceNumber || t.name} (${formatRupiah(Number(t.amount))}) ${t.dueDate ? `jatuh tempo ${shortDate(t.dueDate.getTime())}` : `diterbitkan ${shortDate(inv.invoiceDate as number)}`} belum dibayarkan.`,
         });
       }
     }
@@ -169,19 +169,19 @@ async function sendMonitoringAlertEmail(params: {
         `<tr><td style="padding:10px 0;border-bottom:1px solid #E2E8F0;"><strong style="color:#0F172A;">${esc(ALERT_TITLE[a.type])}</strong><br/><span style="color:#475569;">${esc(a.text)}</span></td></tr>`
     )
     .join("");
-  const html = `<!doctype html><html><body style="margin:0;background:#F7F7F4;font-family:Arial,Helvetica,sans-serif;">
+  const html = `<!doctype html><html><head><meta charset="utf-8"/></head><body style="margin:0;background:#F2F4F7;font-family:'Plus Jakarta Sans','Segoe UI',Arial,Helvetica,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:24px 0;"><tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #E2E8F0;border-radius:8px;">
 <tr><td style="background:#0F172A;padding:18px 24px;border-radius:8px 8px 0 0;">
 <span style="color:#ffffff;font-size:14px;font-weight:bold;">PT Sucofindo (Persero)</span><br/>
-<span style="color:#0EA89B;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;">Reminder System · Monitoring Project</span></td></tr>
+<span style="color:#0EA89B;font-size:12px;">Reminder System · Monitoring Project</span></td></tr>
 <tr><td style="padding:24px;font-size:14px;line-height:1.55;color:#334155;">
 <p>Yth. ${esc(params.project.pic)},</p>
-<p>Project berikut memerlukan perhatian Anda:</p>
+<p>Dengan hormat, project berikut memerlukan perhatian Bapak/Ibu:</p>
 <p style="margin:0 0 4px;font-size:16px;color:#0F172A;"><strong>${esc(params.project.projectName)}</strong></p>
-<p style="margin:0 0 12px;font-family:monospace;color:#64748B;">${esc(params.project.projectNumber)}</p>
+<p style="margin:0 0 12px;color:#64748B;">${esc(params.project.projectNumber)}</p>
 <table width="100%" cellpadding="0" cellspacing="0">${items}</table>
-<p style="margin-top:20px;"><a href="${link}" style="background:#0F172A;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:6px;display:inline-block;">Buka Monitoring Project</a></p>
+<p style="margin-top:20px;"><a href="${link}" style="background:#0F172A;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:6px;display:inline-block;">Lihat Monitoring Project</a></p>
 <p style="color:#94A3B8;font-size:12px;margin-top:24px;">Email ini dikirim otomatis oleh Reminder System — PT Sucofindo (Persero). Mohon tidak membalas email ini.</p>
 </td></tr></table></td></tr></table></body></html>`;
 
@@ -190,7 +190,7 @@ async function sendMonitoringAlertEmail(params: {
       from: `"${fromName}" <${process.env.GMAIL_USER}>`,
       to: params.to,
       cc: params.cc,
-      subject: `[Reminder System] Perlu perhatian: ${params.project.projectName}`,
+      subject: `[Reminder System] Pemberitahuan Monitoring Project: ${params.project.projectName}`,
       html,
     });
     return { status: "SENT" };

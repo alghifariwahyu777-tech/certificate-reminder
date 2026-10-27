@@ -36,7 +36,7 @@ export function PortalNavbar({ clientName, userName }: { clientName: string; use
               <p className="font-display font-semibold text-sm text-white leading-tight">
                 Client Portal
               </p>
-              <p className="text-[11px] text-brand-teal font-mono uppercase tracking-wide leading-tight">
+              <p className="text-[11px] text-brand-teal font-mono leading-tight">
                 {clientName}
               </p>
             </div>

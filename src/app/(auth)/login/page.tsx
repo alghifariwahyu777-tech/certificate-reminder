@@ -19,14 +19,14 @@ export default function LoginPage() {
           </div>
           <div>
             <span className="font-display font-semibold text-lg block leading-tight">Reminder System</span>
-            <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-brand-teal">
+            <span className="font-mono text-[11px] text-brand-teal">
               Ensuring Quality, Protecting Trust
             </span>
           </div>
         </div>
 
         <div>
-          <p className="font-mono text-xs uppercase tracking-widest text-slate-400 mb-3">
+          <p className="font-mono text-xs text-slate-400 mb-3">
             PT Sucofindo (Persero) — Internal System
           </p>
           <h2 className="font-display text-3xl font-semibold leading-tight max-w-md">
@@ -48,7 +48,7 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           <div className="flex flex-col items-center mb-8">
             <SucofindoLogo height={40} className="mb-2" />
-            <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-brand-blue dark:text-brand-teal">
+            <span className="font-mono text-[10px] text-brand-blue dark:text-brand-teal">
               Ensuring Quality, Protecting Trust
             </span>
           </div>

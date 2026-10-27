@@ -34,6 +34,24 @@ export async function GET(request: NextRequest, context: { params: Promise<{ fil
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
+  // PIC accounts only see attachments of projects they are PIC of.
+  if (internalSession?.role === "PIC") {
+    const email = { equals: internalSession.email.trim(), mode: "insensitive" as const };
+    const owned = await prisma.project.findFirst({
+      where: {
+        deletedAt: null,
+        picEmail: email,
+        OR: [
+          { driveFileId: fileId },
+          { progressReports: { some: { driveFileId: fileId } } },
+          { milestones: { some: { driveFileId: fileId } } },
+        ],
+      },
+      select: { id: true },
+    });
+    if (!owned) return NextResponse.json({ message: "Dokumen tidak ditemukan." }, { status: 404 });
+  }
+
   if (clientSession) {
     const [ownsViaCertificate, ownsViaApplication] = await Promise.all([
       prisma.certificate.findFirst({

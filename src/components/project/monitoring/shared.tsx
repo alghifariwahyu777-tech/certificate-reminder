@@ -57,10 +57,13 @@ export function FileUploadField({
   value,
   onChange,
   label = "Lampiran (opsional)",
+  uploadUrl = "/api/upload",
 }: {
   value: FileValue;
   onChange: (v: FileValue) => void;
   label?: string;
+  /** PIC screens post to their own upload endpoint (/api/pic/upload or the link's). */
+  uploadUrl?: string;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +80,7 @@ export function FileUploadField({
       const fd = new FormData();
       fd.append("file", file);
       fd.append("folder", "projects");
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const res = await fetch(uploadUrl, { method: "POST", body: fd });
       const body = await res.json();
       if (!res.ok) return setError(body.message || "Gagal mengunggah dokumen.");
       onChange({ fileUrl: body.fileUrl, driveFileId: body.driveFileId, fileMimeType: body.fileMimeType });
@@ -173,17 +176,112 @@ export function DeleteButton({ onConfirm, what }: { onConfirm: () => Promise<str
   );
 }
 
-export function ProgressBar({ value, marker, className }: { value: number; marker?: number; className?: string }) {
+export function ProgressBar({ value, marker, className, tone }: { value: number; marker?: number; className?: string; tone?: Tone }) {
   return (
     <div className={cn("relative h-2 rounded-full bg-slate-100 dark:bg-slate-800", className)}>
-      <div className="absolute inset-y-0 left-0 rounded-full bg-accent" style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
+      <div
+        className={cn("absolute inset-y-0 left-0 rounded-full", tone ? TONE_BAR[tone] : "bg-accent")}
+        style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+      />
       {marker !== undefined && (
         <div
-          className="absolute -top-1 -bottom-1 w-0.5 bg-ink dark:bg-slate-200"
+          className="absolute -top-1 -bottom-1 w-0.5 rounded bg-ink dark:bg-slate-200"
           style={{ left: `${Math.min(100, Math.max(0, marker))}%` }}
           title={`Rencana ${marker}%`}
         />
       )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Shared visual language: tones, the 4-part condition ribbon, tiles, sub-tabs
+// ---------------------------------------------------------------------------
+
+export type Tone = "good" | "warn" | "bad" | "none" | "default";
+export const TONE_TEXT: Record<Tone, string> = {
+  good: "text-signal-active",
+  warn: "text-signal-soon",
+  bad: "text-signal-expired",
+  none: "text-slate-400",
+  default: "text-ink dark:text-slate-100",
+};
+export const TONE_BAR: Record<Tone, string> = {
+  good: "bg-signal-activeBar",
+  warn: "bg-signal-soonBar",
+  bad: "bg-signal-expiredBar",
+  none: "bg-signal-none dark:bg-slate-700",
+  default: "bg-accent",
+};
+export const SIGNAL_WORD: Record<Tone, string> = { good: "Baik", warn: "Waspada", bad: "Kritis", none: "Belum ada data", default: "" };
+
+const RIBBON_PARTS = [
+  { key: "time", short: "W", label: "Waktu" },
+  { key: "cost", short: "B", label: "Biaya" },
+  { key: "scope", short: "L", label: "Lingkup" },
+  { key: "margin", short: "M", label: "Margin" },
+] as const;
+
+/** Four small bars — Waktu, Biaya, Lingkup, Margin — the same condition marker everywhere a project appears. */
+export function ConditionRibbon({ signals, showLetters = true }: { signals: Record<"time" | "cost" | "scope" | "margin", Tone>; showLetters?: boolean }) {
+  return (
+    <div className="inline-flex flex-col gap-1" aria-label={RIBBON_PARTS.map((p) => `${p.label}: ${SIGNAL_WORD[signals[p.key]]}`).join(", ")}>
+      <div className="flex gap-[3px]">
+        {RIBBON_PARTS.map((p) => (
+          <span key={p.key} title={`${p.label}: ${SIGNAL_WORD[signals[p.key]]}`} className={cn("h-2 w-6 rounded-sm", TONE_BAR[signals[p.key]])} />
+        ))}
+      </div>
+      {showLetters && (
+        <div className="flex gap-[3px] text-[10.5px] leading-none text-slate-400">
+          {RIBBON_PARTS.map((p) => (
+            <span key={p.key} className="w-6 text-center">
+              {p.short}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** A constraint tile: coloured top edge, label + verdict, one figure, one line of context. */
+export function ConstraintTile({ label, tone, value, sub, children }: { label: string; tone: Tone; value: React.ReactNode; sub?: React.ReactNode; children?: React.ReactNode }) {
+  return (
+    <div className={cn("rounded-lg border border-line dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3.5 border-t-4", {
+      "border-t-signal-activeBar": tone === "good",
+      "border-t-signal-soonBar": tone === "warn",
+      "border-t-signal-expiredBar": tone === "bad",
+      "border-t-signal-none dark:border-t-slate-700": tone === "none" || tone === "default",
+    })}>
+      <div className="flex items-center justify-between gap-2 text-[13px] font-semibold text-ink dark:text-slate-100">
+        <span>{label}</span>
+        <span className={cn("text-[12.5px]", TONE_TEXT[tone])}>{SIGNAL_WORD[tone]}</span>
+      </div>
+      <div className="mt-2 text-[22px] font-bold leading-tight text-ink dark:text-slate-100">{value}</div>
+      {sub && <p className="mt-1 text-[12.5px] text-slate-500 dark:text-slate-400">{sub}</p>}
+      {children}
+    </div>
+  );
+}
+
+/** Segmented control for the sections inside a tab. */
+export function SubTabs<K extends string>({ items, value, onChange }: { items: { key: K; label: string; badge?: number }[]; value: K; onChange: (k: K) => void }) {
+  return (
+    <div className="inline-flex flex-wrap gap-1 rounded-lg bg-slate-200/60 dark:bg-slate-800 p-1">
+      {items.map((it) => (
+        <button
+          key={it.key}
+          type="button"
+          onClick={() => onChange(it.key)}
+          className={cn(
+            "rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors",
+            value === it.key ? "bg-white text-brand-blueDark shadow-sm dark:bg-slate-900 dark:text-slate-100" : "text-slate-500 hover:text-ink dark:hover:text-slate-200"
+          )}
+        >
+          {it.label}
+          {!!it.badge && <span className="ml-1.5 rounded-full bg-signal-expired px-1.5 py-0.5 text-[10px] leading-none text-white">{it.badge}</span>}
+        </button>
+      ))}
     </div>
   );
 }
@@ -208,17 +306,11 @@ export function Stat({
   hint?: React.ReactNode;
   tone?: "default" | "good" | "warn" | "bad";
 }) {
-  const toneClass = {
-    default: "text-ink dark:text-slate-100",
-    good: "text-signal-active",
-    warn: "text-signal-soon",
-    bad: "text-signal-expired",
-  }[tone];
   return (
-    <div className="rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3">
-      <p className="text-[11px] uppercase tracking-wide text-slate-500">{label}</p>
-      <p className={cn("mt-1 font-display text-xl font-semibold tabular-nums", toneClass)}>{value}</p>
-      {hint && <p className="mt-0.5 text-xs text-slate-500">{hint}</p>}
+    <div className="rounded-lg border border-line dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3.5">
+      <p className="text-[12.5px] font-medium text-slate-500 dark:text-slate-400">{label}</p>
+      <p className={cn("mt-1 text-[21px] font-bold leading-tight", TONE_TEXT[tone])}>{value}</p>
+      {hint && <p className="mt-1 text-[12.5px] text-slate-500 dark:text-slate-400">{hint}</p>}
     </div>
   );
 }

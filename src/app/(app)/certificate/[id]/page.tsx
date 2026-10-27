@@ -76,7 +76,7 @@ export default async function CertificateDetailPage(context: { params: Promise<{
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
             {fields.map((f) => (
               <div key={f.label}>
-                <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">{f.label}</p>
+                <p className="text-xs text-slate-500 mb-1">{f.label}</p>
                 <p className="text-sm text-ink font-medium">{f.value}</p>
               </div>
             ))}
@@ -88,13 +88,13 @@ export default async function CertificateDetailPage(context: { params: Promise<{
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {certificate.description && (
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-500 mb-1.5">Description</p>
+                  <p className="text-xs text-slate-500 mb-1.5">Description</p>
                   <p className="text-sm text-slate-700 whitespace-pre-line">{certificate.description}</p>
                 </div>
               )}
               {certificate.notes && (
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-500 mb-1.5">Catatan</p>
+                  <p className="text-xs text-slate-500 mb-1.5">Catatan</p>
                   <p className="text-sm text-slate-700 whitespace-pre-line">{certificate.notes}</p>
                 </div>
               )}

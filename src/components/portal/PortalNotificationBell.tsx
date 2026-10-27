@@ -113,7 +113,7 @@ export function PortalNotificationBell() {
                   <ClipboardList className="h-4 w-4 mt-0.5 shrink-0 text-accent" />
                   <div className="min-w-0">
                     <p className="text-xs text-ink dark:text-slate-100 leading-snug">{n.message}</p>
-                    <p className="text-[10px] text-slate-400 mt-1 font-mono uppercase">{n.status}</p>
+                    <p className="text-[10px] text-slate-400 mt-1 font-mono">{n.status}</p>
                   </div>
                 </Link>
               ))}

@@ -32,7 +32,7 @@ export async function PUT(request: NextRequest) {
     userName: auth.session.name,
     action: "UPDATE",
     entityType: "ProjectMonitoring",
-    description: `Mengubah ambang monitoring project: waspada ${parsed.data.projectDeviationWarning} poin, kritis ${parsed.data.projectDeviationCritical} poin, progres basi ${parsed.data.projectProgressStaleDays} hari, invoice telat ${parsed.data.projectInvoiceOverdueDays} hari.`,
+    description: `Mengubah ambang monitoring project: waspada ${parsed.data.projectDeviationWarning} poin, kritis ${parsed.data.projectDeviationCritical} poin, progres basi ${parsed.data.projectProgressStaleDays} hari, invoice telat ${parsed.data.projectInvoiceOverdueDays} hari, margin tergerus ${parsed.data.projectMarginDropAlert} poin.`,
   });
 
   return NextResponse.json({ thresholds: await getMonitoringThresholds() });

@@ -12,7 +12,7 @@ export function SCurveChart({ input, today, height = 300 }: { input: MonitoringI
     <div style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 8, right: 16, left: -12, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+          <CartesianGrid stroke="#E9EDF2" vertical={false} />
           <XAxis
             dataKey="t"
             type="number"
@@ -39,8 +39,8 @@ export function SCurveChart({ input, today, height = 300 }: { input: MonitoringI
           />
           <Legend wrapperStyle={{ fontSize: 12 }} />
           {showToday && <ReferenceLine x={today} stroke="#94A3B8" strokeDasharray="4 4" label={{ value: "Hari ini", fontSize: 10, fill: "#64748B", position: "insideTopRight" }} />}
-          <Line type="monotone" dataKey="planned" name="Rencana" stroke="#94A3B8" strokeWidth={2} strokeDasharray="6 4" dot={false} />
-          <Line type="stepAfter" dataKey="actual" name="Realisasi" stroke="#1D4ED8" strokeWidth={2.5} dot={false} connectNulls={false} />
+          <Line type="monotone" dataKey="planned" name="Rencana" stroke="#9AA8B8" strokeWidth={2} strokeDasharray="6 4" dot={false} />
+          <Line type="stepAfter" dataKey="actual" name="Realisasi" stroke="#1671B8" strokeWidth={3} dot={false} connectNulls={false} />
         </LineChart>
       </ResponsiveContainer>
     </div>

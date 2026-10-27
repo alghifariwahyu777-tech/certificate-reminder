@@ -147,7 +147,7 @@ export function ReminderCenter({
 
         {recentLogs.length > 0 && (
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">Log Terbaru</p>
+            <p className="text-xs text-slate-500 mb-2">Log Terbaru</p>
             <div className="rounded border border-slate-200 divide-y divide-slate-100">
               {recentLogs.map((log) => {
                 const Icon = STATUS_ICON[log.status];

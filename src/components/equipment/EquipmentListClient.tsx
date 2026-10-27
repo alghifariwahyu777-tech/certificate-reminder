@@ -215,7 +215,7 @@ export function EquipmentListClient({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-slate-500 border-b border-slate-100 bg-slate-50/60">
+              <tr className="text-left text-xs text-slate-500 border-b border-slate-100 bg-slate-50/60">
                 {canManage && (
                   <th className="px-4 py-3 font-medium w-10">
                     <input

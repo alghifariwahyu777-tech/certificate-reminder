@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { SettingsForm } from "@/components/settings/SettingsForm";
 import { ProjectMonitoringSettingsForm } from "@/components/settings/ProjectMonitoringSettingsForm";
 import { getMonitoringThresholds } from "@/lib/project-monitoring";
+import { WeeklyReportSettingsForm } from "@/components/settings/WeeklyReportSettingsForm";
 
 export default async function SettingsPage() {
   const session = await getSession();
@@ -24,6 +25,16 @@ export default async function SettingsPage() {
           initialWhatsappNumber={settings?.adminWhatsappNumber || ""}
         />
         <ProjectMonitoringSettingsForm canManage={session?.role === "ADMIN"} initial={thresholds} />
+        <WeeklyReportSettingsForm
+          canManage={session?.role === "ADMIN"}
+          initial={{
+            weeklyReportEnabled: settings?.weeklyReportEnabled ?? false,
+            weeklyReportRecipients: (settings?.weeklyReportRecipients || "").split(", ").filter(Boolean).join("\n"),
+            weeklyReportDay: settings?.weeklyReportDay ?? 1,
+            picUpdateRequestEnabled: settings?.picUpdateRequestEnabled ?? true,
+            picUpdateRequestDay: settings?.picUpdateRequestDay ?? 1,
+          }}
+        />
       </div>
     </>
   );

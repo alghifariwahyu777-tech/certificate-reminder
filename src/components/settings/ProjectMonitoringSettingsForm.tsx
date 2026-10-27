@@ -15,6 +15,7 @@ export function ProjectMonitoringSettingsForm({ canManage, initial }: { canManag
     projectDeviationCritical: String(initial.deviationCritical),
     projectProgressStaleDays: String(initial.progressStaleDays),
     projectInvoiceOverdueDays: String(initial.invoiceOverdueDays),
+    projectMarginDropAlert: String(initial.marginDropAlert),
   });
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -59,6 +60,7 @@ export function ProjectMonitoringSettingsForm({ canManage, initial }: { canManag
           {field("projectDeviationCritical", "Ambang Kritis", "Terlambat sebesar ini → Kritis + email ke PIC.", "poin %")}
           {field("projectProgressStaleDays", "Progres tidak diperbarui", "Kirim pengingat update progres setelah sekian hari.", "hari")}
           {field("projectInvoiceOverdueDays", "Invoice tanpa jatuh tempo", "Dianggap telat setelah sekian hari sejak tgl invoice.", "hari")}
+          {field("projectMarginDropAlert", "Margin tergerus", "Margin aktual/prakiraan turun sebesar ini dari rencana → masuk laporan sebagai hal yang perlu keputusan.", "poin %")}
         </div>
         {error && <p className="text-sm text-signal-expired">{error}</p>}
         {canManage && (

@@ -6,6 +6,11 @@ const SESSION_COOKIE = "cert_reminder_session";
 const PORTAL_SESSION_COOKIE = "cert_reminder_portal_session";
 const PUBLIC_PATHS = ["/login", "/forgot-password", "/reset-password"];
 
+// A PIC account may only reach its own small area. Everything else — every
+// internal page and every internal API (many GET endpoints only require "any
+// session") — is closed to it here, in one place.
+const PIC_ALLOWED_PREFIXES = ["/pic", "/api/pic", "/api/auth", "/profile", "/api/profile"];
+
 // Pages that a Viewer is not allowed to open (create/manage-only screens).
 // Prefix-matched, so "/certificate/edit" also covers "/certificate/edit/abc123".
 const ADMIN_ONLY_PATH_PREFIXES = [
@@ -87,7 +92,10 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api/auth/forgot-password") ||
     pathname.startsWith("/api/auth/reset-password") ||
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/uploads");
+    pathname.startsWith("/uploads") ||
+    // signed one-time-style links emailed to PICs (token checked in the route)
+    pathname.startsWith("/update/") ||
+    pathname.startsWith("/api/update/");
 
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   let isAuthenticated = false;
@@ -109,12 +117,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  const home = role === "PIC" ? "/pic" : "/dashboard";
+
   if (isAuthenticated && pathname === "/login") {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL(home, request.url));
   }
 
   if (isAuthenticated && pathname === "/") {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL(home, request.url));
+  }
+
+  if (
+    isAuthenticated &&
+    role === "PIC" &&
+    !isPublic &&
+    !PIC_ALLOWED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"))
+  ) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ message: "Akses tidak diizinkan untuk akun PIC." }, { status: 403 });
+    }
+    return NextResponse.redirect(new URL("/pic", request.url));
   }
 
   if (
@@ -131,5 +153,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api/upload|api/files|api/reminders/run|_next/static|_next/image|brand|favicon.ico).*)"],
+  matcher: ["/((?!api/upload|api/files|api/reminders/run|_next/static|_next/image|brand|fonts|favicon.ico).*)"],
 };

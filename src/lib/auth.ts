@@ -6,7 +6,8 @@ import bcrypt from "bcryptjs";
 const SESSION_COOKIE = "cert_reminder_session";
 const SESSION_DURATION = 60 * 60 * 24 * 7; // 7 days in seconds
 
-export type Role = "ADMIN" | "VIEWER";
+/** PIC = project PIC: may only open /pic and update progress of projects whose PIC email is theirs. */
+export type Role = "ADMIN" | "VIEWER" | "PIC";
 
 function getSecretKey() {
   const secret = process.env.SESSION_SECRET;

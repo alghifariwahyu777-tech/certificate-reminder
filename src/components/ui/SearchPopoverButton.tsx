@@ -71,7 +71,7 @@ export function SearchPopoverButton({
         )}
       </button>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title={label}>
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={label} position="top">
         <form
           onSubmit={(e) => {
             e.preventDefault();

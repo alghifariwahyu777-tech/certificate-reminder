@@ -47,7 +47,7 @@ export const PROJECT_COST_CATEGORIES = [
 export type ProjectHealth = "ON_TRACK" | "WASPADA" | "KRITIS" | "SELESAI" | "BATAL";
 
 export const HEALTH_LABEL: Record<ProjectHealth, string> = {
-  ON_TRACK: "On Track",
+  ON_TRACK: "Sesuai rencana",
   WASPADA: "Waspada",
   KRITIS: "Kritis",
   SELESAI: "Selesai",
@@ -68,6 +68,8 @@ export type MonitoringThresholds = {
   deviationCritical: number;
   progressStaleDays: number;
   invoiceOverdueDays: number;
+  /** margin (aktual/prakiraan) turun ≥ ini poin dari rencana → butir keputusan */
+  marginDropAlert: number;
 };
 
 export const DEFAULT_THRESHOLDS: MonitoringThresholds = {
@@ -75,6 +77,7 @@ export const DEFAULT_THRESHOLDS: MonitoringThresholds = {
   deviationCritical: 10,
   progressStaleDays: 14,
   invoiceOverdueDays: 30,
+  marginDropAlert: 10,
 };
 
 // ---------------------------------------------------------------------------
@@ -99,15 +102,20 @@ export type MonitoringInput = {
     dueDate: number | null;
     paidAmount: number | null;
   }[];
-  budgetItems: { amount: number }[];
-  expenses: { amount: number }[];
+  budgetItems: { amount: number; category?: string }[];
+  expenses: { amount: number; date?: number; category?: string; cause?: string }[];
   issues: { status: string; impact: string }[];
+  /** the locked original plan (triple constraint baseline); null = not locked yet → current plan is used */
+  baseline?: { contractValue: number | null; budget: number | null; budgetByCategory: Record<string, number>; endDate: number | null } | null;
+  /** target margin (%) set for this project — taken from its RAB; null = fall back to the baseline margin */
+  targetMarginPct?: number | null;
 };
 
 export type CurvePoint = { t: number; value: number };
 
 const clamp = (v: number, lo = 0, hi = 100) => Math.min(hi, Math.max(lo, v));
 const round1 = (v: number) => Math.round(v * 10) / 10;
+const fmt1 = (v: number) => round1(v).toLocaleString("id-ID");
 
 export function projectStart(input: Pick<MonitoringInput, "startDate" | "createdAt">): number {
   return input.startDate ?? dateOnly(input.createdAt);
@@ -245,6 +253,9 @@ export type MonitoringSummary = {
   dueUnbilledCount: number; // termin yang rencana tagihnya sudah lewat tapi belum ditagih
   earnedValue: number; // actual% × contract
   unbilledEarned: number; // nilai pekerjaan selesai yang belum ditagih
+  // PAD — Pendapatan yang Akan Diterima = nilai kontrak yang belum diterima
+  pad: number; // piutang + belum ditagih
+  padUnbilled: number; // bagian PAD yang belum ditagih
   // biaya
   budgetTotal: number;
   costActual: number;
@@ -302,16 +313,16 @@ export function computeMonitoring(
     healthReason = "Project dibatalkan.";
   } else if (isOverdue) {
     health = "KRITIS";
-    healthReason = `Melewati target selesai ${Math.abs(daysRemaining)} hari, progres ${round1(actualPercent)}%.`;
+    healthReason = `Telah melewati target selesai ${Math.abs(daysRemaining)} hari dengan progres ${fmt1(actualPercent)}%.`;
   } else if (behind >= thresholds.deviationCritical) {
     health = "KRITIS";
-    healthReason = `Terlambat ${round1(behind)} poin dari rencana.`;
+    healthReason = `Progres tertinggal ${fmt1(behind)} poin dari rencana.`;
   } else if (behind >= thresholds.deviationWarning) {
     health = "WASPADA";
-    healthReason = `Terlambat ${round1(behind)} poin dari rencana.`;
+    healthReason = `Progres tertinggal ${fmt1(behind)} poin dari rencana.`;
   } else {
     health = "ON_TRACK";
-    healthReason = behind > 0 ? `Selisih ${round1(behind)} poin, masih dalam toleransi.` : "Sesuai atau mendahului rencana.";
+    healthReason = behind > 0 ? `Progres tertinggal ${fmt1(behind)} poin, masih dalam batas toleransi.` : "Progres sesuai atau melampaui rencana.";
   }
 
   // keuangan
@@ -355,6 +366,8 @@ export function computeMonitoring(
     invoiced,
     paid,
     outstanding: invoiced - paid,
+    pad: input.status === "CANCELLED" ? 0 : Math.max(0, Math.max(contractValue, termTotal) - paid),
+    padUnbilled: input.status === "CANCELLED" ? 0 : Math.max(0, Math.max(contractValue, termTotal) - invoiced),
     overdueInvoiceCount: overdue.length,
     overdueInvoiceAmount: overdue.reduce((s, t) => s + t.amount, 0),
     dueUnbilledCount: dueUnbilled.length,
@@ -473,4 +486,70 @@ export function formatRupiah(value: number | null | undefined, compact = false):
 export function formatPercent(value: number | null | undefined, digits = 1): string {
   if (value === null || value === undefined || isNaN(value)) return "-";
   return `${value.toLocaleString("id-ID", { maximumFractionDigits: digits })}%`;
+}
+
+// ---------------------------------------------------------------------------
+// PAD (Pendapatan yang Akan Diterima) — projection by month
+// ---------------------------------------------------------------------------
+
+export type PadBucket = { key: string; label: string; amount: number; kind: "OVERDUE" | "MONTH" | "UNSCHEDULED" };
+
+const monthKey = (ms: number) => {
+  const d = new Date(ms);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+};
+export const monthLabel = (key: string) => {
+  const [y, m] = key.split("-").map(Number);
+  return `${MONTHS[m - 1]} ${y}`;
+};
+
+/**
+ * When is each rupiah of PAD expected? Unpaid terms land in the month they're
+ * expected to be paid: an invoiced term on its due date (or invoice date +
+ * overdue threshold), a planned term on its planned billing date. Anything
+ * already past that date is "Tertunggak"; terms without a date, and contract
+ * value not yet split into terms, are "Belum terjadwal".
+ */
+export function padSchedule(input: MonitoringInput, today: number, thresholds: MonitoringThresholds = DEFAULT_THRESHOLDS): PadBucket[] {
+  if (input.status === "CANCELLED") return [];
+  const out = new Map<string, PadBucket>();
+  const add = (key: string, label: string, kind: PadBucket["kind"], amount: number) => {
+    if (amount <= 0) return;
+    const b = out.get(key) || { key, label, kind, amount: 0 };
+    b.amount += amount;
+    out.set(key, b);
+  };
+  for (const t of input.terms) {
+    if (t.status === "PAID") {
+      const short = t.amount - (t.paidAmount ?? t.amount);
+      if (short > 0) add("UNSCHEDULED", "Belum terjadwal", "UNSCHEDULED", short);
+      continue;
+    }
+    const expected =
+      t.status === "INVOICED"
+        ? t.dueDate ?? (t.invoiceDate !== null ? t.invoiceDate + thresholds.invoiceOverdueDays * DAY_MS : null)
+        : t.plannedDate;
+    if (expected === null) add("UNSCHEDULED", "Belum terjadwal", "UNSCHEDULED", t.amount);
+    else if (expected < today) add("OVERDUE", "Tertunggak", "OVERDUE", t.amount);
+    else add(monthKey(expected), monthLabel(monthKey(expected)), "MONTH", t.amount);
+  }
+  const termTotal = input.terms.reduce((s, t) => s + t.amount, 0);
+  const uncovered = (input.contractValue ?? 0) - termTotal;
+  if (uncovered > 0) add("UNSCHEDULED", "Belum terjadwal", "UNSCHEDULED", uncovered);
+
+  const order = (b: PadBucket) => (b.kind === "OVERDUE" ? "0" : b.kind === "MONTH" ? `1${b.key}` : "2");
+  return [...out.values()].sort((a, b) => order(a).localeCompare(order(b)));
+}
+
+/** Sum several projects' PAD schedules into one. */
+export function mergePadSchedules(list: PadBucket[][]): PadBucket[] {
+  const out = new Map<string, PadBucket>();
+  for (const sched of list)
+    for (const b of sched) {
+      const e = out.get(b.key) || { ...b, amount: 0 };
+      e.amount += b.amount;
+      out.set(b.key, e);
+    }
+  const order = (b: PadBucket) => (b.kind === "OVERDUE" ? "0" : b.kind === "MONTH" ? `1${b.key}` : "2");
+  return [...out.values()].sort((a, b) => order(a).localeCompare(order(b)));
 }

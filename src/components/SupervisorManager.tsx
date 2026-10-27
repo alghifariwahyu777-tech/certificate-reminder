@@ -140,7 +140,7 @@ export function SupervisorManager({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-slate-500 border-b border-slate-100 bg-slate-50/60">
+              <tr className="text-left text-xs text-slate-500 border-b border-slate-100 bg-slate-50/60">
                 <th className="px-4 py-3 font-medium">Nama</th>
                 <th className="px-4 py-3 font-medium">Email</th>
                 <th className="px-4 py-3 font-medium">Jabatan</th>

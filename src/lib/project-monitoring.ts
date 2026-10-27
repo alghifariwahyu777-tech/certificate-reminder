@@ -1,9 +1,13 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getJakartaToday } from "@/lib/status";
+import { isoWeekKey } from "@/lib/week";
+import { analyzeMargin, type MarginAnalysis } from "@/lib/project-margin";
 import {
   computeMonitoring,
+  padSchedule,
   DEFAULT_THRESHOLDS,
+  type PadBucket,
   type MonitoringInput,
   type MonitoringSummary,
   type MonitoringThresholds,
@@ -13,6 +17,15 @@ const num = (v: Prisma.Decimal | number | null | undefined): number => (v === nu
 const numOrNull = (v: Prisma.Decimal | number | null | undefined): number | null =>
   v === null || v === undefined ? null : Number(v);
 const ms = (d: Date | null | undefined): number | null => (d ? d.getTime() : null);
+function parseBudgetJson(v: string | null): Record<string, number> {
+  if (!v) return {};
+  try {
+    const o = JSON.parse(v);
+    return o && typeof o === "object" ? (o as Record<string, number>) : {};
+  } catch {
+    return {};
+  }
+}
 
 /** Everything computeMonitoring() needs, in one include. */
 export const MONITORING_INCLUDE = {
@@ -24,6 +37,10 @@ export const MONITORING_INCLUDE = {
   budgetItems: { orderBy: { createdAt: "asc" } },
   expenses: { orderBy: { expenseDate: "desc" } },
   issues: { orderBy: [{ status: "desc" }, { createdAt: "desc" }] },
+  snapshots: { orderBy: { weekKey: "desc" }, take: 26 },
+  closeout: true,
+  rabRevisions: { orderBy: { version: "desc" }, select: { id: true, version: true, reason: true, fileName: true, contractValue: true, totalCost: true, operatingProfit: true, marginPct: true, createdBy: true, createdAt: true } },
+  assignments: { include: { employee: { select: { id: true, name: true, employeeId: true, position: true, isActive: true } } }, orderBy: { createdAt: "asc" } },
 } satisfies Prisma.ProjectInclude;
 
 export type ProjectWithMonitoring = Prisma.ProjectGetPayload<{ include: typeof MONITORING_INCLUDE }>;
@@ -36,6 +53,7 @@ export async function getMonitoringThresholds(): Promise<MonitoringThresholds> {
     deviationCritical: s.projectDeviationCritical,
     progressStaleDays: s.projectProgressStaleDays,
     invoiceOverdueDays: s.projectInvoiceOverdueDays,
+    marginDropAlert: s.projectMarginDropAlert,
   };
 }
 
@@ -63,9 +81,18 @@ export function toMonitoringInput(p: ProjectWithMonitoring): MonitoringInput {
       dueDate: ms(t.dueDate),
       paidAmount: numOrNull(t.paidAmount),
     })),
-    budgetItems: p.budgetItems.map((b) => ({ amount: num(b.amount) })),
-    expenses: p.expenses.map((e) => ({ amount: num(e.amount) })),
+    budgetItems: p.budgetItems.map((b) => ({ amount: num(b.amount), category: b.category })),
+    expenses: p.expenses.map((e) => ({ amount: num(e.amount), date: e.expenseDate.getTime(), category: e.category, cause: e.cause })),
     issues: p.issues.map((i) => ({ status: i.status, impact: i.impact })),
+    baseline: p.baselineLockedAt
+      ? {
+          contractValue: numOrNull(p.baselineContractValue),
+          budget: numOrNull(p.baselineBudget),
+          budgetByCategory: parseBudgetJson(p.baselineBudgetJson),
+          endDate: ms(p.baselineEndDate),
+        }
+      : null,
+    targetMarginPct: p.targetMarginPct ?? null,
   };
 }
 
@@ -79,7 +106,8 @@ export async function getProjectWithMonitoring(id: string) {
   const thresholds = await getMonitoringThresholds();
   const today = getJakartaToday().getTime();
   const input = toMonitoringInput(project);
-  return { project, input, today, thresholds, summary: computeMonitoring(input, today, thresholds) };
+  const summary = computeMonitoring(input, today, thresholds);
+  return { project, input, today, thresholds, summary, margin: analyzeMargin(input, summary, today, thresholds.marginDropAlert) };
 }
 
 export type PortfolioRow = {
@@ -94,7 +122,25 @@ export type PortfolioRow = {
   startDate: string | null;
   targetEndDate: string;
   summary: MonitoringSummary;
+  /** Change in deviation vs last week's snapshot (points; + = improving), null when no history yet. */
+  trend: number | null;
+  padSchedule: PadBucket[];
+  /** For COMPLETED projects: whether BAPP, BAST and final report are all recorded. */
+  closeoutComplete: boolean | null;
+  teamSize: number;
+  margin: MarginAnalysis;
 };
+
+/** Deviation now vs the most recent snapshot from an earlier week. */
+export function deviationTrend(p: Pick<ProjectWithMonitoring, "snapshots">, currentDeviation: number): number | null {
+  const thisWeek = isoWeekKey();
+  const prev = p.snapshots.find((s) => s.weekKey < thisWeek);
+  return prev ? Math.round((currentDeviation - prev.deviation) * 10) / 10 : null;
+}
+
+export function isCloseoutComplete(c: ProjectWithMonitoring["closeout"]): boolean {
+  return !!c && !!c.bappDate && !!c.bastDate && !!c.finalReportDate;
+}
 
 /** One computed row per (non-deleted) project — the data behind the portfolio dashboard and export. */
 export async function getProjectPortfolio(): Promise<{ rows: PortfolioRow[]; thresholds: MonitoringThresholds; today: number }> {
@@ -103,7 +149,10 @@ export async function getProjectPortfolio(): Promise<{ rows: PortfolioRow[]; thr
     getMonitoringThresholds(),
   ]);
   const today = getJakartaToday().getTime();
-  const rows = projects.map((p) => ({
+  const rows = projects.map((p) => {
+    const input = toMonitoringInput(p);
+    const summary = computeMonitoring(input, today, thresholds);
+    return {
     id: p.id,
     projectNumber: p.projectNumber,
     projectName: p.projectName,
@@ -114,7 +163,13 @@ export async function getProjectPortfolio(): Promise<{ rows: PortfolioRow[]; thr
     status: p.status,
     startDate: p.startDate ? p.startDate.toISOString() : null,
     targetEndDate: p.targetEndDate.toISOString(),
-    summary: computeMonitoring(toMonitoringInput(p), today, thresholds),
-  }));
+    summary,
+    trend: p.status === "ONGOING" ? deviationTrend(p, summary.deviation) : null,
+    padSchedule: padSchedule(input, today, thresholds),
+    closeoutComplete: p.status === "COMPLETED" ? isCloseoutComplete(p.closeout) : null,
+    teamSize: p.assignments.length,
+    margin: analyzeMargin(input, summary, today, thresholds.marginDropAlert),
+    };
+  });
   return { rows, thresholds, today };
 }

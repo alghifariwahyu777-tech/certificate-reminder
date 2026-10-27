@@ -1,19 +1,57 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
+/* One typeface across the whole app (self-hosted, no external request): Plus Jakarta Sans */
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/plus-jakarta-sans-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/plus-jakarta-sans-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/plus-jakarta-sans-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/plus-jakarta-sans-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/fonts/plus-jakarta-sans-800.woff2") format("woff2");
+}
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --font-display: "Space Grotesk", sans-serif;
-  --font-body: "Inter", sans-serif;
-  --font-mono: "IBM Plex Mono", monospace;
+  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  /* codes and figures use the same family, with tabular numerals */
+  --font-mono: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
-  background-color: #f7f7f4;
-  color: #0f172a;
+  background-color: #f2f4f7;
+  color: #15202e;
   font-family: var(--font-body);
+  font-feature-settings: "tnum" 1;
+  -webkit-font-smoothing: antialiased;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
@@ -33,17 +71,18 @@ body {
   );
 }
 
+/* Status label: sentence case, pill shaped — the one badge style used everywhere */
 .stamp-badge {
-  font-family: var(--font-mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-size: 11px;
-  font-weight: 500;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 9px;
-  border-radius: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
   border-width: 1px;
   border-style: solid;
 }
@@ -117,7 +156,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid #1d4ed8;
+  outline: 2px solid #1671b8;
   outline-offset: 2px;
 }
 

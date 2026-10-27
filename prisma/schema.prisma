@@ -468,6 +468,7 @@ model Employee {
   updatedAt      DateTime                 @updatedAt
   certifications PersonnelCertification[]
   equipmentAsPic Equipment[]
+  assignments    ProjectAssignment[]
 
   @@index([departmentId])
 }
@@ -522,6 +523,14 @@ model AppSettings {
   projectDeviationCritical  Float    @default(10) // deviasi ≥ ini → "Kritis" (memicu reminder)
   projectProgressStaleDays  Int      @default(14) // progres tidak diperbarui selama ini → reminder
   projectInvoiceOverdueDays Int      @default(30) // invoice belum dibayar lewat jatuh tempo + ini → reminder (dipakai jika jatuh tempo kosong: dihitung dari tanggal invoice)
+  // --- Weekly management report (laporan mingguan) ---
+  weeklyReportEnabled       Boolean  @default(false)
+  weeklyReportRecipients    String? // comma/newline-separated emails
+  weeklyReportDay           Int      @default(1) // ISO weekday in WIB: 1 = Senin … 7 = Minggu
+  // --- Weekly "please update progress" email to PICs ---
+  picUpdateRequestEnabled   Boolean  @default(true)
+  picUpdateRequestDay       Int      @default(1)
+  projectMarginDropAlert    Float    @default(10) // margin aktual/prakiraan turun ≥ ini (poin %) dari rencana → masuk "perlu keputusan"
   updatedAt                 DateTime @updatedAt
 }
 
@@ -541,39 +550,51 @@ model ProjectCategory {
 /// for the project's own target completion date. Doubles as a running
 /// database of completed/ongoing work for future reference.
 model Project {
-  id              String                  @id @default(cuid())
-  projectNumber   String                  @unique // kontrak/project number
-  projectName     String
-  categoryId      String
-  category        ProjectCategory         @relation(fields: [categoryId], references: [id])
-  clientName      String // pemberi kerja — free text, not tied to the certificate Client list
-  pic             String // internal PIC name
-  picEmail        String?
-  ccEmail         String? // atasan email — now supplemented by the global active-Supervisor CC list
-  contractValue   Decimal? // Rupiah
-  startDate       DateTime?
-  targetEndDate   DateTime // reminder milestones are computed from this date
-  actualEndDate   DateTime? // set when the project is actually finished — distinct from the target
-  status          String                  @default("ONGOING") // "ONGOING" | "COMPLETED" | "CANCELLED" — reminders only fire while ONGOING
-  description     String?
-  fileUrl         String?
-  driveFileId     String?
-  fileMimeType    String?
-  notes           String?
-  createdAt       DateTime                @default(now())
-  updatedAt       DateTime                @updatedAt
-  deletedAt       DateTime? // soft delete, same pattern as Certificate
-  addenda         ProjectAddendum[]
-  milestones      ProjectMilestone[]
-  progressPlans   ProjectProgressPlan[]
-  progressReports ProjectProgressReport[]
-  terms           ProjectTerm[]
-  budgetItems     ProjectBudgetItem[]
-  expenses        ProjectExpense[]
-  issues          ProjectIssue[]
-  alertLogs       ProjectAlertLog[]
-  emailLogs       EmailLog[]
-  notifications   Notification[]
+  id                    String                  @id @default(cuid())
+  projectNumber         String                  @unique // kontrak/project number
+  projectName           String
+  categoryId            String
+  category              ProjectCategory         @relation(fields: [categoryId], references: [id])
+  clientName            String // pemberi kerja — free text, not tied to the certificate Client list
+  pic                   String // internal PIC name
+  picEmail              String?
+  ccEmail               String? // atasan email — now supplemented by the global active-Supervisor CC list
+  contractValue         Decimal? // Rupiah
+  startDate             DateTime?
+  targetEndDate         DateTime // reminder milestones are computed from this date
+  actualEndDate         DateTime? // set when the project is actually finished — distinct from the target
+  status                String                  @default("ONGOING") // "ONGOING" | "COMPLETED" | "CANCELLED" — reminders only fire while ONGOING
+  // --- Baseline (triple constraint): the original plan, locked once so later changes are measured against it ---
+  baselineLockedAt      DateTime?
+  baselineLockedBy      String?
+  baselineContractValue Decimal? // nilai kontrak awal
+  baselineBudget        Decimal? // total RAB awal
+  baselineBudgetJson    String? // RAB awal per kategori: {"Perjalanan Dinas": 120000000, ...}
+  baselineEndDate       DateTime? // target selesai awal
+  targetMarginPct       Float? // target margin project (%), diambil dari RAB — tiap project punya target sendiri
+  description           String?
+  fileUrl               String?
+  driveFileId           String?
+  fileMimeType          String?
+  notes                 String?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  deletedAt             DateTime? // soft delete, same pattern as Certificate
+  addenda               ProjectAddendum[]
+  milestones            ProjectMilestone[]
+  progressPlans         ProjectProgressPlan[]
+  progressReports       ProjectProgressReport[]
+  terms                 ProjectTerm[]
+  budgetItems           ProjectBudgetItem[]
+  rabRevisions          ProjectRabRevision[]
+  expenses              ProjectExpense[]
+  issues                ProjectIssue[]
+  alertLogs             ProjectAlertLog[]
+  emailLogs             EmailLog[]
+  notifications         Notification[]
+  snapshots             ProjectSnapshot[]
+  closeout              ProjectCloseout?
+  assignments           ProjectAssignment[]
 
   @@index([categoryId])
   @@index([targetEndDate])
@@ -777,9 +798,35 @@ model ProjectBudgetItem {
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   category    String // see PROJECT_COST_CATEGORIES in lib/project-monitoring-shared.ts
   description String?
+  accountCode String? // kode akun RAB Sucofindo (mis. 4421) — dipakai mencocokkan realisasi biaya per akun
   amount      Decimal
   createdAt   DateTime @default(now())
 
+  @@index([projectId])
+}
+
+/// One uploaded RAB (template RAB Sucofindo). version 0 = RAB awal (baseline), 1.. = revisi.
+/// The current RAB's line items live in ProjectBudgetItem; this keeps the history and the
+/// key figures of every version so revisions can be compared.
+model ProjectRabRevision {
+  id              String   @id @default(cuid())
+  projectId       String
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  version         Int
+  reason          String? // alasan revisi
+  fileName        String?
+  contractValue   Decimal? // pendapatan (excl. PPN)
+  projectCost     Decimal // biaya proyek
+  contingency     Decimal  @default(0) // biaya tak terduga
+  totalCost       Decimal // biaya operasi = total RAB yang dipantau
+  overhead        Decimal? // biaya overhead (informasi; tidak mengurangi laba operasi pada template)
+  operatingProfit Decimal? // laba operasi
+  marginPct       Float? // margin laba operasi (%)
+  dataJson        String // ringkasan lengkap: data proyek, lingkup, tim, anggaran per bagian & per tahun
+  createdBy       String?
+  createdAt       DateTime @default(now())
+
+  @@unique([projectId, version])
   @@index([projectId])
 }
 
@@ -792,12 +839,16 @@ model ProjectExpense {
   category     String
   description  String
   amount       Decimal
+  cause        String   @default("NORMAL") // "NORMAL" | "DELAY" (akibat keterlambatan) | "EXTRA_SCOPE" (pekerjaan tambahan)
+  referenceNo  String? // no. bukti/voucher (opsional, dari Excel)
+  importKey    String? // sidik jari baris Excel — mencegah impor ganda
   fileUrl      String?
   driveFileId  String?
   fileMimeType String?
   createdBy    String?
   createdAt    DateTime @default(now())
 
+  @@unique([projectId, importKey])
   @@index([projectId])
 }
 
@@ -840,4 +891,85 @@ model ProjectAlertLog {
 
   @@unique([projectId, alertType, refKey])
   @@index([projectId])
+}
+
+/// Weekly "potret" of a project's monitoring figures, upserted by the daily
+/// job so each ISO week keeps its latest values. Gives trend (▲▼) and
+/// history without recomputing the past.
+model ProjectSnapshot {
+  id                String   @id @default(cuid())
+  projectId         String
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  weekKey           String // ISO week in WIB, e.g. "2026-W43"
+  snapshotDate      DateTime
+  plannedPercent    Float
+  actualPercent     Float
+  deviation         Float
+  spi               Float?
+  health            String
+  invoiced          Float    @default(0)
+  paid              Float    @default(0)
+  pad               Float    @default(0)
+  costActual        Float    @default(0)
+  openIssues        Int      @default(0)
+  cpi               Float?
+  actualMarginPct   Float? // margin aktual (berdasarkan progres), % dari nilai pekerjaan selesai
+  forecastMarginPct Float? // prakiraan margin akhir, % dari nilai kontrak
+  plannedMarginPct  Float? // margin rencana (baseline), % dari nilai kontrak awal
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([projectId, weekKey])
+  @@index([weekKey])
+}
+
+/// Close-out checklist for a finished project — one row per project.
+model ProjectCloseout {
+  id              String    @id @default(cuid())
+  projectId       String    @unique
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  bappDate        DateTime? // Berita Acara Penyelesaian Pekerjaan
+  bastDate        DateTime? // Berita Acara Serah Terima
+  finalReportDate DateTime? // laporan final diserahkan
+  satisfaction    Int? // 1–5, penilaian kepuasan klien
+  lessonsLearned  String?
+  notes           String?
+  fileUrl         String?
+  driveFileId     String?
+  fileMimeType    String?
+  updatedBy       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+/// Personnel mapping (SDB — Sumber Daya Bersama): who works on which project,
+/// in what role, for which period. One employee may sit on many projects.
+model ProjectAssignment {
+  id         String    @id @default(cuid())
+  projectId  String
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  employeeId String
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  role       String // peran, mis. "Ketua Tim", "Inspektur", "Auditor"
+  startDate  DateTime? // default: project start
+  endDate    DateTime? // default: project target end
+  notes      String?
+  createdAt  DateTime  @default(now())
+
+  @@unique([projectId, employeeId, role])
+  @@index([employeeId])
+  @@index([projectId])
+}
+
+/// Dedup + history for scheduled mailings (weekly management report, weekly
+/// PIC update requests). key is unique per mailing occurrence, e.g.
+/// "WEEKLY_REPORT:2026-W43" or "PIC_UPDATE:2026-W43:pic@x.id".
+model MailingLog {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  kind         String // "WEEKLY_REPORT" | "PIC_UPDATE"
+  recipients   String
+  status       String // "SENT" | "FAILED" | "SKIPPED"
+  errorMessage String?
+  sentAt       DateTime @default(now())
 }

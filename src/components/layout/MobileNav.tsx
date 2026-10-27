@@ -8,6 +8,7 @@ import {
   X,
   LayoutDashboard,
   TrendingUp,
+  Network,
   FileBadge2,
   Building2,
   Building,
@@ -76,8 +77,10 @@ const NAV_GROUPS = [
   {
     label: "Project",
     items: [
-      { href: "/projects/dashboard", label: "Dashboard Realisasi", icon: TrendingUp, adminOnly: false },
-      { href: "/projects", label: "Project Monitoring", icon: FolderClock, adminOnly: false },
+      { href: "/projects/dashboard", label: "Monitoring Project", icon: TrendingUp, adminOnly: false },
+      { href: "/projects", label: "Daftar Project", icon: FolderClock, adminOnly: false },
+      { href: "/projects/personnel", label: "Mapping Personil", icon: Network, adminOnly: false },
+      { href: "/projects/weekly-report", label: "Laporan Mingguan", icon: FileBarChart, adminOnly: false },
       { href: "/project-categories", label: "Categories", icon: Tags, adminOnly: false },
       { href: "/project-email-template", label: "Email Template", icon: Mail, adminOnly: true },
     ],
@@ -105,7 +108,7 @@ const NAV_GROUPS = [
   },
 ];
 
-export function MobileNav({ role }: { role: "ADMIN" | "VIEWER" }) {
+export function MobileNav({ role }: { role: "ADMIN" | "VIEWER" | "PIC" }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const groups = NAV_GROUPS.map((group) => ({
@@ -125,7 +128,7 @@ export function MobileNav({ role }: { role: "ADMIN" | "VIEWER" }) {
 
       {open && (
         <div className="fixed inset-0 z-50 flex">
-          <div className="w-64 bg-ink text-slate-300 flex flex-col">
+          <div className="w-64 bg-brand-blueDark text-slate-300 flex flex-col">
             <div className="flex items-center justify-between px-5 py-5 border-b border-white/10">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shrink-0 p-1">
@@ -133,7 +136,7 @@ export function MobileNav({ role }: { role: "ADMIN" | "VIEWER" }) {
                 </div>
                 <div>
                   <p className="font-display font-semibold text-white text-sm leading-tight">Reminder System</p>
-                  <p className="font-mono text-[8px] tracking-[0.1em] text-brand-teal uppercase leading-tight mt-0.5">
+                  <p className="text-[11px] text-sky-200/70 leading-tight mt-0.5">
                     Ensuring Quality, Protecting Trust
                   </p>
                 </div>
@@ -146,7 +149,7 @@ export function MobileNav({ role }: { role: "ADMIN" | "VIEWER" }) {
               {groups.map((group, groupIndex) => (
                 <div key={group.label || `group-${groupIndex}`} className={groupIndex > 0 ? "pt-3 mt-3 border-t border-white/10" : ""}>
                   {group.label && (
-                    <p className="px-3 pb-1.5 text-[10px] font-mono uppercase tracking-[0.12em] text-slate-500">
+                    <p className="px-3 pb-1.5 text-xs font-medium text-sky-200/60">
                       {group.label}
                     </p>
                   )}

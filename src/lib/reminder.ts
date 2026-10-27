@@ -5,6 +5,9 @@ import { sendPersonnelReminderEmail } from "@/lib/personnel-email";
 import { sendProjectReminderEmail } from "@/lib/project-email";
 import { sendEquipmentReminderEmail } from "@/lib/equipment-email";
 import { runProjectMonitoringAlerts } from "@/lib/project-alerts";
+import { takeWeeklySnapshots } from "@/lib/project-snapshots";
+import { runPicUpdateRequests } from "@/lib/pic-update-request";
+import { runWeeklyReport } from "@/lib/weekly-report-send";
 
 /** Reminder milestones per spec: days remaining before expiry (0 = expiry day itself). */
 export const REMINDER_MILESTONES = [90, 60, 30, 14, 7, 3, 1, 0] as const;
@@ -49,9 +52,22 @@ export async function runReminderCheck(): Promise<ReminderRunSummary> {
   await runPersonnelReminders(summary, supervisorCc);
   await runProjectReminders(summary, supervisorCc);
   await runProjectMonitoringAlerts(summary, supervisorCc);
+  // Project monitoring — weekly rhythm. Each step is independent: one
+  // failing (e.g. SMTP down) must not stop the others or the reminders above.
+  await safely("snapshot mingguan", () => takeWeeklySnapshots());
+  await safely("permintaan update PIC", () => runPicUpdateRequests(summary));
+  await safely("laporan mingguan", () => runWeeklyReport(summary));
   await runEquipmentReminders(summary, supervisorCc);
 
   return summary;
+}
+
+async function safely(label: string, fn: () => Promise<unknown>) {
+  try {
+    await fn();
+  } catch (err) {
+    console.error(`Reminder job — ${label} gagal:`, err);
+  }
 }
 
 /** Combines the global active-Supervisor CC list with a record's own legacy ccEmail (if any), so old free-text CC entries keep working alongside the new centralized list. */

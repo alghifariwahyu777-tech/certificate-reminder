@@ -1,65 +1,108 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
-import { AlertOctagon, ClipboardList, FileText, Flag, LayoutDashboard, Receipt, Wallet } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { SubTabs } from "./shared";
 
 const TABS = [
-  { key: "ringkasan", label: "Ringkasan", icon: LayoutDashboard },
-  { key: "progres", label: "Progres", icon: ClipboardList },
-  { key: "milestone", label: "Milestone", icon: Flag },
-  { key: "termin", label: "Termin & Penagihan", icon: Receipt },
-  { key: "biaya", label: "Biaya", icon: Wallet },
-  { key: "kendala", label: "Kendala & Risiko", icon: AlertOctagon },
-  { key: "kontrak", label: "Kontrak & Addendum", icon: FileText },
+  { key: "ringkasan", label: "Ringkasan" },
+  { key: "jadwal", label: "Jadwal & Progres" },
+  { key: "keuangan", label: "Keuangan" },
+  { key: "tim", label: "Tim & Kendala" },
+  { key: "dokumen", label: "Dokumen" },
 ] as const;
 
 export type MonitoringTabKey = (typeof TABS)[number]["key"];
+export type MonitoringSection = { key: string; label: string; badge?: number; node: ReactNode };
+type Panel = ReactNode | MonitoringSection[];
+
+const isSections = (p: Panel): p is MonitoringSection[] => Array.isArray(p) && p.length > 0 && typeof p[0] === "object" && p[0] !== null && "node" in (p[0] as object);
 
 /**
- * Tab bar for the project detail page. The active tab lives in the URL hash
- * (#termin etc.) so a refresh after saving — or a link from an email/the
- * portfolio dashboard — lands on the same tab. Hash (not a search param) so
- * no Suspense boundary is needed around useSearchParams.
+ * Five tabs; a tab with several parts shows them one at a time through a small
+ * segmented control. The location lives in the URL hash ("#keuangan/termin"),
+ * so a refresh or a link from an email lands on the same place. Old single-word
+ * hashes from earlier versions (#termin, #biaya, #margin, …) still resolve.
  */
-export function MonitoringTabs({ panels, badges }: { panels: Record<MonitoringTabKey, ReactNode>; badges?: Partial<Record<MonitoringTabKey, number>> }) {
+export function MonitoringTabs({ panels }: { panels: Record<MonitoringTabKey, Panel> }) {
   const [tab, setTab] = useState<MonitoringTabKey>("ringkasan");
+  const [section, setSection] = useState<Partial<Record<MonitoringTabKey, string>>>({});
 
   useEffect(() => {
     const read = () => {
-      const h = window.location.hash.slice(1) as MonitoringTabKey;
-      if (TABS.some((t) => t.key === h)) setTab(h);
+      const [a, b] = window.location.hash.slice(1).split("/");
+      if (!a) return;
+      if (TABS.some((t) => t.key === a)) {
+        setTab(a as MonitoringTabKey);
+        if (b) setSection((s) => ({ ...s, [a]: b }));
+        return;
+      }
+      // legacy / direct section links: find the tab that owns the section
+      for (const t of TABS) {
+        const p = panels[t.key];
+        if (isSections(p) && p.some((x) => x.key === a)) {
+          setTab(t.key);
+          setSection((s) => ({ ...s, [t.key]: a }));
+          return;
+        }
+      }
     };
     read();
     window.addEventListener("hashchange", read);
     return () => window.removeEventListener("hashchange", read);
+    // panels' section keys are static per page
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function select(key: MonitoringTabKey) {
+  function go(key: MonitoringTabKey, sub?: string) {
     setTab(key);
-    history.replaceState(null, "", `#${key}`);
+    if (sub) setSection((s) => ({ ...s, [key]: sub }));
+    history.replaceState(null, "", `#${key}${sub ? `/${sub}` : ""}`);
   }
+
+  const badgeOf = (p: Panel) => (isSections(p) ? p.reduce((a, x) => a + (x.badge || 0), 0) : 0);
+  const current = panels[tab];
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-1 overflow-x-auto">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => select(t.key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium whitespace-nowrap transition-colors ${
-              tab === t.key ? "bg-ink text-white dark:bg-slate-100 dark:text-ink" : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800"
-            }`}
-          >
-            <t.icon className="h-3.5 w-3.5" />
-            {t.label}
-            {!!badges?.[t.key] && (
-              <span className="ml-0.5 rounded-full bg-signal-expired text-white text-[10px] leading-none px-1.5 py-0.5">{badges[t.key]}</span>
-            )}
-          </button>
-        ))}
+      <div className="-mx-1 overflow-x-auto border-b border-line dark:border-slate-800">
+        <div className="flex gap-1 px-1">
+          {TABS.map((t) => {
+            const badge = badgeOf(panels[t.key]);
+            return (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => go(t.key)}
+                className={cn(
+                  "-mb-px whitespace-nowrap border-b-2 px-3.5 py-2.5 text-[13.5px] font-semibold transition-colors",
+                  tab === t.key
+                    ? "border-brand-blueDark text-brand-blueDark dark:border-slate-100 dark:text-slate-100"
+                    : "border-transparent text-slate-500 hover:text-ink dark:hover:text-slate-200"
+                )}
+              >
+                {t.label}
+                {badge > 0 && <span className="ml-1.5 rounded-full bg-signal-expired px-1.5 py-0.5 text-[10px] leading-none text-white">{badge}</span>}
+              </button>
+            );
+          })}
+        </div>
       </div>
-      <div>{panels[tab]}</div>
+      {isSections(current) ? (
+        <SectionedPanel sections={current} value={section[tab] && current.some((x) => x.key === section[tab]) ? (section[tab] as string) : current[0].key} onChange={(k) => go(tab, k)} />
+      ) : (
+        <div>{current}</div>
+      )}
+    </div>
+  );
+}
+
+function SectionedPanel({ sections, value, onChange }: { sections: MonitoringSection[]; value: string; onChange: (k: string) => void }) {
+  const active = sections.find((s) => s.key === value) ?? sections[0];
+  return (
+    <div className="space-y-4">
+      {sections.length > 1 && <SubTabs items={sections.map((s) => ({ key: s.key, label: s.label, badge: s.badge }))} value={active.key} onChange={onChange} />}
+      <div>{active.node}</div>
     </div>
   );
 }

@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { UploadCloud, FileText, X, Save } from "lucide-react";
+import { UploadCloud, FileText, X, Save, FileSpreadsheet, CheckCircle2 } from "lucide-react";
+import type { RabData } from "@/lib/project-rab-import";
 import { projectSchema, type ProjectInput, MAX_FILE_SIZE, ACCEPTED_FILE_TYPES } from "@/lib/validations";
 import { Input, Label, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -39,10 +40,15 @@ export function ProjectForm({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [rabFile, setRabFile] = useState<File | null>(null);
+  const [rab, setRab] = useState<RabData | null>(null);
+  const [rabBusy, setRabBusy] = useState(false);
+  const [rabError, setRabError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ProjectInput>({
     resolver: zodResolver(projectSchema),
@@ -92,6 +98,39 @@ export function ProjectForm({
     }
   }
 
+  /** Reads the RAB and fills the form; the same file is saved to the project right after it is created. */
+  async function handleRab(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setRabBusy(true);
+    setRabError(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/projects/rab-parse", { method: "POST", body: fd });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setRabError(body.message || "File RAB tidak dapat dibaca.");
+        return;
+      }
+      const d = body.data as RabData;
+      const opts = { shouldValidate: true, shouldDirty: true };
+      if (d.project.contractNumber) setValue("projectNumber", d.project.contractNumber, opts);
+      if (d.project.name) setValue("projectName", d.project.name, opts);
+      if (d.project.client) setValue("clientName", d.project.client, opts);
+      if (d.project.projectManager) setValue("pic", d.project.projectManager, opts);
+      setValue("contractValue", String(Math.round(d.revenue)), opts);
+      if (d.project.startDate) setValue("startDate", d.project.startDate, opts);
+      if (d.project.endDate) setValue("targetEndDate", d.project.endDate, opts);
+      const scope = [d.project.objective, ...d.scopes.map((x) => `${x.no}. ${x.scope}`)].filter(Boolean).join("\n");
+      if (scope) setValue("description", scope, opts);
+      setRab(d);
+      setRabFile(file);
+    } finally {
+      setRabBusy(false);
+    }
+  }
+
   async function onSubmit(data: ProjectInput) {
     setServerError(null);
     const payload = { ...data, fileUrl, driveFileId, fileMimeType };
@@ -108,6 +147,16 @@ export function ProjectForm({
       return;
     }
 
+    if (!isEdit && rabFile && body.project?.id) {
+      const fd = new FormData();
+      fd.append("file", rabFile);
+      fd.append("commit", "1");
+      const r = await fetch(`/api/projects/${body.project.id}/rab`, { method: "POST", body: fd });
+      showToast(r.ok ? "Project dan RAB berhasil disimpan." : "Project tersimpan, tetapi RAB gagal disimpan. Unggah ulang pada tab Keuangan.");
+      router.push(`/projects/${body.project.id}#keuangan/biaya`);
+      router.refresh();
+      return;
+    }
     showToast(isEdit ? "Project berhasil diperbarui." : "Project berhasil ditambahkan.");
     router.push(isEdit ? `/projects/${initialData.id}` : "/projects");
     router.refresh();
@@ -115,6 +164,27 @@ export function ProjectForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
+      {!isEdit && (
+        <Card>
+          <CardContent className="space-y-3">
+            <div>
+              <p className="font-bold text-[15px] text-ink dark:text-slate-100">Isi otomatis dari RAB</p>
+              <p className="mt-0.5 text-[13px] text-slate-500">
+                Pilih file RAB (template Sucofindo). Nomor SPMK, nama, klien, manajer proyek, nilai, dan periode project terisi otomatis, dan RAB langsung tersimpan sebagai baseline saat project disimpan.
+              </p>
+            </div>
+            <label className="block cursor-pointer">
+              <div className="flex items-center gap-2 rounded-md border border-dashed border-slate-300 px-3 py-2.5 text-sm text-slate-500 hover:border-accent hover:bg-accent/5">
+                {rab ? <CheckCircle2 className="h-4 w-4 text-signal-active" /> : <FileSpreadsheet className="h-4 w-4 text-brand-blue" />}
+                {rabBusy ? "Membaca RAB..." : rab && rabFile ? `${rabFile.name}: total RAB Rp ${Math.round(rab.operatingCost).toLocaleString("id-ID")}, margin ${rab.marginPct?.toLocaleString("id-ID") ?? "-"}%` : "Klik untuk memilih file RAB (.xlsx / .xlsm)"}
+              </div>
+              <input type="file" className="hidden" accept=".xlsx,.xlsm" onChange={handleRab} disabled={rabBusy} />
+            </label>
+            {rabError && <p className="text-xs text-signal-expired">{rabError}</p>}
+            {rab && <p className="text-xs text-slate-500">Periksa kembali isian di bawah, lalu pilih kategori project.</p>}
+          </CardContent>
+        </Card>
+      )}
       <Card>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-3">

@@ -13,7 +13,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           className={cn(
-            "w-full rounded border px-3 py-2 text-sm text-ink bg-white transition-colors placeholder:text-slate-400 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500",
+            "w-full rounded-md border px-3 py-2 text-sm text-ink bg-white transition-colors placeholder:text-slate-400 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500",
             error
               ? "border-signal-expiredBorder focus:border-signal-expired"
               : "border-slate-300 focus:border-accent dark:border-slate-600",
@@ -40,7 +40,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         <textarea
           ref={ref}
           className={cn(
-            "w-full rounded border px-3 py-2 text-sm text-ink bg-white transition-colors placeholder:text-slate-400 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500",
+            "w-full rounded-md border px-3 py-2 text-sm text-ink bg-white transition-colors placeholder:text-slate-400 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500",
             error
               ? "border-signal-expiredBorder focus:border-signal-expired"
               : "border-slate-300 focus:border-accent dark:border-slate-600",
@@ -67,7 +67,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         <select
           ref={ref}
           className={cn(
-            "w-full rounded border px-3 py-2 text-sm text-ink bg-white transition-colors dark:bg-slate-900 dark:text-slate-100",
+            "w-full rounded-md border px-3 py-2 text-sm text-ink bg-white transition-colors dark:bg-slate-900 dark:text-slate-100",
             error
               ? "border-signal-expiredBorder focus:border-signal-expired"
               : "border-slate-300 focus:border-accent dark:border-slate-600",
@@ -88,7 +88,7 @@ Select.displayName = "Select";
 export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
   return (
     <label
-      className={cn("block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5 uppercase tracking-wide", className)}
+      className={cn("block text-[13px] font-medium text-slate-600 dark:text-slate-400 mb-1.5", className)}
       {...props}
     />
   );

@@ -73,13 +73,13 @@ export const createUserSchema = z.object({
   name: z.string().min(1, "Nama wajib diisi"),
   email: z.string().min(1, "Email wajib diisi").email("Format email tidak valid"),
   password: z.string().min(6, "Password minimal 6 karakter"),
-  role: z.enum(["ADMIN", "VIEWER"], { errorMap: () => ({ message: "Role tidak valid" }) }),
+  role: z.enum(["ADMIN", "VIEWER", "PIC"], { errorMap: () => ({ message: "Role tidak valid" }) }),
 });
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 
 export const updateUserSchema = z.object({
   name: z.string().min(1, "Nama wajib diisi"),
-  role: z.enum(["ADMIN", "VIEWER"], { errorMap: () => ({ message: "Role tidak valid" }) }),
+  role: z.enum(["ADMIN", "VIEWER", "PIC"], { errorMap: () => ({ message: "Role tidak valid" }) }),
   isActive: z.boolean(),
   password: z.string().min(6, "Password minimal 6 karakter").optional().or(z.literal("")),
 });
@@ -496,6 +496,8 @@ export const projectExpenseSchema = z.object({
   category: z.string().trim().min(1, "Kategori biaya wajib diisi").max(100),
   description: z.string().trim().min(1, "Keterangan wajib diisi").max(500),
   amount: money("Nominal biaya harus berupa angka"),
+  cause: z.enum(["NORMAL", "DELAY", "EXTRA_SCOPE"]).default("NORMAL"),
+  referenceNo: z.string().max(100).optional().nullable(),
   ...fileFields,
 });
 
@@ -516,6 +518,7 @@ export const projectMonitoringSettingsSchema = z
     projectDeviationCritical: z.coerce.number().min(0).max(100),
     projectProgressStaleDays: z.coerce.number().int().min(1).max(365),
     projectInvoiceOverdueDays: z.coerce.number().int().min(1).max(365),
+    projectMarginDropAlert: z.coerce.number().min(1).max(100).optional(),
   })
   .refine((v) => v.projectDeviationCritical >= v.projectDeviationWarning, {
     message: "Ambang kritis harus lebih besar atau sama dengan ambang waspada",
@@ -564,3 +567,51 @@ export const supervisorSchema = z.object({
   isActive: z.boolean().optional(),
 });
 export type SupervisorInput = z.infer<typeof supervisorSchema>;
+
+// --- PIC progress update (login or emailed link) ---
+export const picProgressUpdateSchema = z.object({
+  reportDate: z.string().min(1, "Tanggal wajib diisi").refine((v) => !isNaN(Date.parse(v)), "Format tanggal tidak valid"),
+  actualPercent: z.coerce.number({ invalid_type_error: "Progres harus berupa angka" }).min(0, "Minimal 0%").max(100, "Maksimal 100%"),
+  summary: z.string().trim().min(1, "Mohon isi pekerjaan yang sudah dilakukan").max(5000),
+  nextPlan: z.string().max(5000).optional().nullable(),
+  completedMilestoneIds: z.array(z.string()).max(100).default([]),
+  issueTitle: z.string().max(200).optional().nullable(),
+  issueImpact: z.enum(["LOW", "MEDIUM", "HIGH"]).default("MEDIUM"),
+  fileUrl: z.string().nullable().optional(),
+  driveFileId: z.string().nullable().optional(),
+  fileMimeType: z.string().nullable().optional(),
+});
+export type PicProgressUpdateInput = z.infer<typeof picProgressUpdateSchema>;
+
+export const projectCloseoutSchema = z.object({
+  bappDate: z.string().optional().nullable().transform((v) => v || null),
+  bastDate: z.string().optional().nullable().transform((v) => v || null),
+  finalReportDate: z.string().optional().nullable().transform((v) => v || null),
+  satisfaction: z
+    .union([z.string(), z.number()])
+    .optional()
+    .nullable()
+    .transform((v) => (v === "" || v === null || v === undefined ? null : Number(v)))
+    .refine((v) => v === null || (Number.isInteger(v) && v >= 1 && v <= 5), "Nilai kepuasan 1–5"),
+  lessonsLearned: z.string().max(5000).optional().nullable(),
+  notes: z.string().max(5000).optional().nullable(),
+  fileUrl: z.string().nullable().optional(),
+  driveFileId: z.string().nullable().optional(),
+  fileMimeType: z.string().nullable().optional(),
+});
+
+export const projectAssignmentSchema = z.object({
+  employeeId: z.string().min(1, "Pilih personil"),
+  role: z.string().trim().min(1, "Peran wajib diisi").max(100),
+  startDate: z.string().optional().nullable().transform((v) => v || null),
+  endDate: z.string().optional().nullable().transform((v) => v || null),
+  notes: z.string().max(1000).optional().nullable(),
+});
+
+export const weeklyReportSettingsSchema = z.object({
+  weeklyReportEnabled: z.boolean(),
+  weeklyReportRecipients: z.string().max(5000).optional().nullable(),
+  weeklyReportDay: z.coerce.number().int().min(1).max(7),
+  picUpdateRequestEnabled: z.boolean(),
+  picUpdateRequestDay: z.coerce.number().int().min(1).max(7),
+});
