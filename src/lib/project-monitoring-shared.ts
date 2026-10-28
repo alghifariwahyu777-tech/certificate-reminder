@@ -31,6 +31,23 @@ export const TERM_STATUS_LABEL: Record<string, string> = {
 
 export const ISSUE_TYPE_LABEL: Record<string, string> = { ISSUE: "Kendala", RISK: "Risiko" };
 export const ISSUE_IMPACT_LABEL: Record<string, string> = { LOW: "Rendah", MEDIUM: "Sedang", HIGH: "Tinggi" };
+export const ISSUE_LIKELIHOOD_LABEL: Record<string, string> = { LOW: "Jarang", MEDIUM: "Mungkin", HIGH: "Sangat mungkin" };
+export const ISSUE_CATEGORY_LABEL: Record<string, string> = {
+  TEKNIS: "Teknis / metode",
+  KLIEN: "Klien / perizinan",
+  SDM: "SDM / personil",
+  KEUANGAN: "Keuangan / penagihan",
+  HSE: "HSE / K3",
+  ALAM: "Cuaca / alam",
+  LAINNYA: "Lainnya",
+};
+const LEVEL_SCORE: Record<string, number> = { LOW: 1, MEDIUM: 2, HIGH: 3 };
+/** Risk level from likelihood × impact on a 3×3 matrix; an issue (already happening) counts as certain. */
+export function riskLevel(type: string, likelihood: string, impact: string): { score: number; label: "Rendah" | "Sedang" | "Tinggi" | "Ekstrem" } {
+  const l = type === "ISSUE" ? 3 : LEVEL_SCORE[likelihood] ?? 2;
+  const score = l * (LEVEL_SCORE[impact] ?? 2);
+  return { score, label: score >= 9 ? "Ekstrem" : score >= 6 ? "Tinggi" : score >= 3 ? "Sedang" : "Rendah" };
+}
 export const ISSUE_STATUS_LABEL: Record<string, string> = { OPEN: "Terbuka", CLOSED: "Selesai" };
 
 export const PROJECT_COST_CATEGORIES = [
@@ -366,8 +383,12 @@ export function computeMonitoring(
   let forecastEndDate: number | null = null;
   const elapsedDays = (today - start) / DAY_MS;
   if (input.status === "ONGOING" && actualPercent > 0 && actualPercent < 100 && elapsedDays > 0) {
-    const ratePerDay = actualPercent / elapsedDays;
-    forecastEndDate = dateOnly(today + ((100 - actualPercent) / ratePerDay) * DAY_MS);
+    // schedule performance (progress vs plan) stretched over the planned duration — the usual
+    // "duration ÷ SPI" estimate, which respects the S shape of the plan; straight-line pace as fallback
+    const spiNow = plannedPercent > 0.5 ? Math.max(0.2, actualPercent / plannedPercent) : null;
+    const byPace = today + ((100 - actualPercent) / (actualPercent / elapsedDays)) * DAY_MS;
+    const bySpi = spiNow ? start + (end - start) / spiNow : byPace;
+    forecastEndDate = dateOnly(Math.max(today + DAY_MS, bySpi));
   }
 
   const lastProgressUpdate = events.length ? events[events.length - 1].t : null;

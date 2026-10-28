@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { getProjectWithMonitoring } from "@/lib/project-monitoring";
-import { HEALTH_LABEL, MILESTONE_STATUS_LABEL, TERM_STATUS_LABEL, ISSUE_IMPACT_LABEL, ISSUE_TYPE_LABEL, buildSCurve, formatPercent, formatRupiah, shortDate, isInvoiceOverdue } from "@/lib/project-monitoring-shared";
+import { HEALTH_LABEL, MILESTONE_STATUS_LABEL, TERM_STATUS_LABEL, ISSUE_IMPACT_LABEL, ISSUE_TYPE_LABEL, riskLevel, buildSCurve, formatPercent, formatRupiah, shortDate, isInvoiceOverdue } from "@/lib/project-monitoring-shared";
 import { certWarnings } from "@/lib/personnel-mapping";
 import { formatLongDate, jakartaDay } from "@/lib/week";
 import { PDF_COLOR, createReport, type PdfLine } from "@/lib/pdf-kit";
 import { buildProfitLoss, marginTimeline } from "@/lib/project-margin";
+import { summarizeHse, toHseRecord } from "@/lib/project-hse";
 
 /**
  * Detailed report of ONE project, for management wanting the full picture of a
@@ -344,17 +345,37 @@ export async function generateProjectReportPdf(projectId: string): Promise<{ pdf
   else
     r.table(
       [
-        { header: "Jenis", width: 55 },
-        { header: "Uraian", width: 240 },
-        { header: "Dampak", width: 55 },
-        { header: "Penanggung jawab", width: 90 },
-        { header: "Target", width: 60 },
+        { header: "Jenis", width: 50 },
+        { header: "Uraian", width: 225 },
+        { header: "Tingkat", width: 55 },
+        { header: "Dampak", width: 45 },
+        { header: "Penanggung jawab", width: 85 },
+        { header: "Target", width: 55 },
       ],
-      open.map((i) => ({
-        cells: [ISSUE_TYPE_LABEL[i.type] ?? i.type, i.title, ISSUE_IMPACT_LABEL[i.impact] ?? i.impact, i.owner || "-", d(i.targetDate)],
-        color: (c) => (c === 2 && i.impact === "HIGH" ? BAD : undefined),
-      }))
+      [...open]
+        .map((i) => ({ i, lv: riskLevel(i.type, i.likelihood, i.impact) }))
+        .sort((a, b) => b.lv.score - a.lv.score)
+        .map(({ i, lv }) => ({
+          cells: [ISSUE_TYPE_LABEL[i.type] ?? i.type, i.title, lv.label, ISSUE_IMPACT_LABEL[i.impact] ?? i.impact, i.owner || "-", d(i.targetDate)],
+          color: (c) => (c === 2 && lv.score >= 6 ? BAD : c === 2 && lv.score >= 3 ? WARN : undefined),
+        }))
     );
+
+  // ------------------------------------------------------------ HSE
+  const hse = summarizeHse(p.hseReports.map(toHseRecord));
+  r.section("HSE (K3)", 90);
+  if (!hse.months) r.paragraph("Belum ada laporan HSE bulanan.", { color: MUTED });
+  else {
+    r.figures([
+      { label: "Jam kerja", value: hse.manHours.toLocaleString("id-ID"), sub: `${hse.months} bulan dilaporkan` },
+      { label: "LTIFR", value: (hse.ltifr ?? 0).toLocaleString("id-ID"), sub: "per 1 juta jam kerja", color: hse.ltifr ? BAD : GOOD },
+      { label: "TRIR", value: (hse.trir ?? 0).toLocaleString("id-ID"), sub: "per 1 juta jam kerja", color: hse.trir ? WARN : GOOD },
+    ]);
+    r.paragraph(
+      `Kejadian: ${hse.fatality} fatal, ${hse.lostTimeInjury} cedera hilang hari kerja, ${hse.medicalTreatment} perawatan medis, ${hse.firstAid} P3K, ${hse.nearMiss} nyaris celaka, ${hse.propertyDamage} kerusakan aset. Kegiatan proaktif: ${hse.safetyTalks} safety talk, ${hse.inspections} inspeksi, ${hse.unsafeObservations} temuan tidak aman.`,
+      { size: 8.5 }
+    );
+  }
 
   // ------------------------------------------------------------ 8. team
   r.section("Tim project", 60);

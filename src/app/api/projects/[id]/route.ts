@@ -59,6 +59,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       status: parsed.data.status,
       description: parsed.data.description || null,
       notes: parsed.data.notes || null,
+      province: parsed.data.province || null,
+      latitude: parsed.data.latitude ? Number(parsed.data.latitude) : null,
+      longitude: parsed.data.longitude ? Number(parsed.data.longitude) : null,
       ...(parsed.data.fileUrl
         ? {
             fileUrl: parsed.data.fileUrl,

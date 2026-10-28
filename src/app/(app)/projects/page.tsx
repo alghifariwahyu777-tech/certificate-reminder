@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { getProjectPortfolio } from "@/lib/project-monitoring";
 import { CostImportDialog } from "@/components/project/monitoring/CostImportDialog";
+import { DemoSeeder } from "@/components/project/monitoring/DemoSeeder";
 
 function formatRupiah(value: number): string {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(
@@ -17,7 +18,7 @@ function formatRupiah(value: number): string {
 
 export default async function ProjectsPage() {
   const session = await getSession();
-  await ensureDemoDataOnce();
+  const demo = await ensureDemoDataOnce();
   const [projects, categories, portfolio] = await Promise.all([
     prisma.project.findMany({
       where: { deletedAt: null },
@@ -50,6 +51,7 @@ export default async function ProjectsPage() {
     <>
       <Navbar title="Daftar Project" subtitle="Kelola data project: tambah, ubah, atau hapus" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
       <div className="p-5 md:p-8 space-y-5">
+        {demo.state === "pending" && <DemoSeeder present={demo.present ?? 0} total={demo.total ?? 0} />}
         <div className="flex flex-col gap-3 rounded-lg border border-line bg-white px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700 dark:bg-slate-900">
           <p className="text-[13.5px] text-slate-600 dark:text-slate-300">
             {ongoing.length} project berjalan senilai <strong className="text-ink dark:text-slate-100">{formatRupiah(runningContractValue)}</strong>, {completed.length} project selesai

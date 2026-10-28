@@ -12,6 +12,8 @@ import { deviationTrend, getProjectWithMonitoring } from "@/lib/project-monitori
 import { PROJECT_COST_CATEGORIES, formatRupiah as formatRupiahShared, padSchedule } from "@/lib/project-monitoring-shared";
 import { buildCostCurve, buildProfitLoss, marginTimeline } from "@/lib/project-margin";
 import { prisma } from "@/lib/prisma";
+import { summarizeHse, toHseRecord } from "@/lib/project-hse";
+import { HsePanel } from "@/components/project/monitoring/HsePanel";
 import { certWarnings } from "@/lib/personnel-mapping";
 import { TeamPanel } from "@/components/project/monitoring/TeamPanel";
 import { CloseoutPanel } from "@/components/project/monitoring/CloseoutPanel";
@@ -158,6 +160,8 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
       title: i.title,
       description: i.description,
       impact: i.impact,
+      likelihood: i.likelihood,
+      category: i.category,
       owner: i.owner,
       targetDate: d(i.targetDate),
       status: i.status,
@@ -166,6 +170,10 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
       createdBy: i.createdBy,
       createdAt: i.createdAt.toISOString(),
     })),
+    hse: {
+      records: project.hseReports.map((h) => ({ ...toHseRecord(h), id: h.id, periodDate: h.periodDate.toISOString().slice(0, 10), notes: h.notes, createdBy: h.createdBy })),
+      summary: summarizeHse(project.hseReports.map(toHseRecord)),
+    },
     trend: project.status === "ONGOING" ? deviationTrend(project, summary.deviation) : null,
     padSchedule: padSchedule(loaded.input, loaded.today, loaded.thresholds),
     snapshots: project.snapshots.map((x) => ({
@@ -465,6 +473,7 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
             ],
             tim: [
               { key: "kendala", label: "Kendala & risiko", badge: summary.openHighIssues || undefined, node: <IssuePanel data={monitoring} /> },
+              { key: "hse", label: "HSE", badge: monitoring.hse.summary.signal === "bad" ? 1 : undefined, node: <HsePanel data={monitoring} /> },
               { key: "personil", label: "Tim", badge: monitoring.team.filter((m) => m.warnings.some((w) => w.expired)).length || undefined, node: <TeamPanel data={monitoring} /> },
             ],
             dokumen: [

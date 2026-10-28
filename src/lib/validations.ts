@@ -399,6 +399,17 @@ export const projectSchema = z.object({
   status: z.enum(["ONGOING", "COMPLETED", "CANCELLED"]).default("ONGOING"),
   description: z.string().optional(),
   notes: z.string().optional(),
+  province: z.string().max(60).optional().or(z.literal("")),
+  latitude: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine((v) => !v || (!isNaN(Number(v)) && Math.abs(Number(v)) <= 15), "Lintang tidak valid (contoh: -6.2)"),
+  longitude: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine((v) => !v || (!isNaN(Number(v)) && Number(v) >= 90 && Number(v) <= 145), "Bujur tidak valid (contoh: 106.8)"),
   fileUrl: z.string().nullable().optional(),
   driveFileId: z.string().nullable().optional(),
   fileMimeType: z.string().nullable().optional(),
@@ -506,6 +517,8 @@ export const projectIssueSchema = z.object({
   title: z.string().trim().min(1, "Judul wajib diisi").max(200, "Maksimal 200 karakter"),
   description: z.string().max(5000).optional().nullable(),
   impact: z.enum(["LOW", "MEDIUM", "HIGH"]),
+  likelihood: z.enum(["LOW", "MEDIUM", "HIGH"]).optional().default("MEDIUM"),
+  category: z.enum(["TEKNIS", "KLIEN", "SDM", "KEUANGAN", "HSE", "ALAM", "LAINNYA"]).optional().nullable().or(z.literal("").transform(() => null)),
   owner: z.string().max(150).optional().nullable(),
   targetDate: optionalDate,
   status: z.enum(["OPEN", "CLOSED"]),
@@ -614,4 +627,20 @@ export const weeklyReportSettingsSchema = z.object({
   weeklyReportDay: z.coerce.number().int().min(1).max(7),
   picUpdateRequestEnabled: z.boolean(),
   picUpdateRequestDay: z.coerce.number().int().min(1).max(7),
+});
+
+const count = z.coerce.number().int("Harus bilangan bulat").min(0, "Tidak boleh negatif").max(1_000_000);
+export const projectHseReportSchema = z.object({
+  periodDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Periode wajib diisi"),
+  manHours: z.coerce.number().int("Harus bilangan bulat").min(0, "Tidak boleh negatif").max(100_000_000),
+  nearMiss: count,
+  firstAid: count,
+  medicalTreatment: count,
+  lostTimeInjury: count,
+  fatality: count,
+  propertyDamage: count,
+  unsafeObservations: count,
+  safetyTalks: count,
+  inspections: count,
+  notes: z.string().max(5000).optional().nullable(),
 });

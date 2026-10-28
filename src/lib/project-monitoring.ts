@@ -1,3 +1,6 @@
+import { projectPoint } from "@/lib/indonesia-provinces";
+import { cashflowForecast, costOverrunPareto, issueCausePareto, performanceTrend, type CashflowMonth, type ParetoItem, type PerformanceWeek } from "@/lib/portfolio-insights";
+import { summarizeHse, toHseRecord, type HseSummary } from "@/lib/project-hse";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getJakartaToday } from "@/lib/status";
@@ -7,6 +10,7 @@ import {
   DAY_MS,
   actualAt,
   actualLineAt,
+  buildSCurve,
   actualEvents,
   interpolate,
   plannedPoints,
@@ -45,6 +49,7 @@ export const MONITORING_INCLUDE = {
   expenses: { orderBy: { expenseDate: "desc" } },
   issues: { orderBy: [{ status: "desc" }, { createdAt: "desc" }] },
   snapshots: { orderBy: { weekKey: "desc" }, take: 26 },
+  hseReports: { orderBy: { periodDate: "asc" } },
   closeout: true,
   rabRevisions: { orderBy: { version: "desc" }, select: { id: true, version: true, reason: true, fileName: true, contractValue: true, totalCost: true, operatingProfit: true, marginPct: true, createdBy: true, createdAt: true } },
   assignments: { include: { employee: { select: { id: true, name: true, employeeId: true, position: true, isActive: true } } }, orderBy: { createdAt: "asc" } },
@@ -136,6 +141,23 @@ export type PortfolioRow = {
   closeoutComplete: boolean | null;
   teamSize: number;
   margin: MarginAnalysis;
+  hse: HseSummary;
+  location: { lat: number; lon: number; exact: boolean; province: string | null } | null;
+};
+
+export type PortfolioRisk = {
+  id: string;
+  projectId: string;
+  projectName: string;
+  projectHealth: string;
+  type: string;
+  title: string;
+  likelihood: string;
+  impact: string;
+  category: string | null;
+  owner: string | null;
+  targetDate: number | null;
+  createdAt: number;
 };
 
 /** Deviation now vs the most recent snapshot from an earlier week. */
@@ -183,7 +205,60 @@ export function portfolioSCurve(inputs: MonitoringInput[], today: number): Portf
   });
 }
 
-export async function getProjectPortfolio(): Promise<{ rows: PortfolioRow[]; thresholds: MonitoringThresholds; today: number; curve: PortfolioCurvePoint[] }> {
+export type MiniCurvePoint = { t: number; p: number; a: number | null };
+
+/** A compact Kurva S (≤ 40 points) for the small per-project charts on the dashboard. */
+export function miniSCurve(input: MonitoringInput, today: number): MiniCurvePoint[] {
+  const rows = buildSCurve(input, today);
+  const step = Math.max(1, Math.ceil(rows.length / 40));
+  const keep = rows.filter((r, i) => i % step === 0 || i === rows.length - 1 || r.t === today || r.report);
+  return keep.map((r) => ({ t: r.t, p: r.planned, a: r.actual }));
+}
+
+export type HealthTrendRow = { week: string; date: number; KRITIS: number; WASPADA: number; ON_TRACK: number };
+export type AgingBucket = { key: string; label: string; amount: number; projects: { id: string; name: string; amount: number }[] };
+
+/** Outstanding invoices of all projects by how long past due they are. */
+export function receivableAging(items: { id: string; name: string; input: MonitoringInput }[], today: number): AgingBucket[] {
+  const buckets: AgingBucket[] = [
+    { key: "current", label: "Belum jatuh tempo", amount: 0, projects: [] },
+    { key: "d30", label: "1–30 hari", amount: 0, projects: [] },
+    { key: "d60", label: "31–60 hari", amount: 0, projects: [] },
+    { key: "d90", label: "61–90 hari", amount: 0, projects: [] },
+    { key: "d90p", label: "> 90 hari", amount: 0, projects: [] },
+  ];
+  for (const { id, name, input } of items) {
+    for (const t of input.terms) {
+      if (t.status !== "INVOICED") continue;
+      const open = Math.max(0, t.amount - (t.paidAmount ?? 0));
+      if (open <= 0) continue;
+      const due = t.dueDate ?? (t.invoiceDate !== null ? t.invoiceDate + 30 * DAY_MS : today);
+      const late = Math.floor((today - due) / DAY_MS);
+      const b = late <= 0 ? buckets[0] : late <= 30 ? buckets[1] : late <= 60 ? buckets[2] : late <= 90 ? buckets[3] : buckets[4];
+      b.amount += open;
+      const row = b.projects.find((x) => x.id === id);
+      if (row) row.amount += open;
+      else b.projects.push({ id, name, amount: open });
+    }
+  }
+  buckets.forEach((b) => b.projects.sort((x, y) => y.amount - x.amount));
+  return buckets;
+}
+
+export async function getProjectPortfolio(): Promise<{
+  rows: PortfolioRow[];
+  thresholds: MonitoringThresholds;
+  today: number;
+  curve: PortfolioCurvePoint[];
+  curves: Record<string, MiniCurvePoint[]>;
+  healthTrend: HealthTrendRow[];
+  aging: AgingBucket[];
+  risks: PortfolioRisk[];
+  cashflow: CashflowMonth[];
+  paretoCost: ParetoItem[];
+  paretoIssues: ParetoItem[];
+  perfTrend: PerformanceWeek[];
+}> {
   const [projects, thresholds] = await Promise.all([
     prisma.project.findMany({ where: { deletedAt: null }, include: MONITORING_INCLUDE, orderBy: { targetEndDate: "asc" } }),
     getMonitoringThresholds(),
@@ -210,8 +285,66 @@ export async function getProjectPortfolio(): Promise<{ rows: PortfolioRow[]; thr
     padSchedule: padSchedule(input, today, thresholds),
     closeoutComplete: p.status === "COMPLETED" ? isCloseoutComplete(p.closeout) : null,
     teamSize: p.assignments.length,
+    hse: summarizeHse(p.hseReports.map(toHseRecord)),
+    location: (() => {
+      const pt = projectPoint({ latitude: p.latitude, longitude: p.longitude, province: p.province });
+      return pt ? { ...pt, province: p.province } : null;
+    })(),
     margin: analyzeMargin(input, summary, today, thresholds.marginDropAlert),
     };
   });
-  return { rows, thresholds, today, curve: portfolioSCurve(inputs, today) };
+  const curves: Record<string, MiniCurvePoint[]> = {};
+  projects.forEach((p, i) => {
+    if (p.status === "ONGOING") curves[p.id] = miniSCurve(inputs[i], today);
+  });
+  // condition of the running projects per week: recorded weekly snapshots, with this week from today's figures
+  const thisWeek = isoWeekKey(new Date(today));
+  const weeks = new Map<string, HealthTrendRow>();
+  const bump = (week: string, date: number, health: string) => {
+    if (health !== "KRITIS" && health !== "WASPADA" && health !== "ON_TRACK") return;
+    const w = weeks.get(week) ?? { week, date, KRITIS: 0, WASPADA: 0, ON_TRACK: 0 };
+    w[health] += 1;
+    w.date = Math.min(w.date, date);
+    weeks.set(week, w);
+  };
+  projects.forEach((p, i) => {
+    for (const sn of p.snapshots) if (sn.weekKey !== thisWeek) bump(sn.weekKey, sn.snapshotDate.getTime(), sn.health);
+    if (p.status === "ONGOING") bump(thisWeek, today, rows[i].summary.health);
+  });
+  const healthTrend = [...weeks.values()].sort((a, b) => a.week.localeCompare(b.week)).slice(-12);
+  const aging = receivableAging(
+    projects.map((p, i) => ({ id: p.id, name: p.projectName, input: inputs[i] })),
+    today
+  );
+  const risks: PortfolioRisk[] = projects.flatMap((p, i) =>
+    p.status !== "ONGOING"
+      ? []
+      : p.issues
+          .filter((x) => x.status === "OPEN")
+          .map((x) => ({
+            id: x.id,
+            projectId: p.id,
+            projectName: p.projectName,
+            projectHealth: rows[i].summary.health,
+            type: x.type,
+            title: x.title,
+            likelihood: x.type === "ISSUE" ? "HIGH" : x.likelihood,
+            impact: x.impact,
+            category: x.category,
+            owner: x.owner,
+            targetDate: x.targetDate ? x.targetDate.getTime() : null,
+            createdAt: x.createdAt.getTime(),
+          }))
+  );
+  const items = projects.map((p, i) => ({ p, input: inputs[i], summary: rows[i].summary, margin: rows[i].margin }));
+  const cashflow = cashflowForecast(items, today);
+  const paretoCost = costOverrunPareto(items);
+  const ongoingProjects = projects.filter((p) => p.status === "ONGOING");
+  const paretoIssues = issueCausePareto(ongoingProjects, today);
+  const perfTrend = performanceTrend(ongoingProjects, {
+    week: thisWeek,
+    date: today,
+    items: rows.filter((r) => r.status === "ONGOING").map((r) => ({ value: r.summary.contractValue, spi: r.summary.spi, cpi: r.margin.cpi })),
+  });
+  return { rows, thresholds, today, curve: portfolioSCurve(inputs, today), curves, healthTrend, aging, risks, cashflow, paretoCost, paretoIssues, perfTrend };
 }

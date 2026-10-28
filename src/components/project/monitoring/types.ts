@@ -1,3 +1,4 @@
+import type { HseRecord, HseSummary } from "@/lib/project-hse";
 import type { RabData, RabRevisionSummary } from "@/lib/project-rab-import";
 import type { MonitoringInput, MonitoringSummary, MonitoringThresholds, PadBucket } from "@/lib/project-monitoring-shared";
 import type { CertWarning } from "@/lib/personnel-mapping";
@@ -69,12 +70,16 @@ export type ExpenseDTO = {
   fileMimeType: string | null;
 };
 
+export type HseRecordDTO = Omit<HseRecord, "periodDate"> & { id: string; periodDate: string; notes: string | null; createdBy: string | null };
+
 export type IssueDTO = {
   id: string;
   type: string;
   title: string;
   description: string | null;
   impact: string;
+  likelihood: string;
+  category: string | null;
   owner: string | null;
   targetDate: string | null;
   status: string;
@@ -102,6 +107,7 @@ export type ProjectMonitoringDTO = {
   budgetItems: BudgetItemDTO[];
   expenses: ExpenseDTO[];
   issues: IssueDTO[];
+  hse: { records: HseRecordDTO[]; summary: HseSummary };
   // batch 2
   trend: number | null;
   padSchedule: PadBucket[];

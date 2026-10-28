@@ -38,6 +38,14 @@ export function SummaryPanel({ data }: { data: ProjectMonitoringDTO }) {
   if (ongoing && s.isOverdue) alerts.push({ tone: "bad", text: `Project melewati target selesai ${Math.abs(s.daysRemaining)} hari.`, href: "#jadwal/progres", action: "Lihat progres" });
   if (s.overdueInvoiceCount > 0) alerts.push({ tone: "bad", text: `${s.overdueInvoiceCount} invoice lewat jatuh tempo (${formatRupiah(s.overdueInvoiceAmount, true)}).`, href: "#keuangan/termin", action: "Lihat termin" });
   if (s.openHighIssues > 0) alerts.push({ tone: "bad", text: `${s.openHighIssues} kendala atau risiko berdampak tinggi masih terbuka.`, href: "#tim/kendala", action: "Lihat kendala" });
+  const hse = data.hse.summary;
+  if (hse.fatality + hse.lostTimeInjury > 0)
+    alerts.push({ tone: "bad", text: `Tercatat ${hse.fatality + hse.lostTimeInjury} kecelakaan kerja dengan hilang hari kerja/fatal (LTIFR ${hse.ltifr?.toLocaleString("id-ID")}).`, href: "#tim/hse", action: "Lihat HSE" });
+  if (ongoing && data.input.startDate !== null && data.today - (data.input.startDate ?? data.today) > 45 * 86400000) {
+    const lastMonthEnd = Date.UTC(new Date(data.today).getUTCFullYear(), new Date(data.today).getUTCMonth(), 0);
+    if (!hse.lastPeriod || hse.lastPeriod < lastMonthEnd)
+      alerts.push({ tone: "warn", text: "Laporan HSE bulan lalu belum diisi.", href: data.canManage ? "#tim/hse/baru" : "#tim/hse", action: data.canManage ? "Isi laporan" : "Lihat HSE" });
+  }
   if (data.team.some((x) => x.warnings.some((w) => w.expired))) alerts.push({ tone: "bad", text: "Ada personil tim dengan sertifikasi yang sudah berakhir.", href: "#tim/personil", action: "Lihat tim" });
   else if (data.team.some((x) => x.warnings.length)) alerts.push({ tone: "warn", text: "Ada sertifikasi personil tim yang berakhir sebelum penugasan selesai.", href: "#tim/personil", action: "Lihat tim" });
   if (m.belowTarget) alerts.push({ tone: m.signals.margin === "bad" ? "bad" : "warn", text: `Prakiraan margin kurang ${formatRupiah(m.targetGap, true)} dari target project.`, href: "#keuangan/margin", action: "Lihat margin" });

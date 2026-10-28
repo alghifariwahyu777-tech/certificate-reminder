@@ -17,7 +17,8 @@ import type { RabData } from "@/lib/project-rab-import";
 
 export const DEMO_PREFIX = "DEMO-";
 const DEMO_EMAIL = "@contoh.demo";
-const DEMO_CATEGORY = "Contoh (Demo)";
+const DEMO_CATEGORY = "Contoh (Demo)"; // legacy single category, removed with the demo data
+const DEMO_CATEGORY_SUFFIX = " (contoh)";
 const DEMO_CERT_CATEGORY = "Sertifikasi (Contoh)";
 const DAY = 86400000;
 
@@ -39,6 +40,8 @@ type Scenario = {
   /** routine cost per unit of earned value (1 = exactly per RAB) */
   costFactor: number;
   delayCost?: number;
+  /** days the overdue invoice is past its due date (default 25) */
+  overdueDays?: number;
   extraCost?: number;
   /** terms: [share, status] — status follows progress when omitted */
   terms: [number, "PLANNED" | "INVOICED" | "PAID" | "OVERDUE"][];
@@ -122,7 +125,7 @@ const SCENARIOS: Scenario[] = [
     no: "DEMO-04",
     name: "Verifikasi TKDN Komponen Smelter",
     client: "PT Freeport Indonesia",
-    location: "Gresik, Jawa Timur",
+    location: "Timika, Papua Tengah",
     pic: "Dewi Anggraini",
     value: 1_200_000_000,
     startDaysAgo: 60,
@@ -167,6 +170,7 @@ const SCENARIOS: Scenario[] = [
     rabRatio: 0.72,
     costFactor: 1.02,
     terms: [[0.5, "PAID"], [0.3, "OVERDUE"], [0.2, "PLANNED"]],
+    overdueDays: 41,
     team: [[2, "Auditor Energi"]],
     scopes: ["Walk-through audit", "Pengukuran beban listrik", "Analisis peluang hemat energi", "Laporan audit energi"],
   },
@@ -192,7 +196,7 @@ const SCENARIOS: Scenario[] = [
     no: "DEMO-08",
     name: "Pengawasan Mutu Konstruksi Jalan Tol Seksi 3",
     client: "PT Jasa Marga (Persero) Tbk",
-    location: "Jawa Tengah",
+    location: "Medan, Sumatera Utara",
     pic: "Fajar Nugroho",
     value: 2_400_000_000,
     startDaysAgo: 75,
@@ -205,7 +209,164 @@ const SCENARIOS: Scenario[] = [
     team: [[2, "Inspektur Mutu"], [0, "Surveyor"], [7, "Koordinator Project"]],
     scopes: ["Pengujian material", "Pengawasan pekerjaan tanah", "Pengawasan perkerasan", "Laporan bulanan mutu"],
   },
+  {
+    no: "DEMO-09",
+    name: "Inspeksi Pipa Penyalur Gas Bawah Laut",
+    client: "PT Perusahaan Gas Negara Tbk",
+    location: "Balikpapan, Kalimantan Timur",
+    pic: "Hendra Gunawan",
+    value: 2_850_000_000,
+    startDaysAgo: 90,
+    durationDays: 200,
+    actual: 50,
+    staleDays: 3,
+    rabRatio: 0.8,
+    costFactor: 1.2,
+    terms: [[0.2, "PAID"], [0.3, "INVOICED"], [0.5, "PLANNED"]],
+    issues: [{ title: "Sewa kapal ROV naik karena jadwal dipercepat", impact: "MEDIUM" }],
+    team: [[4, "Inspektur NDT"], [0, "Surveyor"]],
+    scopes: ["Mobilisasi kapal dan ROV", "Survei visual jalur pipa", "Pengukuran ketebalan dinding", "Analisis integritas", "Laporan inspeksi"],
+  },
+  {
+    no: "DEMO-10",
+    name: "Sertifikasi Produk SNI Baja Tulangan",
+    client: "PT Krakatau Steel (Persero) Tbk",
+    location: "Cilegon, Banten",
+    pic: "Siti Nurhaliza",
+    value: 950_000_000,
+    startDaysAgo: 100,
+    durationDays: 160,
+    actual: 60,
+    staleDays: 7,
+    rabRatio: 0.7,
+    costFactor: 0.85,
+    terms: [[0.3, "PAID"], [0.4, "PLANNED"], [0.3, "PLANNED"]],
+    issues: [{ title: "Pengambilan contoh uji menunggu jadwal produksi klien", impact: "MEDIUM", type: "RISK" }],
+    team: [[1, "Auditor"], [5, "Analis Laboratorium"]],
+    scopes: ["Audit sistem mutu pabrik", "Pengambilan contoh uji", "Pengujian laboratorium", "Evaluasi dan keputusan sertifikasi"],
+  },
+  {
+    no: "DEMO-11",
+    name: "Survei Kadaster Lahan PLTS Terapung",
+    client: "PT PLN Indonesia Power",
+    location: "Waduk Saguling, Jawa Barat",
+    pic: "Ahmad Rifai",
+    value: 1_750_000_000,
+    startDaysAgo: 45,
+    durationDays: 150,
+    actual: 23,
+    staleDays: 2,
+    rabRatio: 0.76,
+    costFactor: 0.97,
+    terms: [[0.2, "PAID"], [0.4, "PLANNED"], [0.4, "PLANNED"]],
+    team: [[0, "Ketua Tim Survei"], [3, "Tenaga Ahli Geodesi"]],
+    scopes: ["Pemasangan titik kontrol", "Pengukuran batas bidang", "Pemetaan situasi", "Penyusunan peta bidang", "Laporan akhir"],
+  },
+  {
+    no: "DEMO-12",
+    name: "Uji Tak Rusak Struktur Jembatan Kereta Api",
+    client: "PT Kereta Api Indonesia (Persero)",
+    location: "Daop 2 Bandung",
+    pic: "Bambang Wijaya",
+    value: 1_380_000_000,
+    startDaysAgo: 140,
+    durationDays: 180,
+    actual: 70,
+    staleDays: 4,
+    rabRatio: 0.74,
+    costFactor: 1.15,
+    delayCost: 85_000_000,
+    overdueDays: 72,
+    terms: [[0.3, "PAID"], [0.3, "OVERDUE"], [0.4, "PLANNED"]],
+    issues: [{ title: "Akses jalur kereta hanya tersedia malam hari", impact: "HIGH" }],
+    team: [[2, "Inspektur"], [4, "Inspektur NDT"]],
+    scopes: ["Inspeksi visual struktur", "Uji ultrasonik sambungan", "Uji magnetic particle", "Analisis dan rekomendasi", "Laporan akhir"],
+  },
 ];
+
+/** Province and site coordinates of each demo project (for the map). */
+const LOC: Record<string, [string, number, number]> = {
+  "DEMO-01": ["Sumatera Selatan", -3.43, 104.23],
+  "DEMO-02": ["Jawa Timur", -7.16, 112.65],
+  "DEMO-03": ["DKI Jakarta", -6.1, 106.88],
+  "DEMO-04": ["Papua Tengah", -4.55, 136.88],
+  "DEMO-05": ["DKI Jakarta", -6.13, 106.89],
+  "DEMO-06": ["DKI Jakarta", -6.24, 106.8],
+  "DEMO-07": ["Jawa Barat", -6.24, 107.0],
+  "DEMO-08": ["Sumatera Utara", 3.6, 98.6],
+  "DEMO-09": ["Kalimantan Timur", -1.27, 116.83],
+  "DEMO-10": ["Banten", -6.0, 106.05],
+  "DEMO-11": ["Jawa Barat", -6.91, 107.37],
+  "DEMO-12": ["Jawa Barat", -6.92, 107.6],
+};
+
+/** Portfolio (project category) of each demo project. */
+const PORTFOLIO: Record<string, string> = {
+  "DEMO-01": "Geomatika",
+  "DEMO-03": "Geomatika",
+  "DEMO-11": "Geomatika",
+  "DEMO-05": "Inspeksi Teknik",
+  "DEMO-09": "Inspeksi Teknik",
+  "DEMO-12": "Inspeksi Teknik",
+  "DEMO-07": "Inspeksi Teknik",
+  "DEMO-02": "Sertifikasi & Audit",
+  "DEMO-04": "Sertifikasi & Audit",
+  "DEMO-06": "Sertifikasi & Audit",
+  "DEMO-10": "Sertifikasi & Audit",
+  "DEMO-08": "Pengawasan Konstruksi",
+};
+
+type IssueSeed = { title: string; impact: "LOW" | "MEDIUM" | "HIGH"; type?: "ISSUE" | "RISK"; likelihood?: "LOW" | "MEDIUM" | "HIGH"; category: string; due: number };
+/** Open issues and risks per demo project; `due` = days from today to the follow-up target (negative = already late). */
+const RISKS: Record<string, IssueSeed[]> = {
+  "DEMO-01": [
+    { title: "Izin kerja area sumur PDM-12 belum terbit", impact: "HIGH", category: "KLIEN", due: -6 },
+    { title: "Curah hujan tinggi berpotensi menunda pengukuran drone", impact: "MEDIUM", type: "RISK", likelihood: "HIGH", category: "ALAM", due: 20 },
+    { title: "Pekerjaan di dekat jalur pipa bertekanan", impact: "HIGH", type: "RISK", likelihood: "MEDIUM", category: "HSE", due: 30 },
+  ],
+  "DEMO-02": [
+    { title: "Dokumen prosedur tanggap darurat belum lengkap", impact: "MEDIUM", category: "HSE", due: -3 },
+    { title: "Auditor utama juga bertugas di project lain pada minggu audit", impact: "MEDIUM", type: "RISK", likelihood: "HIGH", category: "SDM", due: 7 },
+  ],
+  "DEMO-03": [{ title: "Gelombang tinggi musim barat menunda survei kapal", impact: "MEDIUM", type: "RISK", likelihood: "MEDIUM", category: "ALAM", due: 25 }],
+  "DEMO-04": [{ title: "Data BOM dari vendor luar negeri terlambat", impact: "LOW", type: "RISK", likelihood: "MEDIUM", category: "KLIEN", due: 14 }],
+  "DEMO-05": [
+    { title: "Jadwal pengosongan tangki T-07 belum dikonfirmasi klien", impact: "HIGH", category: "KLIEN", due: -12 },
+    { title: "Pekerjaan di ruang terbatas (confined space)", impact: "HIGH", type: "RISK", likelihood: "MEDIUM", category: "HSE", due: 10 },
+  ],
+  "DEMO-06": [{ title: "Invoice termin 2 belum diproses klien", impact: "MEDIUM", category: "KEUANGAN", due: -9 }],
+  "DEMO-08": [
+    { title: "Rencana pembebasan lahan seksi 3B mundur", impact: "HIGH", type: "RISK", likelihood: "MEDIUM", category: "KLIEN", due: 45 },
+    { title: "Kekurangan inspektur mutu bersertifikat", impact: "MEDIUM", type: "RISK", likelihood: "LOW", category: "SDM", due: 30 },
+  ],
+  "DEMO-09": [
+    { title: "Sewa kapal ROV naik karena jadwal dipercepat", impact: "MEDIUM", category: "KEUANGAN", due: 5 },
+    { title: "Penyelaman di arus kuat", impact: "HIGH", type: "RISK", likelihood: "MEDIUM", category: "HSE", due: 15 },
+  ],
+  "DEMO-10": [{ title: "Pengambilan contoh uji menunggu jadwal produksi klien", impact: "MEDIUM", type: "RISK", likelihood: "HIGH", category: "KLIEN", due: 12 }],
+  "DEMO-11": [{ title: "Batas bidang disengketakan warga", impact: "MEDIUM", type: "RISK", likelihood: "LOW", category: "KLIEN", due: 40 }],
+  "DEMO-12": [
+    { title: "Akses jalur kereta hanya tersedia malam hari", impact: "HIGH", category: "TEKNIS", due: -4 },
+    { title: "Bekerja di ketinggian tanpa platform permanen", impact: "HIGH", type: "RISK", likelihood: "HIGH", category: "HSE", due: 3 },
+    { title: "Alat UT cadangan belum tersedia", impact: "LOW", type: "RISK", likelihood: "MEDIUM", category: "TEKNIS", due: 20 },
+  ],
+};
+
+/** HSE profile per demo project: crew size, and incidents placed `monthsAgo` months back. */
+const HSE: Record<string, { crew: number; events?: { monthsAgo: number; field: "nearMiss" | "firstAid" | "medicalTreatment" | "lostTimeInjury" | "propertyDamage"; n: number }[]; skipLast?: boolean }> = {
+  "DEMO-01": { crew: 18, events: [{ monthsAgo: 3, field: "firstAid", n: 2 }, { monthsAgo: 2, field: "medicalTreatment", n: 1 }, { monthsAgo: 1, field: "nearMiss", n: 3 }] },
+  "DEMO-02": { crew: 6, events: [{ monthsAgo: 1, field: "nearMiss", n: 1 }] },
+  "DEMO-03": { crew: 14, events: [{ monthsAgo: 2, field: "nearMiss", n: 2 }, { monthsAgo: 1, field: "firstAid", n: 1 }] },
+  "DEMO-04": { crew: 5 },
+  "DEMO-05": { crew: 9, skipLast: true },
+  "DEMO-06": { crew: 4 },
+  "DEMO-07": { crew: 4 },
+  "DEMO-08": { crew: 22, events: [{ monthsAgo: 1, field: "propertyDamage", n: 1 }, { monthsAgo: 1, field: "nearMiss", n: 4 }] },
+  "DEMO-09": { crew: 16, events: [{ monthsAgo: 2, field: "nearMiss", n: 3 }, { monthsAgo: 1, field: "medicalTreatment", n: 1 }, { monthsAgo: 1, field: "firstAid", n: 2 }] },
+  "DEMO-10": { crew: 6 },
+  "DEMO-11": { crew: 12, events: [{ monthsAgo: 1, field: "nearMiss", n: 1 }] },
+  "DEMO-12": { crew: 15, events: [{ monthsAgo: 2, field: "lostTimeInjury", n: 1 }, { monthsAgo: 3, field: "firstAid", n: 2 }, { monthsAgo: 1, field: "nearMiss", n: 5 }] },
+};
 
 // RAB composition (share of total project cost) with Sucofindo account codes
 const RAB_LINES: { code: string; section: string; category: string; account: string; desc: string; share: number }[] = [
@@ -242,37 +403,53 @@ export async function removeDemoData() {
   await prisma.personnelCertification.deleteMany({ where: { employeeId: { in: empIds } } });
   await prisma.projectAssignment.deleteMany({ where: { employeeId: { in: empIds } } });
   await prisma.employee.deleteMany({ where: { id: { in: empIds } } });
-  await prisma.projectCategory.deleteMany({ where: { name: DEMO_CATEGORY, projects: { none: {} } } });
+  await prisma.projectCategory.deleteMany({ where: { OR: [{ name: DEMO_CATEGORY }, { name: { endsWith: DEMO_CATEGORY_SUFFIX } }], projects: { none: {} } } });
   await prisma.personnelCertificationCategory.deleteMany({ where: { name: DEMO_CERT_CATEGORY, certifications: { none: {} } } });
   return projects.length;
 }
 
-export async function createDemoData(actor: string) {
-  await removeDemoData(); // also clears leftovers (e.g. demo employees whose projects were deleted by hand)
-  const today = getJakartaToday().getTime();
+type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+/** Marks demo projects made by the current generator; older or half-made ones are replaced. */
+const DEMO_TAG = "(contoh v6)";
 
-  const category = await prisma.projectCategory.upsert({ where: { name: DEMO_CATEGORY }, update: {}, create: { name: DEMO_CATEGORY } });
+async function deleteProjects(ids: string[]) {
+  if (!ids.length) return;
+  await prisma.emailLog.deleteMany({ where: { projectId: { in: ids } } }).catch(() => undefined);
+  await prisma.notification.deleteMany({ where: { projectId: { in: ids } } }).catch(() => undefined);
+  await prisma.projectAddendum.deleteMany({ where: { projectId: { in: ids } } }).catch(() => undefined);
+  await prisma.project.deleteMany({ where: { id: { in: ids } } });
+}
+
+/** Category, certification category, demo employees and their certificates — created once, reused. Returns employee ids by PEOPLE index. */
+async function ensureDemoBasics(today: number): Promise<{ employees: string[] }> {
   const certCat = await prisma.personnelCertificationCategory.upsert({ where: { name: DEMO_CERT_CATEGORY }, update: {}, create: { name: DEMO_CERT_CATEGORY } });
-
-  const employees: { id: string }[] = [];
-  for (const [i, [name, position]] of PEOPLE.entries()) {
-    employees.push(
-      await prisma.employee.create({
-        data: { name, position, email: `${name.toLowerCase().replace(/[^a-z]+/g, ".")}${DEMO_EMAIL}`, employeeId: `DEMO-${String(i + 1).padStart(3, "0")}` },
-      })
-    );
-  }
-  // certificates: one expired while on duty, one expiring during the assignment, the rest safe
-  await prisma.personnelCertification.createMany({
-    data: [
-      { employeeId: employees[3].id, categoryId: certCat.id, certificationName: "Surveyor Kadaster Berlisensi", expiryDate: day(today - 6 * DAY) },
-      { employeeId: employees[0].id, categoryId: certCat.id, certificationName: "Operator Drone (Remote Pilot)", expiryDate: day(today + 24 * DAY) },
-      { employeeId: employees[4].id, categoryId: certCat.id, certificationName: "NDT Level II - Ultrasonic", expiryDate: day(today + 400 * DAY) },
-      { employeeId: employees[1].id, categoryId: certCat.id, certificationName: "Auditor SMK3", expiryDate: day(today + 300 * DAY) },
-    ],
+  const empNo = (i: number) => `DEMO-${String(i + 1).padStart(3, "0")}`;
+  await prisma.employee.createMany({
+    data: PEOPLE.map(([name, position], i) => ({ name, position, email: `${name.toLowerCase().replace(/[^a-z]+/g, ".")}${DEMO_EMAIL}`, employeeId: empNo(i) })),
+    skipDuplicates: true,
   });
+  const rows = await prisma.employee.findMany({ where: { employeeId: { in: PEOPLE.map((_, i) => empNo(i)) } }, select: { id: true, employeeId: true } });
+  const employees = PEOPLE.map((_, i) => rows.find((r) => r.employeeId === empNo(i))?.id as string);
+  if (employees.some((e) => !e)) throw new Error("Karyawan contoh tidak dapat dibuat (nomor karyawan DEMO-… sudah dipakai data lain).");
+  const hasCerts = await prisma.personnelCertification.count({ where: { employeeId: { in: employees } } });
+  if (!hasCerts)
+    // certificates: one expired while on duty, one expiring during the assignment, the rest safe
+    await prisma.personnelCertification.createMany({
+      data: [
+        { employeeId: employees[3], categoryId: certCat.id, certificationName: "Surveyor Kadaster Berlisensi", expiryDate: day(today - 6 * DAY) },
+        { employeeId: employees[0], categoryId: certCat.id, certificationName: "Operator Drone (Remote Pilot)", expiryDate: day(today + 24 * DAY) },
+        { employeeId: employees[4], categoryId: certCat.id, certificationName: "NDT Level II - Ultrasonic", expiryDate: day(today + 400 * DAY) },
+        { employeeId: employees[1], categoryId: certCat.id, certificationName: "Auditor SMK3", expiryDate: day(today + 300 * DAY) },
+      ],
+    });
+  return { employees };
+}
 
-  for (const sc of SCENARIOS) {
+/** One demo project with all its data, written in a single transaction so a project is either complete or absent. */
+async function createDemoProject(tx: Tx, sc: Scenario, ctx: { today: number; actor: string; employees: string[] }) {
+  const { today, actor, employees } = ctx;
+  const catName = `${PORTFOLIO[sc.no] ?? "Umum"}${DEMO_CATEGORY_SUFFIX}`;
+  const categoryId = (await tx.projectCategory.upsert({ where: { name: catName }, update: {}, create: { name: catName } })).id;
     const start = today - sc.startDaysAgo * DAY;
     const end = start + sc.durationDays * DAY;
     const completed = sc.status === "COMPLETED";
@@ -281,11 +458,11 @@ export async function createDemoData(actor: string) {
     const projectCost = budget - contingency;
     const marginPct = sc.rabRatio ? Math.round(((sc.value - budget) / sc.value) * 10000) / 100 : null;
 
-    const project = await prisma.project.create({
+    const project = await tx.project.create({
       data: {
         projectNumber: sc.no,
         projectName: sc.name,
-        categoryId: category.id,
+        categoryId: categoryId,
         clientName: sc.client,
         pic: sc.pic,
         contractValue: sc.value,
@@ -293,8 +470,11 @@ export async function createDemoData(actor: string) {
         targetEndDate: day(end),
         actualEndDate: completed ? day(end - 5 * DAY) : null,
         status: sc.status ?? "ONGOING",
-        description: `Data contoh untuk mencoba fitur monitoring. Lokasi: ${sc.location}.`,
+        description: `Data contoh untuk mencoba fitur monitoring. Lokasi: ${sc.location}. ${DEMO_TAG}`,
         targetMarginPct: marginPct,
+        province: LOC[sc.no]?.[0] ?? null,
+        latitude: LOC[sc.no]?.[1] ?? null,
+        longitude: LOC[sc.no]?.[2] ?? null,
       },
     });
     const pid = project.id;
@@ -317,7 +497,7 @@ export async function createDemoData(actor: string) {
     // milestones: equal-ish weights over the scope list, done up to the current progress
     const weights = sc.scopes.map((_, i, a) => (i === a.length - 1 ? 100 - Math.floor(100 / a.length) * (a.length - 1) : Math.floor(100 / a.length)));
     let cum = 0;
-    await prisma.projectMilestone.createMany({
+    await tx.projectMilestone.createMany({
       data: sc.scopes.map((name, i) => {
         const from = cum;
         cum += weights[i];
@@ -338,7 +518,7 @@ export async function createDemoData(actor: string) {
 
     // progress reports: six steps up to today's value, following an S shape like real work
     const steps = [1 / 6, 2 / 6, 3 / 6, 4 / 6, 5 / 6, 1];
-    await prisma.projectProgressReport.createMany({
+    await tx.projectProgressReport.createMany({
       data: steps.map((f, i) => ({
         projectId: pid,
         reportDate: day(start + (lastReport - start) * f),
@@ -350,14 +530,14 @@ export async function createDemoData(actor: string) {
 
     // payment terms
     let seq = 0;
-    await prisma.projectTerm.createMany({
+    await tx.projectTerm.createMany({
       data: sc.terms.map(([share, st], i) => {
         seq += 1;
         const amount = round(sc.value * share);
         const invoiceAt = start + ((i + 1) / (sc.terms.length + 0.5)) * (today - start);
         const base = { projectId: pid, sequence: seq, name: i === 0 && sc.terms.length > 2 ? `Uang muka (${Math.round(share * 100)}%)` : `Termin ${i + 1} (${Math.round(share * 100)}%)`, percent: share * 100, amount };
         if (st === "PAID") return { ...base, status: "PAID", invoiceNumber: `INV/${sc.no}/${i + 1}`, invoiceDate: day(invoiceAt), dueDate: day(invoiceAt + 30 * DAY), paidDate: day(invoiceAt + 25 * DAY), paidAmount: amount };
-        if (st === "OVERDUE") return { ...base, status: "INVOICED", invoiceNumber: `INV/${sc.no}/${i + 1}`, invoiceDate: day(today - 55 * DAY), dueDate: day(today - 25 * DAY) };
+        if (st === "OVERDUE") return { ...base, status: "INVOICED", invoiceNumber: `INV/${sc.no}/${i + 1}`, invoiceDate: day(today - ((sc.overdueDays ?? 25) + 30) * DAY), dueDate: day(today - (sc.overdueDays ?? 25) * DAY) };
         if (st === "INVOICED") return { ...base, status: "INVOICED", invoiceNumber: `INV/${sc.no}/${i + 1}`, invoiceDate: day(today - 12 * DAY), dueDate: day(today + 18 * DAY) };
         return { ...base, status: "PLANNED", plannedDate: day(Math.min(end, today + (i + 1) * 30 * DAY)), requirement: `Progres ${Math.round(((i + 1) / sc.terms.length) * 100)}% dan BAPP ditandatangani` };
       }),
@@ -366,7 +546,7 @@ export async function createDemoData(actor: string) {
     // RAB (lines + one saved revision so the RAB card and details show)
     if (sc.rabRatio) {
       const items = RAB_LINES.map((l) => ({ ...l, amount: round(projectCost * l.share) }));
-      await prisma.projectBudgetItem.createMany({
+      await tx.projectBudgetItem.createMany({
         data: [
           ...items.map((l) => ({ projectId: pid, category: l.category, description: l.desc, accountCode: l.account, amount: l.amount })),
           { projectId: pid, category: "Biaya Tak Terduga", description: "Biaya tak terduga (0,5% dari pendapatan)", amount: contingency },
@@ -429,7 +609,7 @@ export async function createDemoData(actor: string) {
         })(),
         warnings: [],
       };
-      await prisma.projectRabRevision.create({
+      await tx.projectRabRevision.create({
         data: {
           projectId: pid,
           version: 0,
@@ -445,7 +625,7 @@ export async function createDemoData(actor: string) {
           createdBy: actor,
         },
       });
-      await prisma.project.update({
+      await tx.project.update({
         where: { id: pid },
         data: { baselineLockedAt: day(start), baselineLockedBy: actor, baselineContractValue: sc.value, baselineBudget: itemsTotal + contingency, baselineEndDate: day(end) },
       });
@@ -474,111 +654,176 @@ export async function createDemoData(actor: string) {
         expenses.push({ projectId: pid, expenseDate: day(today - 20 * DAY), category: "Fasilitas", description: "Perpanjangan sewa kendaraan karena cuaca dan izin", amount: sc.delayCost, cause: "DELAY", referenceNo: `BKK/${sc.no}/D1`, createdBy: `${actor} (data contoh)` });
       if (sc.extraCost)
         expenses.push({ projectId: pid, expenseDate: day(today - 15 * DAY), category: "Operasional", description: "Audit tambahan unit pengantongan (di luar kontrak)", amount: sc.extraCost, cause: "EXTRA_SCOPE", referenceNo: `BKK/${sc.no}/E1`, createdBy: `${actor} (data contoh)` });
-      await prisma.projectExpense.createMany({ data: expenses });
+      await tx.projectExpense.createMany({ data: expenses });
     }
 
-    if (sc.issues?.length)
-      await prisma.projectIssue.createMany({
-        data: sc.issues.map((x) => ({ projectId: pid, title: x.title, impact: x.impact, type: x.type ?? "ISSUE", owner: sc.pic, targetDate: day(today + 10 * DAY), createdBy: actor })),
+    const risks = RISKS[sc.no] ?? [];
+    if (risks.length)
+      await tx.projectIssue.createMany({
+        data: risks.map((x, i) => ({
+          projectId: pid,
+          title: x.title,
+          impact: x.impact,
+          type: x.type ?? "ISSUE",
+          likelihood: x.type === "RISK" ? x.likelihood ?? "MEDIUM" : "HIGH",
+          category: x.category,
+          owner: i % 2 ? sc.team.length > 1 ? PEOPLE[sc.team[1][0]][0] : sc.pic : sc.pic,
+          targetDate: day(today + x.due * DAY),
+          createdBy: actor,
+          createdAt: day(Math.max(start, today - (20 + i * 9) * DAY)),
+        })),
       });
 
-    await prisma.projectAssignment.createMany({
-      data: sc.team.map(([e, role]) => ({ projectId: pid, employeeId: employees[e].id, role })),
+    // HSE: one record per finished month since the start (work hours from crew size; a few incidents)
+    const hse = HSE[sc.no];
+    if (hse) {
+      const now = new Date(today);
+      const lastMonthEnd = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0);
+      const records = [];
+      const first = new Date(start);
+      for (let k = 0; ; k++) {
+        const monthEnd = Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + k + 1, 0);
+        if (monthEnd > lastMonthEnd || monthEnd > (completed ? end + 31 * DAY : lastMonthEnd)) break;
+        const monthsAgo = Math.round((lastMonthEnd - monthEnd) / (30.4 * DAY));
+        if (hse.skipLast && monthsAgo === 0) continue;
+        const from = Math.max(start, Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + k, 1));
+        const workDays = Math.max(0, Math.round(((Math.min(monthEnd, end) - from) / DAY) * (22 / 30)));
+        const ev = (f: string) => (hse.events ?? []).filter((e) => e.field === f && e.monthsAgo === monthsAgo).reduce((a, e) => a + e.n, 0);
+        records.push({
+          projectId: pid,
+          periodDate: day(monthEnd),
+          manHours: Math.round(hse.crew * 3 * workDays * 9 * (0.9 + ((k * 7) % 5) / 25)), // crew plus subcontractors
+          nearMiss: ev("nearMiss"),
+          firstAid: ev("firstAid"),
+          medicalTreatment: ev("medicalTreatment"),
+          lostTimeInjury: ev("lostTimeInjury"),
+          fatality: 0,
+          propertyDamage: ev("propertyDamage"),
+          unsafeObservations: 2 + ((k * 3 + hse.crew) % 6),
+          safetyTalks: Math.max(1, Math.round(workDays / 5)),
+          inspections: 1 + (k % 3),
+          notes: ev("lostTimeInjury") ? "Teknisi terkilir saat turun dari struktur; istirahat 3 hari. Tindak lanjut: pemasangan tangga sementara dan briefing ulang." : null,
+          createdBy: actor,
+        });
+      }
+      if (records.length) await tx.projectHseReport.createMany({ data: records });
+    }
+
+    await tx.projectAssignment.createMany({
+      data: sc.team.map(([e, role]) => ({ projectId: pid, employeeId: employees[e], role })),
       skipDuplicates: true,
     });
 
-    if (completed) await prisma.projectCloseout.create({ data: { projectId: pid, bappDate: day(end - 5 * DAY), satisfaction: 4, updatedBy: actor } }).catch(() => undefined);
-  }
-
-  await backfillSnapshots(today);
-  return SCENARIOS.length;
+    if (completed) await tx.projectCloseout.create({ data: { projectId: pid, bappDate: day(end - 5 * DAY), satisfaction: 4, updatedBy: actor } }).catch(() => undefined);
+  
+  await backfillSnapshots(tx, pid, today);
 }
 
-/** Six weeks of history for the demo projects, computed from the data as it stood each week. */
-async function backfillSnapshots(today: number) {
-  const thresholds = await getMonitoringThresholds();
-  const projects = await prisma.project.findMany({ where: { projectNumber: { startsWith: DEMO_PREFIX }, status: "ONGOING" }, include: MONITORING_INCLUDE });
-  const rows = [];
-  for (const p of projects) {
-    const full = toMonitoringInput(p);
-    for (let w = 6; w >= 1; w--) {
-      const t = today - w * 7 * DAY;
-      if (t < (full.startDate ?? t)) continue;
-      const input = { ...full, reports: full.reports.filter((r) => r.reportDate <= t), expenses: full.expenses.filter((e) => (e.date ?? 0) <= t) };
-      const s = computeMonitoring(input, t, thresholds);
-      const m = analyzeMargin(input, s, t, thresholds.marginDropAlert);
-      rows.push({
-        projectId: p.id,
-        weekKey: isoWeekKey(new Date(t)),
-        snapshotDate: new Date(t),
-        plannedPercent: s.plannedPercent,
-        actualPercent: s.actualPercent,
-        deviation: s.deviation,
-        spi: s.spi,
-        health: s.health,
-        invoiced: s.invoiced,
-        paid: s.paid,
-        pad: s.pad,
-        costActual: s.costActual,
-        openIssues: s.openIssues,
-        cpi: m.cpi,
-        actualMarginPct: m.actualMarginPct,
-        forecastMarginPct: m.hasCost ? m.forecastMarginPct : null,
-        plannedMarginPct: m.plannedMarginPct,
-      });
-    }
-  }
-  if (rows.length) await prisma.projectSnapshot.createMany({ data: rows, skipDuplicates: true });
-}
-
-export type DemoSeedResult = { state: "exists" | "seeded" | "removed" | "busy" | "error"; message?: string };
+export type DemoFillResult = { created: number; present: number; total: number; done: boolean };
 
 /**
- * Makes sure the demo projects are there, automatically, on any Project page.
- *  - already present → nothing to do
- *  - removed on purpose by an admin (audit log) → never re-created
- *  - otherwise create them; a short-lived lock (AppSettings.demoDataSeededAt)
- *    stops two simultaneous visits from seeding twice. If seeding fails the
- *    lock is released so the next visit tries again, and the reason is returned
- *    so the page can show it.
+ * Creates the demo projects that are still missing, one transaction per
+ * project, and stops when the time budget is used so a request never runs
+ * into the hosting time limit; call again to continue. Demo projects from an
+ * older version (or left half-made) are replaced.
+ */
+export async function fillDemoData(actor: string, budgetMs = 40000): Promise<DemoFillResult> {
+  const started = Date.now();
+  const today = getJakartaToday().getTime();
+  const existing = await prisma.project.findMany({ where: { projectNumber: { startsWith: DEMO_PREFIX } }, select: { id: true, projectNumber: true, description: true } });
+  const wanted = new Set(SCENARIOS.map((x) => x.no));
+  const stale = existing.filter((p) => !wanted.has(p.projectNumber) || !(p.description ?? "").includes(DEMO_TAG));
+  await deleteProjects(stale.map((p) => p.id));
+  if (stale.length) await prisma.projectCategory.deleteMany({ where: { OR: [{ name: DEMO_CATEGORY }, { name: { endsWith: DEMO_CATEGORY_SUFFIX } }], projects: { none: {} } } });
+  const present = new Set(existing.filter((p) => !stale.includes(p)).map((p) => p.projectNumber));
+  const basics = await ensureDemoBasics(today);
+
+  let created = 0;
+  for (const sc of SCENARIOS) {
+    if (present.has(sc.no)) continue;
+    if (created > 0 && Date.now() - started > budgetMs) break;
+    try {
+      await prisma.$transaction((tx) => createDemoProject(tx, sc, { today, actor, ...basics }), { timeout: 45000, maxWait: 10000 });
+      present.add(sc.no);
+      created += 1;
+    } catch (e) {
+      // another visitor created it at the same moment
+      if (await prisma.project.findUnique({ where: { projectNumber: sc.no }, select: { id: true } })) present.add(sc.no);
+      else throw e;
+    }
+  }
+  return { created, present: present.size, total: SCENARIOS.length, done: present.size >= SCENARIOS.length };
+}
+
+/** Creates the full demo set in one go (tests, scripts). */
+export async function createDemoData(actor: string) {
+  await removeDemoData();
+  const r = await fillDemoData(actor, Number.POSITIVE_INFINITY);
+  return r.present;
+}
+
+/** Weekly history for one demo project, computed from its data as it stood each week. */
+async function backfillSnapshots(tx: Tx, projectId: string, today: number) {
+  const thresholds = await getMonitoringThresholds();
+  const p = await tx.project.findUnique({ where: { id: projectId }, include: MONITORING_INCLUDE });
+  if (!p || p.status !== "ONGOING") return;
+  const full = toMonitoringInput(p);
+  const rows = [];
+  for (let w = 6; w >= 1; w--) {
+    const t = today - w * 7 * DAY;
+    if (t < (full.startDate ?? t)) continue;
+    const input = { ...full, reports: full.reports.filter((r) => r.reportDate <= t), expenses: full.expenses.filter((e) => (e.date ?? 0) <= t) };
+    const s = computeMonitoring(input, t, thresholds);
+    const m = analyzeMargin(input, s, t, thresholds.marginDropAlert);
+    rows.push({
+      projectId: p.id,
+      weekKey: isoWeekKey(new Date(t)),
+      snapshotDate: new Date(t),
+      plannedPercent: s.plannedPercent,
+      actualPercent: s.actualPercent,
+      deviation: s.deviation,
+      spi: s.spi,
+      health: s.health,
+      invoiced: s.invoiced,
+      paid: s.paid,
+      pad: s.pad,
+      costActual: s.costActual,
+      openIssues: s.openIssues,
+      cpi: m.cpi,
+      actualMarginPct: m.actualMarginPct,
+      forecastMarginPct: m.hasCost ? m.forecastMarginPct : null,
+      plannedMarginPct: m.plannedMarginPct,
+    });
+  }
+  if (rows.length) await tx.projectSnapshot.createMany({ data: rows, skipDuplicates: true });
+}
+
+export type DemoSeedResult = { state: "exists" | "pending" | "removed" | "error"; present?: number; total?: number; message?: string };
+
+/**
+ * Reports whether the demo set is complete — fast, no writes, so pages stay
+ * quick. When it is not (first visit, a newer demo version, or an earlier run
+ * cut short), the page shows a small client component that fills it through
+ * the API in short steps. Once an admin has removed the demo data on purpose,
+ * it is not brought back automatically.
  */
 export async function ensureDemoDataOnce(): Promise<DemoSeedResult> {
   try {
-    if (await hasDemoData()) {
-      // demo data from an older version (plain straight-line progress) is refreshed once to the current shape
-      const first = await prisma.project.findFirst({ where: { projectNumber: "DEMO-01", deletedAt: null }, select: { _count: { select: { progressReports: true } } } });
-      if (!first || first._count.progressReports >= 6) return { state: "exists" };
-    } else {
+    const existing = await prisma.project.findMany({ where: { projectNumber: { startsWith: DEMO_PREFIX } }, select: { projectNumber: true, description: true } });
+    const wanted = new Set(SCENARIOS.map((x) => x.no));
+    const good = existing.filter((p) => wanted.has(p.projectNumber) && (p.description ?? "").includes(DEMO_TAG)).length;
+    if (good >= SCENARIOS.length && existing.length === good) return { state: "exists" };
+    if (existing.length === 0) {
       const removed = await prisma.auditLog.findFirst({
         where: { entityType: "ProjectMonitoring", action: "DELETE", description: { contains: "data contoh" } },
         select: { id: true },
       });
       if (removed) return { state: "removed" };
     }
+    return { state: "pending", present: good, total: SCENARIOS.length };
   } catch (e) {
     console.error("demo data check failed", e);
     return { state: "error", message: "Data contoh tidak dapat diperiksa." };
-  }
-
-  let locked = false;
-  try {
-    await prisma.appSettings.upsert({ where: { id: "default" }, update: {}, create: { id: "default" } });
-    const staleBefore = new Date(Date.now() - 2 * 60 * 1000);
-    const claimed = await prisma.appSettings.updateMany({
-      where: { id: "default", OR: [{ demoDataSeededAt: null }, { demoDataSeededAt: { lt: staleBefore } }] },
-      data: { demoDataSeededAt: new Date() },
-    });
-    if (claimed.count === 0) return { state: "busy" };
-    locked = true;
-    await createDemoData("Sistem");
-    return { state: "seeded" };
-  } catch (e) {
-    console.error("demo data seeding failed", e);
-    const msg = e instanceof Error ? e.message : String(e);
-    if (locked) await prisma.appSettings.updateMany({ where: { id: "default" }, data: { demoDataSeededAt: null } }).catch(() => undefined);
-    if (/demoDataSeededAt|column .* does not exist|P2022/i.test(msg))
-      return { state: "error", message: "Struktur database belum diperbarui. Jalankan \"npx prisma migrate deploy\" lalu muat ulang halaman ini." };
-    return { state: "error", message: `Data contoh gagal dibuat: ${msg.split("\n").filter(Boolean).slice(-1)[0]?.slice(0, 200) ?? "kesalahan tidak diketahui"}` };
   }
 }
 

@@ -554,6 +554,9 @@ model Project {
   id                    String                  @id @default(cuid())
   projectNumber         String                  @unique // kontrak/project number
   projectName           String
+  province              String? // provinsi lokasi pekerjaan (peta project)
+  latitude              Float?
+  longitude             Float?
   categoryId            String
   category              ProjectCategory         @relation(fields: [categoryId], references: [id])
   clientName            String // pemberi kerja — free text, not tied to the certificate Client list
@@ -594,6 +597,7 @@ model Project {
   emailLogs             EmailLog[]
   notifications         Notification[]
   snapshots             ProjectSnapshot[]
+  hseReports            ProjectHseReport[]
   closeout              ProjectCloseout?
   assignments           ProjectAssignment[]
 
@@ -862,6 +866,8 @@ model ProjectIssue {
   title       String
   description String?
   impact      String    @default("MEDIUM") // "LOW" | "MEDIUM" | "HIGH"
+  likelihood  String    @default("MEDIUM") // "LOW" | "MEDIUM" | "HIGH" (for risks; issues have already happened)
+  category    String? // TEKNIS | KLIEN | SDM | KEUANGAN | HSE | ALAM | LAINNYA
   owner       String? // PIC tindak lanjut
   targetDate  DateTime?
   status      String    @default("OPEN") // "OPEN" | "CLOSED"
@@ -973,4 +979,30 @@ model MailingLog {
   status       String // "SENT" | "FAILED" | "SKIPPED"
   errorMessage String?
   sentAt       DateTime @default(now())
+}
+
+/// Monthly HSE (K3) record of a project: hours worked and incidents by
+/// severity, plus proactive safety activities. Basis for LTIFR/TRIR.
+model ProjectHseReport {
+  id                 String   @id @default(cuid())
+  projectId          String
+  project            Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  periodDate         DateTime // last day of the month reported
+  manHours           Int      @default(0)
+  nearMiss           Int      @default(0)
+  firstAid           Int      @default(0)
+  medicalTreatment   Int      @default(0)
+  lostTimeInjury     Int      @default(0)
+  fatality           Int      @default(0)
+  propertyDamage     Int      @default(0)
+  unsafeObservations Int      @default(0) // unsafe acts / conditions reported
+  safetyTalks        Int      @default(0) // toolbox meetings / safety briefings
+  inspections        Int      @default(0)
+  notes              String?
+  createdBy          String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([projectId, periodDate])
+  @@index([projectId])
 }

@@ -241,6 +241,43 @@ export function generateWeeklyReportPdf(r: WeeklyReportData): Promise<Buffer> {
       paragraph(`Dokumen penutupan (BAPP/BAST/laporan final) belum lengkap untuk project: ${r.closeoutPending.map((c) => c.name).join("; ")}.`, { color: MUTED, size: 8.5 });
     }
 
+    // ------------------------------------------------------------ HSE & risks
+    section("HSE dan risiko", 110);
+    const hm = r.hse.month;
+    table(
+      [
+        { header: "Indikator", width: 190 },
+        { header: r.hse.monthLabel, width: 110, align: "right" },
+        { header: "Kumulatif project berjalan", width: 195 },
+      ],
+      [
+        { cells: ["Jam kerja", hm.manHours.toLocaleString("id-ID"), r.hse.total.manHours.toLocaleString("id-ID")] },
+        { cells: ["Kecelakaan fatal / hilang hari kerja", `${hm.fatality} / ${hm.lti}`, `${r.hse.total.fatality} / ${r.hse.total.lti}`], color: (i) => (i > 0 && hm.fatality + hm.lti ? HEALTH_COLOR.KRITIS : undefined) },
+        { cells: ["Perawatan medis / P3K / nyaris celaka", `${hm.medical} / ${hm.firstAid} / ${hm.nearMiss}`, `${r.hse.total.medical} perawatan medis`] },
+        { cells: ["LTIFR / TRIR (per 1 juta jam kerja)", "-", `${(r.hse.total.ltifr ?? 0).toLocaleString("id-ID")} / ${(r.hse.total.trir ?? 0).toLocaleString("id-ID")}`] },
+        { cells: ["Project yang sudah melapor", `${hm.reported} dari ${hm.expected}`, r.hse.missing.length ? `Belum: ${r.hse.missing.join(", ")}` : "-"], color: (i) => (i === 2 && r.hse.missing.length ? HEALTH_COLOR.WASPADA : undefined) },
+      ],
+      { fontSize: 8.5 }
+    );
+    doc.moveDown(0.4);
+    paragraph(`Risiko dan kendala terbuka: ${r.riskCounts.open} (${r.riskCounts.extreme} ekstrem, ${r.riskCounts.high} tinggi, ${r.riskCounts.late} lewat target tindak lanjut).`, { size: 8.5 });
+    if (r.topRisks.length) {
+      doc.moveDown(0.3);
+      table(
+        [
+          { header: "Tingkat", width: 55 },
+          { header: "Risiko / kendala", width: 210 },
+          { header: "Project", width: 140 },
+          { header: "Penanggung jawab", width: 90 },
+        ],
+        r.topRisks.map((x) => ({
+          cells: [x.level + (x.late ? " (lewat)" : ""), x.title, x.project, x.owner || "-"],
+          color: (i) => (i === 0 ? (x.level === "Ekstrem" || x.level === "Tinggi" ? HEALTH_COLOR.KRITIS : HEALTH_COLOR.WASPADA) : undefined),
+        })),
+        { fontSize: 8 }
+      );
+    }
+
     // ------------------------------------------------------------ 3. certs & calibration
     section("Sertifikasi personil & kalibrasi alat (30 hari ke depan)");
     const certExpired = r.urgentCerts.filter((c) => c.days < 0).length;

@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { UploadCloud, FileText, X, Save, FileSpreadsheet, CheckCircle2 } from "lucide-react";
 import type { RabData } from "@/lib/project-rab-import";
+import { PROVINCES } from "@/lib/indonesia-provinces";
 import { projectSchema, type ProjectInput, MAX_FILE_SIZE, ACCEPTED_FILE_TYPES } from "@/lib/validations";
 import { Input, Label, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -256,6 +257,30 @@ export function ProjectForm({
             <Label htmlFor="pr-actualEnd">Tanggal Selesai Aktual (opsional)</Label>
             <Input id="pr-actualEnd" type="date" {...register("actualEndDate")} error={errors.actualEndDate?.message} />
             <p className="text-xs text-slate-400 mt-1">Isi saat pekerjaan benar-benar selesai — untuk catatan database.</p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.4fr_1fr_1fr]">
+            <div>
+              <Label htmlFor="pr-province">Provinsi lokasi pekerjaan</Label>
+              <Select id="pr-province" {...register("province")} error={errors.province?.message}>
+                <option value="">Pilih provinsi</option>
+                {PROVINCES.map((p) => (
+                  <option key={p.name} value={p.name}>
+                    {p.name}
+                  </option>
+                ))}
+              </Select>
+              <p className="mt-1 text-xs text-slate-400">Untuk peta lokasi project di dasbor.</p>
+            </div>
+            <div>
+              <Label htmlFor="pr-lat">Lintang (opsional)</Label>
+              <Input id="pr-lat" inputMode="decimal" {...register("latitude")} error={errors.latitude?.message} placeholder="-6.2088" />
+            </div>
+            <div>
+              <Label htmlFor="pr-lon">Bujur (opsional)</Label>
+              <Input id="pr-lon" inputMode="decimal" {...register("longitude")} error={errors.longitude?.message} placeholder="106.8456" />
+              <p className="mt-1 text-xs text-slate-400">Salin dari Google Maps bila ingin titik yang tepat.</p>
+            </div>
           </div>
 
           <div>

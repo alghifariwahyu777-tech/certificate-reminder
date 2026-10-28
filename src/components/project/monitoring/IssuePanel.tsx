@@ -6,19 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Select, Textarea } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
-import { ISSUE_IMPACT_LABEL, ISSUE_STATUS_LABEL, ISSUE_TYPE_LABEL } from "@/lib/project-monitoring-shared";
+import { ISSUE_CATEGORY_LABEL, ISSUE_IMPACT_LABEL, ISSUE_LIKELIHOOD_LABEL, ISSUE_STATUS_LABEL, ISSUE_TYPE_LABEL, riskLevel } from "@/lib/project-monitoring-shared";
 import { cn } from "@/lib/utils";
 import { DeleteButton, EmptyState, FormError, fmtDate, todayInput, useMonitoringApi, useOpenFromHash } from "./shared";
 import type { IssueDTO, ProjectMonitoringDTO } from "./types";
 
-const IMPACT_CLASS: Record<string, string> = {
-  LOW: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
-  MEDIUM: "bg-signal-soonBg text-signal-soon border-signal-soonBorder",
-  HIGH: "bg-signal-expiredBg text-signal-expired border-signal-expiredBorder",
+type Form = { type: string; title: string; description: string; impact: string; likelihood: string; category: string; owner: string; targetDate: string; status: string; resolution: string };
+const blank: Form = { type: "ISSUE", title: "", description: "", impact: "MEDIUM", likelihood: "MEDIUM", category: "", owner: "", targetDate: "", status: "OPEN", resolution: "" };
+const LEVEL_CLASS: Record<string, string> = {
+  Rendah: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+  Sedang: "bg-signal-soonBg text-signal-soon border-signal-soonBorder",
+  Tinggi: "bg-signal-expiredBg text-signal-expired border-signal-expiredBorder",
+  Ekstrem: "bg-signal-expiredBar text-white border-signal-expiredBar",
 };
-
-type Form = { type: string; title: string; description: string; impact: string; owner: string; targetDate: string; status: string; resolution: string };
-const blank: Form = { type: "ISSUE", title: "", description: "", impact: "MEDIUM", owner: "", targetDate: "", status: "OPEN", resolution: "" };
 
 export function IssuePanel({ data }: { data: ProjectMonitoringDTO }) {
   const { send, busy } = useMonitoringApi();
@@ -39,6 +39,8 @@ export function IssuePanel({ data }: { data: ProjectMonitoringDTO }) {
             title: i.title,
             description: i.description || "",
             impact: i.impact,
+            likelihood: i.likelihood || "MEDIUM",
+            category: i.category || "",
             owner: i.owner || "",
             targetDate: i.targetDate || "",
             status: i.status,
@@ -106,7 +108,15 @@ export function IssuePanel({ data }: { data: ProjectMonitoringDTO }) {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-xs font-mono text-slate-400">{ISSUE_TYPE_LABEL[i.type]}</span>
                       <p className={cn("font-medium text-ink dark:text-slate-100", i.status === "CLOSED" && "line-through opacity-60")}>{i.title}</p>
-                      <span className={cn("stamp-badge", IMPACT_CLASS[i.impact])}>Dampak {ISSUE_IMPACT_LABEL[i.impact]?.toLowerCase()}</span>
+                      {(() => {
+                        const lv = riskLevel(i.type, i.likelihood, i.impact);
+                        return (
+                          <span className={cn("stamp-badge", LEVEL_CLASS[lv.label])} title={`${i.type === "RISK" ? `Kemungkinan ${ISSUE_LIKELIHOOD_LABEL[i.likelihood]?.toLowerCase()}, d` : "D"}ampak ${ISSUE_IMPACT_LABEL[i.impact]?.toLowerCase()}`}>
+                            Tingkat {lv.label.toLowerCase()}
+                          </span>
+                        );
+                      })()}
+                      {i.category && <span className="text-[11.5px] text-slate-500">{ISSUE_CATEGORY_LABEL[i.category]}</span>}
                       {i.status === "CLOSED" && <span className="stamp-badge bg-signal-activeBg text-signal-active border-signal-activeBorder">{ISSUE_STATUS_LABEL.CLOSED}</span>}
                     </div>
                     {i.description && <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 whitespace-pre-line">{i.description}</p>}
@@ -148,6 +158,29 @@ export function IssuePanel({ data }: { data: ProjectMonitoringDTO }) {
               </Select>
             </div>
             <div>
+              <Label htmlFor="is-cat">Kategori</Label>
+              <Select id="is-cat" value={form.category} onChange={(e) => set("category", e.target.value)}>
+                <option value="">Pilih kategori</option>
+                {Object.entries(ISSUE_CATEGORY_LABEL).map(([v, l]) => (
+                  <option key={v} value={v}>
+                    {l}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="is-like">Kemungkinan terjadi</Label>
+              <Select id="is-like" value={form.type === "ISSUE" ? "HIGH" : form.likelihood} disabled={form.type === "ISSUE"} onChange={(e) => set("likelihood", e.target.value)}>
+                {Object.entries(ISSUE_LIKELIHOOD_LABEL).map(([v, l]) => (
+                  <option key={v} value={v}>
+                    {form.type === "ISSUE" && v === "HIGH" ? "Sudah terjadi" : l}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
               <Label htmlFor="is-impact">Dampak</Label>
               <Select id="is-impact" value={form.impact} onChange={(e) => set("impact", e.target.value)}>
                 {Object.entries(ISSUE_IMPACT_LABEL).map(([v, l]) => (
@@ -158,6 +191,9 @@ export function IssuePanel({ data }: { data: ProjectMonitoringDTO }) {
               </Select>
             </div>
           </div>
+          <p className="-mt-2 text-[12px] text-slate-500">
+            Tingkat: <strong>{riskLevel(form.type, form.likelihood, form.impact).label}</strong> (kemungkinan × dampak)
+          </p>
           <div>
             <Label htmlFor="is-title">Judul</Label>
             <Input id="is-title" value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="Contoh: Akses lokasi tertunda izin K3 pemilik" />

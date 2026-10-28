@@ -3,6 +3,7 @@ import {
   projectAssignmentSchema,
   projectBudgetItemSchema,
   projectExpenseSchema,
+  projectHseReportSchema,
   projectIssueSchema,
   projectMilestoneSchema,
   projectProgressReportSchema,
@@ -131,6 +132,8 @@ export const issueDef: SubresourceDef<typeof projectIssueSchema> = {
     title: v.title,
     description: emptyToNull(v.description),
     impact: v.impact,
+    likelihood: v.type === "ISSUE" ? "HIGH" : v.likelihood,
+    category: v.category || null,
     owner: emptyToNull(v.owner),
     targetDate: toDate(v.targetDate),
     status: v.status,
@@ -159,4 +162,33 @@ export const assignmentDef: SubresourceDef<typeof projectAssignmentSchema> = {
   update: (id, data) => prisma.projectAssignment.update({ where: { id }, data }),
   remove: (id) => prisma.projectAssignment.delete({ where: { id } }),
   findOwner: (id) => prisma.projectAssignment.findUnique({ where: { id }, select: { projectId: true } }),
+};
+
+/** Monthly HSE record; the period is stored as the last day of its month so one month has one record. */
+export const hseReportDef: SubresourceDef<typeof projectHseReportSchema> = {
+  label: "laporan HSE",
+  schema: projectHseReportSchema,
+  describe: (v) => `periode ${v.periodDate.slice(0, 7)}`,
+  toData: (v, { session, isCreate }) => {
+    const [y, m] = v.periodDate.split("-").map(Number);
+    return {
+      periodDate: new Date(Date.UTC(y, m, 0)),
+      manHours: v.manHours,
+      nearMiss: v.nearMiss,
+      firstAid: v.firstAid,
+      medicalTreatment: v.medicalTreatment,
+      lostTimeInjury: v.lostTimeInjury,
+      fatality: v.fatality,
+      propertyDamage: v.propertyDamage,
+      unsafeObservations: v.unsafeObservations,
+      safetyTalks: v.safetyTalks,
+      inspections: v.inspections,
+      notes: emptyToNull(v.notes),
+      ...(isCreate ? { createdBy: session.name } : {}),
+    };
+  },
+  create: (data) => prisma.projectHseReport.create({ data: data as any }),
+  update: (id, data) => prisma.projectHseReport.update({ where: { id }, data }),
+  remove: (id) => prisma.projectHseReport.delete({ where: { id } }),
+  findOwner: (id) => prisma.projectHseReport.findUnique({ where: { id }, select: { projectId: true } }),
 };

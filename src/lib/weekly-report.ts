@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { getProjectPortfolio, type PortfolioRow } from "@/lib/project-monitoring";
 import {
   HEALTH_LABEL,
+  ISSUE_CATEGORY_LABEL,
+  riskLevel,
   formatPercent,
   formatRupiah,
   mergePadSchedules,
@@ -120,7 +122,21 @@ export type WeeklyReportData = {
   /** same periods as `pad`, split by project status */
   padSplit: { key: string; label: string; kind: PadBucket["kind"]; ongoing: number; completed: number; total: number }[];
   closeoutPending: { name: string; number: string }[];
+  hse: WeeklyHse;
+  topRisks: WeeklyRisk[];
+  riskCounts: { open: number; extreme: number; high: number; late: number };
 };
+
+export type WeeklyHse = {
+  /** last full month */
+  monthLabel: string;
+  month: { manHours: number; fatality: number; lti: number; medical: number; firstAid: number; nearMiss: number; reported: number; expected: number };
+  /** since project start, running projects */
+  total: { manHours: number; ltifr: number | null; trir: number | null; fatality: number; lti: number; medical: number };
+  missing: string[];
+  incidents: { project: string; projectId: string; text: string; severe: boolean }[];
+};
+export type WeeklyRisk = { project: string; projectId: string; title: string; level: string; category: string | null; owner: string | null; targetDate: string | null; late: boolean };
 
 const MAX_ACTIONS = 5;
 
@@ -134,7 +150,7 @@ function noteFor(r: PortfolioRow, lastSummary: string | null): string {
 }
 
 export async function buildWeeklyReport(): Promise<WeeklyReportData> {
-  const { rows } = await getProjectPortfolio();
+  const { rows, risks } = await getProjectPortfolio();
   const today = getJakartaToday();
   const todayMs = today.getTime();
   const ongoing = rows.filter((r) => r.status === "ONGOING");
@@ -239,8 +255,58 @@ export async function buildWeeklyReport(): Promise<WeeklyReportData> {
     days: Math.round((e.nextCalibrationDate.getTime() - todayMs) / DAY),
   }));
 
+  // --- HSE: last full month + cumulative ---
+  const nowD = new Date(todayMs);
+  const lastMonthEnd = new Date(Date.UTC(nowD.getUTCFullYear(), nowD.getUTCMonth(), 0));
+  const MONTHS_ID = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+  const monthRecs = await prisma.projectHseReport.findMany({
+    where: { periodDate: lastMonthEnd, projectId: { in: ongoing.map((r) => r.id) } },
+    select: { projectId: true, manHours: true, fatality: true, lostTimeInjury: true, medicalTreatment: true, firstAid: true, nearMiss: true, notes: true },
+  });
+  const nameOf = new Map(rows.map((r) => [r.id, r.projectName]));
+  const msum = (k: "manHours" | "fatality" | "lostTimeInjury" | "medicalTreatment" | "firstAid" | "nearMiss") => monthRecs.reduce((a, x) => a + x[k], 0);
+  // projects running for the whole of last month are expected to report
+  const expectedIds = ongoing.filter((r) => r.startDate && Date.parse(r.startDate) <= Date.UTC(lastMonthEnd.getUTCFullYear(), lastMonthEnd.getUTCMonth(), 1)).map((r) => r.id);
+  const reportedIds = new Set(monthRecs.map((x) => x.projectId));
+  const hseTotal = (() => {
+    const list = ongoing.filter((r) => r.hse.months > 0);
+    const hours = list.reduce((a, r) => a + r.hse.manHours, 0);
+    const fat = list.reduce((a, r) => a + r.hse.fatality, 0);
+    const lti = list.reduce((a, r) => a + r.hse.lostTimeInjury, 0);
+    const med = list.reduce((a, r) => a + r.hse.medicalTreatment, 0);
+    const rate = (n: number) => (hours ? Math.round(((n * 1e6) / hours) * 100) / 100 : null);
+    return { manHours: hours, ltifr: rate(fat + lti), trir: rate(fat + lti + med), fatality: fat, lti, medical: med };
+  })();
+  const hse: WeeklyHse = {
+    monthLabel: `${MONTHS_ID[lastMonthEnd.getUTCMonth()]} ${lastMonthEnd.getUTCFullYear()}`,
+    month: { manHours: msum("manHours"), fatality: msum("fatality"), lti: msum("lostTimeInjury"), medical: msum("medicalTreatment"), firstAid: msum("firstAid"), nearMiss: msum("nearMiss"), reported: expectedIds.filter((id) => reportedIds.has(id)).length, expected: expectedIds.length },
+    total: hseTotal,
+    missing: expectedIds.filter((id) => !reportedIds.has(id)).map((id) => nameOf.get(id) ?? ""),
+    incidents: monthRecs
+      .filter((x) => x.fatality + x.lostTimeInjury + x.medicalTreatment > 0)
+      .map((x) => ({
+        project: nameOf.get(x.projectId) ?? "",
+        projectId: x.projectId,
+        severe: x.fatality + x.lostTimeInjury > 0,
+        text: [x.fatality && `${x.fatality} kecelakaan fatal`, x.lostTimeInjury && `${x.lostTimeInjury} cedera hilang hari kerja`, x.medicalTreatment && `${x.medicalTreatment} perawatan medis`].filter(Boolean).join(", ") + (x.notes ? `. ${x.notes}` : ""),
+      }))
+      .sort((a, b) => Number(b.severe) - Number(a.severe)),
+  };
+
+  // --- risks: highest level first ---
+  const ranked = risks
+    .map((x) => ({ x, lv: riskLevel(x.type, x.likelihood, x.impact), late: x.targetDate !== null && x.targetDate < todayMs }))
+    .sort((a, b) => b.lv.score - a.lv.score || Number(b.late) - Number(a.late));
+  const topRisks: WeeklyRisk[] = ranked
+    .filter((r) => r.lv.score >= 6)
+    .slice(0, 6)
+    .map(({ x, lv, late }) => ({ project: x.projectName, projectId: x.projectId, title: x.title, level: lv.label, category: x.category ? ISSUE_CATEGORY_LABEL[x.category] ?? null : null, owner: x.owner, targetDate: x.targetDate ? new Date(x.targetDate).toISOString().slice(0, 10) : null, late }));
+  const riskCounts = { open: risks.length, extreme: ranked.filter((r) => r.lv.label === "Ekstrem").length, high: ranked.filter((r) => r.lv.label === "Tinggi").length, late: ranked.filter((r) => r.late).length };
+
   // --- things that need a decision/action, most severe first ---
   const actions: ActionItem[] = [];
+  for (const i of hse.incidents.filter((x) => x.severe))
+    actions.push({ tone: "bad", project: i.project, projectId: i.projectId, text: `terjadi kecelakaan kerja pada ${hse.monthLabel}: ${i.text}`, suggestion: "Hasil investigasi kecelakaan dan tindakan perbaikan perlu dilaporkan; pekerjaan sejenis dihentikan sementara hingga pengendalian bahaya diterapkan." });
   for (const r of [...ongoing].sort((a, b) => a.summary.deviation - b.summary.deviation)) {
     const s = r.summary;
     if (s.isOverdue) actions.push({ tone: "bad", project: r.projectName, projectId: r.id, text: `telah melewati target selesai ${Math.abs(s.daysRemaining)} hari dengan progres ${formatPercent(s.actualPercent)}.`, suggestion: "Diperlukan keputusan: pengajuan addendum waktu kepada klien atau percepatan pekerjaan (penambahan personil/lembur)." });
@@ -266,6 +332,10 @@ export async function buildWeeklyReport(): Promise<WeeklyReportData> {
     actions.push({ tone: "bad", text: `Terdapat ${expiredOnDuty.length} personil yang masih bertugas dengan sertifikasi yang telah habis masa berlakunya (${expiredOnDuty.slice(0, 3).map((c) => c.employee).join(", ")}${expiredOnDuty.length > 3 ? ", …" : ""}).`, suggestion: "Personil perlu diganti atau sertifikasinya segera diperpanjang sebelum pekerjaan dilanjutkan." });
   for (const r of ongoing.filter((x) => x.trend !== null && x.trend <= -5 && x.summary.health !== "KRITIS"))
     actions.push({ tone: "warn", project: r.projectName, projectId: r.id, text: `deviasi memburuk ${Math.abs(r.trend as number)} poin dalam satu minggu terakhir.`, suggestion: "Penyebabnya perlu dikonfirmasi kepada PIC sebelum project menjadi kritis." });
+  for (const r of ranked.filter((r) => r.lv.label === "Ekstrem" && r.late).slice(0, 3))
+    actions.push({ tone: "bad", project: r.x.projectName, projectId: r.x.projectId, text: `${r.x.type === "ISSUE" ? "kendala" : "risiko"} tingkat ekstrem "${r.x.title}" telah melewati target tindak lanjut.`, suggestion: `Penanggung jawab${r.x.owner ? ` (${r.x.owner})` : ""} perlu menyampaikan langkah penyelesaian; eskalasi kepada manajemen bila memerlukan keputusan.` });
+  if (hse.missing.length)
+    actions.push({ tone: "warn", text: `Laporan HSE ${hse.monthLabel} belum diisi untuk ${hse.missing.length} project (${hse.missing.slice(0, 3).join(", ")}${hse.missing.length > 3 ? ", dan lainnya" : ""}).`, suggestion: "PIC atau petugas HSE perlu segera mengisi laporan HSE bulanan." });
   const overdueEq = urgentEquipment.filter((e) => e.days < 0).length;
   if (overdueEq) actions.push({ tone: "warn", text: `Terdapat ${overdueEq} alat yang telah melewati jadwal kalibrasi.`, suggestion: "Alat tersebut sebaiknya tidak digunakan untuk pekerjaan klien hingga kalibrasi dilakukan." });
   // Progress data not refreshed: one item per project (or one combined item when many), stating how old the data is.
@@ -351,6 +421,9 @@ export async function buildWeeklyReport(): Promise<WeeklyReportData> {
       });
     })(),
     closeoutPending: rows.filter((r) => r.closeoutComplete === false).map((r) => ({ name: r.projectName, number: r.projectNumber })),
+    hse,
+    topRisks,
+    riskCounts,
   };
 }
 
@@ -396,7 +469,7 @@ ${kpiCell("PAD", formatRupiah(k.pad, true), `project berjalan ${formatRupiah(k.p
   const urgentList = (items: string[]) => (items.length ? `<ul style="margin:4px 0 0;padding-left:18px;font-size:13px;">${items.join("")}</ul>` : "");
   const urgent =
     r.urgentCerts.length || r.urgentEquipment.length
-      ? `${h3(3, "Sertifikasi personil & kalibrasi alat")}
+      ? `${h3(4, "Sertifikasi personil & kalibrasi alat")}
 <p style="margin:0;font-size:13px;">Dalam 30 hari ke depan: <strong>${r.urgentCerts.length}</strong> sertifikasi personil (${certExpired} telah berakhir) dan <strong>${r.urgentEquipment.length}</strong> jadwal kalibrasi alat (${eqExpired} terlewat).</p>
 ${urgentList(
   r.urgentCerts.slice(0, 5).map(
@@ -412,11 +485,32 @@ ${urgentList(
 )}`
       : "";
 
+  const LEVEL_COLOR: Record<string, string> = { Ekstrem: "#7F1D1D", Tinggi: "#B91C1C", Sedang: "#B45309", Rendah: "#15803D" };
+  const hm = r.hse.month;
+  const hseRisk = (n: number) => `${h3(n, "HSE dan risiko")}
+<table width="100%" cellpadding="0" cellspacing="6" style="margin:4px -6px 2px;"><tr>
+${kpiCell(`Kecelakaan kerja ${r.hse.monthLabel}`, String(hm.fatality + hm.lti), `${hm.fatality} fatal · ${hm.lti} hilang hari kerja · ${hm.medical} perawatan medis`, hm.fatality + hm.lti ? "#B91C1C" : "#15803D")}
+${kpiCell("Nyaris celaka", String(hm.nearMiss), `${hm.firstAid} P3K · ${hm.manHours.toLocaleString("id-ID")} jam kerja`)}
+${kpiCell("LTIFR / TRIR", `${(r.hse.total.ltifr ?? 0).toLocaleString("id-ID")} / ${(r.hse.total.trir ?? 0).toLocaleString("id-ID")}`, "kumulatif per 1 juta jam kerja", r.hse.total.ltifr ? "#B91C1C" : "#15803D")}
+${kpiCell("Risiko terbuka", String(r.riskCounts.open), `${r.riskCounts.extreme} ekstrem · ${r.riskCounts.high} tinggi · ${r.riskCounts.late} lewat target`, r.riskCounts.extreme ? "#B91C1C" : "#0F172A")}
+</tr></table>
+${hm.expected ? `<p style="margin:2px 0 0;font-size:12.5px;color:${r.hse.missing.length ? "#B45309" : "#334155"};">Laporan HSE ${esc(r.hse.monthLabel)}: ${hm.reported} dari ${hm.expected} project sudah melapor${r.hse.missing.length ? ` (belum: ${esc(r.hse.missing.slice(0, 3).join(", "))}${r.hse.missing.length > 3 ? ", …" : ""})` : ""}.</p>` : ""}
+${
+  r.topRisks.length
+    ? `<table width="100%" cellpadding="0" cellspacing="0" style="font-size:12.5px;border-collapse:collapse;margin-top:8px;">${r.topRisks
+        .map(
+          (x) =>
+            `<tr><td valign="top" width="64" style="padding:5px 6px 5px 0;"><span style="display:inline-block;padding:1px 6px;border-radius:4px;background:${LEVEL_COLOR[x.level]};color:#fff;font-size:11px;font-weight:bold;">${esc(x.level)}</span></td><td style="padding:5px 0;border-bottom:1px solid #F1F5F9;"><strong>${esc(x.title)}</strong><br/><span style="color:#64748B;">${esc(x.project)}${x.category ? ` · ${esc(x.category)}` : ""}${x.owner ? ` · ${esc(x.owner)}` : ""}</span>${x.late ? ` <span style="color:#B91C1C;font-weight:bold;">· lewat target</span>` : ""}</td></tr>`
+        )
+        .join("")}</table>`
+    : `<p style="margin:6px 0 0;font-size:13px;color:#15803D;">Tidak ada risiko tingkat tinggi atau ekstrem yang terbuka.</p>`
+}`;
+
   const critical = r.projects.filter((p) => p.health === "KRITIS" || p.health === "WASPADA" || p.belowTarget);
   const shown = critical.length ? critical : r.projects.slice(0, 5);
   const rest = r.projects.length - shown.length;
   const table = r.projects.length
-    ? `${h3(r.urgentCerts.length || r.urgentEquipment.length ? 4 : 3, critical.length ? "Project yang memerlukan perhatian" : "Project berjalan")}
+    ? `${h3(r.urgentCerts.length || r.urgentEquipment.length ? 5 : 4, critical.length ? "Project yang memerlukan perhatian" : "Project berjalan")}
 <table width="100%" cellpadding="0" cellspacing="0" style="font-size:12px;border-collapse:collapse;">
 <tr style="color:#64748B;text-align:left;"><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;">Project</th><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;text-align:right;">Nilai</th><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;text-align:right;">Progres <span style="font-weight:normal;">(<span style="color:#1671B8;">realisasi</span> / rencana)</span></th><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;text-align:right;">Target selesai</th><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;text-align:right;">Dev.</th><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;text-align:right;">Margin <span style="font-weight:normal;">(prakiraan / target)</span></th><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;">Status</th></tr>
 ${shown
@@ -457,10 +551,11 @@ ${
 }
 ${h3(2, "Hal yang memerlukan keputusan")}
 ${actions}
+${hseRisk(3)}
 ${urgent}
 ${table}
 <p style="margin-top:20px;">${button(appUrl("/projects/dashboard"), "Buka Monitoring Project")}</p>
-<p style="font-size:12px;color:#64748B;">Rincian lengkap (seluruh project, proyeksi PAD per bulan, serta daftar sertifikasi dan kalibrasi) tersedia pada lampiran PDF.</p>`;
+<p style="font-size:12px;color:#64748B;">Rincian lengkap (seluruh project, proyeksi PAD per bulan, HSE dan risiko, serta daftar sertifikasi dan kalibrasi) tersedia pada lampiran PDF.</p>`;
 
   return brandedEmail({
     kicker: "Laporan Mingguan Monitoring Project",

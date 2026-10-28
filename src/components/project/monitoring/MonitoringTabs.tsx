@@ -8,7 +8,7 @@ const TABS = [
   { key: "ringkasan", label: "Ringkasan" },
   { key: "jadwal", label: "Jadwal & Progres" },
   { key: "keuangan", label: "Keuangan" },
-  { key: "tim", label: "Tim & Kendala" },
+  { key: "tim", label: "Risiko, HSE & Tim" },
   { key: "dokumen", label: "Dokumen" },
 ] as const;
 
