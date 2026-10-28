@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { standardShare } from "@/lib/project-monitoring-shared";
 import { getJakartaToday } from "@/lib/status";
 import { isoWeekKey } from "@/lib/week";
 import { computeMonitoring } from "@/lib/project-monitoring-shared";
@@ -90,7 +91,7 @@ const SCENARIOS: Scenario[] = [
     value: 850_000_000,
     startDaysAgo: 95,
     durationDays: 130,
-    actual: 67,
+    actual: 76,
     staleDays: 3,
     rabRatio: 0.7,
     costFactor: 1.18,
@@ -126,7 +127,7 @@ const SCENARIOS: Scenario[] = [
     value: 1_200_000_000,
     startDaysAgo: 60,
     durationDays: 185,
-    actual: 33,
+    actual: 27,
     staleDays: 4,
     rabRatio: 0.65,
     costFactor: 0.98,
@@ -196,7 +197,7 @@ const SCENARIOS: Scenario[] = [
     value: 2_400_000_000,
     startDaysAgo: 75,
     durationDays: 365,
-    actual: 22,
+    actual: 15,
     staleDays: 6,
     rabRatio: 0.78,
     costFactor: 1.0,
@@ -298,6 +299,21 @@ export async function createDemoData(actor: string) {
     });
     const pid = project.id;
 
+    // progress follows an S shape up to the latest report; milestones complete on the date that curve reaches their cumulative weight
+    const lastReport = today - sc.staleDays * DAY;
+    const xEnd = Math.min(1, Math.max(0.05, (lastReport - start) / (sc.durationDays * DAY)));
+    const reportedAt = (f: number) => (sc.actual * standardShare(f * xEnd)) / standardShare(xEnd);
+    const reachedOn = (value: number) => {
+      let lo = 0;
+      let hi = 1;
+      for (let i = 0; i < 40; i++) {
+        const mid = (lo + hi) / 2;
+        if (reportedAt(mid) < value) lo = mid;
+        else hi = mid;
+      }
+      return start + (lastReport - start) * hi;
+    };
+
     // milestones: equal-ish weights over the scope list, done up to the current progress
     const weights = sc.scopes.map((_, i, a) => (i === a.length - 1 ? 100 - Math.floor(100 / a.length) * (a.length - 1) : Math.floor(100 / a.length)));
     let cum = 0;
@@ -305,7 +321,7 @@ export async function createDemoData(actor: string) {
       data: sc.scopes.map((name, i) => {
         const from = cum;
         cum += weights[i];
-        const planned = start + ((cum / 100) * sc.durationDays) * DAY;
+        const planned = start + sShareInverse(cum / 100) * sc.durationDays * DAY;
         const done = sc.actual >= cum - 0.01;
         const running = !done && sc.actual > from;
         return {
@@ -314,20 +330,19 @@ export async function createDemoData(actor: string) {
           name,
           weight: weights[i],
           plannedDate: day(planned),
-          actualDate: done ? day(Math.min(today - 2 * DAY, planned + (sc.costFactor > 1.05 || sc.delayCost ? 12 : 0) * DAY)) : null,
+          actualDate: done ? day(Math.min(lastReport, reachedOn(cum))) : null,
           status: done ? "DONE" : running ? "IN_PROGRESS" : "PENDING",
         };
       }),
     });
 
-    // progress reports: four steps up to today's value
-    const lastReport = today - sc.staleDays * DAY;
-    const steps = [0.25, 0.5, 0.75, 1];
+    // progress reports: six steps up to today's value, following an S shape like real work
+    const steps = [1 / 6, 2 / 6, 3 / 6, 4 / 6, 5 / 6, 1];
     await prisma.projectProgressReport.createMany({
       data: steps.map((f, i) => ({
         projectId: pid,
         reportDate: day(start + (lastReport - start) * f),
-        actualPercent: Math.round(sc.actual * f * 10) / 10,
+        actualPercent: Math.round(reportedAt(f) * 10) / 10,
         summary: i === steps.length - 1 ? `Progres ${sc.actual}%: ${sc.scopes[Math.min(sc.scopes.length - 1, Math.floor((sc.actual / 100) * sc.scopes.length))].toLowerCase()} berjalan.` : `Pekerjaan berjalan sesuai tahapan (${Math.round(sc.actual * f)}%).`,
         createdBy: i === steps.length - 1 ? `${sc.pic} (PIC)` : actor,
       })),
@@ -397,7 +412,21 @@ export async function createDemoData(actor: string) {
         overheadPct: 4,
         operatingProfit: sc.value - itemsTotal - contingency,
         marginPct,
-        years: [],
+        years: (() => {
+          // RAB split per calendar year, proportional to the days of the project in that year
+          const out: { label: string; revenue: number; cost: number; profit: number; marginPct: number | null }[] = [];
+          const y0 = new Date(start).getUTCFullYear();
+          const y1 = new Date(end).getUTCFullYear();
+          for (let y = y0; y <= y1; y++) {
+            const a = Math.max(start, Date.UTC(y, 0, 1));
+            const b = Math.min(end, Date.UTC(y + 1, 0, 1));
+            const f = (b - a) / (end - start);
+            const rev = round(sc.value * f);
+            const cost = round((itemsTotal + contingency) * f * (y === y1 && y1 > y0 ? 1.12 : y1 > y0 ? 0.95 : 1));
+            out.push({ label: `Tahun ${y - y0 + 1}`, revenue: rev, cost, profit: rev - cost, marginPct: rev ? Math.round(((rev - cost) / rev) * 1000) / 10 : null });
+          }
+          return out;
+        })(),
         warnings: [],
       };
       await prisma.projectRabRevision.create({
@@ -502,22 +531,65 @@ async function backfillSnapshots(today: number) {
   if (rows.length) await prisma.projectSnapshot.createMany({ data: rows, skipDuplicates: true });
 }
 
+export type DemoSeedResult = { state: "exists" | "seeded" | "removed" | "busy" | "error"; message?: string };
+
 /**
- * Fills the demo data once, automatically, the first time the Project dashboard
- * is opened. The flag is claimed atomically so two simultaneous visits don't
- * both seed, and data removed by the user is never re-created.
+ * Makes sure the demo projects are there, automatically, on any Project page.
+ *  - already present → nothing to do
+ *  - removed on purpose by an admin (audit log) → never re-created
+ *  - otherwise create them; a short-lived lock (AppSettings.demoDataSeededAt)
+ *    stops two simultaneous visits from seeding twice. If seeding fails the
+ *    lock is released so the next visit tries again, and the reason is returned
+ *    so the page can show it.
  */
-export async function ensureDemoDataOnce(): Promise<boolean> {
+export async function ensureDemoDataOnce(): Promise<DemoSeedResult> {
   try {
-    const current = await prisma.appSettings.findUnique({ where: { id: "default" }, select: { demoDataSeededAt: true } });
-    if (current?.demoDataSeededAt) return false;
-    if (!current) await prisma.appSettings.upsert({ where: { id: "default" }, update: {}, create: { id: "default" } });
-    const claimed = await prisma.appSettings.updateMany({ where: { id: "default", demoDataSeededAt: null }, data: { demoDataSeededAt: new Date() } });
-    if (claimed.count === 0) return false;
+    if (await hasDemoData()) {
+      // demo data from an older version (plain straight-line progress) is refreshed once to the current shape
+      const first = await prisma.project.findFirst({ where: { projectNumber: "DEMO-01", deletedAt: null }, select: { _count: { select: { progressReports: true } } } });
+      if (!first || first._count.progressReports >= 6) return { state: "exists" };
+    } else {
+      const removed = await prisma.auditLog.findFirst({
+        where: { entityType: "ProjectMonitoring", action: "DELETE", description: { contains: "data contoh" } },
+        select: { id: true },
+      });
+      if (removed) return { state: "removed" };
+    }
+  } catch (e) {
+    console.error("demo data check failed", e);
+    return { state: "error", message: "Data contoh tidak dapat diperiksa." };
+  }
+
+  let locked = false;
+  try {
+    await prisma.appSettings.upsert({ where: { id: "default" }, update: {}, create: { id: "default" } });
+    const staleBefore = new Date(Date.now() - 2 * 60 * 1000);
+    const claimed = await prisma.appSettings.updateMany({
+      where: { id: "default", OR: [{ demoDataSeededAt: null }, { demoDataSeededAt: { lt: staleBefore } }] },
+      data: { demoDataSeededAt: new Date() },
+    });
+    if (claimed.count === 0) return { state: "busy" };
+    locked = true;
     await createDemoData("Sistem");
-    return true;
+    return { state: "seeded" };
   } catch (e) {
     console.error("demo data seeding failed", e);
-    return false;
+    const msg = e instanceof Error ? e.message : String(e);
+    if (locked) await prisma.appSettings.updateMany({ where: { id: "default" }, data: { demoDataSeededAt: null } }).catch(() => undefined);
+    if (/demoDataSeededAt|column .* does not exist|P2022/i.test(msg))
+      return { state: "error", message: "Struktur database belum diperbarui. Jalankan \"npx prisma migrate deploy\" lalu muat ulang halaman ini." };
+    return { state: "error", message: `Data contoh gagal dibuat: ${msg.split("\n").filter(Boolean).slice(-1)[0]?.slice(0, 200) ?? "kesalahan tidak diketahui"}` };
   }
+}
+
+/** Fraction of the duration at which a standard S-curve reaches the given share of work. */
+function sShareInverse(share: number): number {
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (standardShare(mid) < share) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
 }

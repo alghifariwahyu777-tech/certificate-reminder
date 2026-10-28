@@ -4,12 +4,13 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUp, Download, SlidersHorizontal } from "lucide-react";
 import { SearchPopoverButton } from "@/components/ui/SearchPopoverButton";
-import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from "recharts";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Input";
 import { HEALTH_BADGE_CLASS, HEALTH_LABEL, formatPercent, formatRupiah, mergePadSchedules, shortDate, type ProjectHealth } from "@/lib/project-monitoring-shared";
-import type { PortfolioRow } from "@/lib/project-monitoring";
+import type { PortfolioCurvePoint, PortfolioRow } from "@/lib/project-monitoring";
 import { cn } from "@/lib/utils";
 import { ConditionRibbon, ProgressBar, type Tone } from "./shared";
 import { InfoTip } from "@/components/ui/InfoTip";
@@ -26,7 +27,7 @@ const CHIPS: { key: string; label: string }[] = [
   { key: "ON_TRACK", label: "Sesuai rencana" },
 ];
 
-export function PortfolioDashboard({ rows, categories }: { rows: PortfolioRow[]; categories: { id: string; name: string }[] }) {
+export function PortfolioDashboard({ rows, categories, curve = [], today = Date.now() }: { rows: PortfolioRow[]; categories: { id: string; name: string }[]; curve?: PortfolioCurvePoint[]; today?: number }) {
   const [status, setStatus] = useState("ONGOING");
   const [categoryId, setCategoryId] = useState("");
   const [pic, setPic] = useState("");
@@ -165,6 +166,8 @@ export function PortfolioDashboard({ rows, categories }: { rows: PortfolioRow[];
         <Headline label="PAD" value={formatRupiah(k.pad, true)} sub={k.overduePad ? `${formatRupiah(k.overduePad, true)} tertunggak` : "Tidak ada yang tertunggak"} />
         <Headline label="Nilai kontrak" value={formatRupiah(k.contract, true)} sub={`${k.count} project, ${k.clients} klien`} />
       </div>
+
+      <PortfolioAnalysis rows={base} curve={curve} today={today} />
 
       {/* the one table */}
       <Card>
@@ -464,5 +467,123 @@ function Headline({ label, value, sub, tone = "default", onClick }: { label: str
       </p>
       <p className="mt-1 text-[12.5px] text-slate-500">{sub}</p>
     </Tag>
+  );
+}
+
+const HEALTH_DOT: Record<string, string> = { KRITIS: "#C2362F", WASPADA: "#D69E2E", ON_TRACK: "#2F855A", SELESAI: "#1671B8", BATAL: "#94A3B8" };
+
+/** Two portfolio views: the contract-weighted S-curve, and every running project placed by schedule (SPI) and cost (CPI) performance. */
+function PortfolioAnalysis({ rows, curve, today }: { rows: PortfolioRow[]; curve: PortfolioCurvePoint[]; today: number }) {
+  const router = useRouter();
+  const ongoing = rows.filter((r) => r.status === "ONGOING");
+  const clamp = (v: number) => Math.min(1.47, Math.max(0.53, v));
+  const points = ongoing
+    .filter((r) => r.summary.spi !== null && r.margin.cpi !== null)
+    .map((r) => ({ id: r.id, name: r.projectName, health: r.summary.health, spi: clamp(r.summary.spi as number), cpi: clamp(r.margin.cpi as number), rawSpi: r.summary.spi, rawCpi: r.margin.cpi, value: Math.max(1, r.summary.contractValue) }));
+  const missing = ongoing.length - points.length;
+  const last = [...curve].reverse().find((c) => c.actual !== null);
+  if (!ongoing.length) return null;
+
+  return (
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <Card>
+        <div className="flex items-start justify-between gap-3 px-5 pt-4">
+          <CardTitle className="flex items-center gap-1.5">
+            Kurva S portofolio
+            <InfoTip label="Keterangan kurva S portofolio">
+              Gabungan progres seluruh project berjalan, dibobot nilai kontrak. Garis putus-putus = rencana, garis biru = realisasi. Jarak antara keduanya menunjukkan seberapa jauh
+              portofolio tertinggal atau mendahului rencana. Kurva S tiap project ada di halaman detail project.
+            </InfoTip>
+          </CardTitle>
+          {last && (
+            <p className="text-right text-[13px]">
+              <span className="font-bold text-accent">{formatPercent(last.actual)}</span>
+              <span className="text-slate-500"> / {formatPercent(last.planned)}</span>
+            </p>
+          )}
+        </div>
+        <CardContent>
+          <div className="h-60">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={curve} margin={{ top: 8, right: 12, left: -14, bottom: 0 }}>
+                <CartesianGrid stroke="#E9EDF2" vertical={false} />
+                <XAxis dataKey="t" type="number" scale="time" domain={["dataMin", "dataMax"]} tickFormatter={(t: number) => shortDate(t)} tick={{ fontSize: 11, fill: "#5B6B7F" }} minTickGap={28} axisLine={{ stroke: "#E3E8EF" }} tickLine={false} />
+                <YAxis domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11, fill: "#5B6B7F" }} axisLine={false} tickLine={false} />
+                <Tooltip labelFormatter={(t) => shortDate(Number(t))} formatter={(v, n) => [`${Number(v).toLocaleString("id-ID")}%`, n]} contentStyle={tooltipStyle} />
+                <ReferenceLine x={today} stroke="#94A3B8" strokeDasharray="3 3" />
+                <Line type="monotone" dataKey="planned" name="Rencana" stroke="#9AA8B8" strokeDasharray="6 4" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="actual" name="Realisasi" stroke="#1671B8" strokeWidth={3} dot={false} connectNulls={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <div className="px-5 pt-4">
+          <CardTitle className="flex items-center gap-1.5">
+            Matriks waktu dan biaya
+            <InfoTip label="Keterangan matriks waktu dan biaya" align="right">
+              Setiap titik adalah satu project berjalan (ukuran = nilai kontrak, warna = status). Sumbu mendatar = <strong>kinerja waktu</strong> (realisasi dibagi rencana), sumbu
+              tegak = <strong>kinerja biaya</strong> (nilai pekerjaan selesai dibagi biaya keluar). Angka 1 berarti sesuai rencana. Kuadran kiri bawah = terlambat dan boros, yang
+              paling perlu perhatian. Klik titik untuk membuka project.
+              {missing > 0 ? ` ${missing} project belum tampil karena belum memiliki data RAB dan biaya.` : ""}
+            </InfoTip>
+          </CardTitle>
+        </div>
+        <CardContent>
+          {points.length === 0 ? (
+            <p className="py-16 text-center text-sm text-slate-400">Belum ada project dengan data RAB dan biaya.</p>
+          ) : (
+            <div className="h-60">
+              <ResponsiveContainer width="100%" height="100%">
+                <ScatterChart margin={{ top: 8, right: 12, left: -14, bottom: 4 }}>
+                  <ReferenceArea x1={0.4} x2={1} y1={0.4} y2={1} fill="#FBEDEC" fillOpacity={0.7} label={{ value: "Terlambat & boros", position: "insideBottomLeft", fontSize: 10, fill: "#C2362F" }} />
+                  <ReferenceArea x1={1} x2={1.6} y1={1} y2={1.6} fill="#EAF5EE" fillOpacity={0.7} label={{ value: "Cepat & hemat", position: "insideTopRight", fontSize: 10, fill: "#2F855A" }} />
+                  <ReferenceArea x1={0.4} x2={1} y1={1} y2={1.6} fill="#FBF3E4" fillOpacity={0.5} label={{ value: "Terlambat, hemat", position: "insideTopLeft", fontSize: 10, fill: "#B7791F" }} />
+                  <ReferenceArea x1={1} x2={1.6} y1={0.4} y2={1} fill="#FBF3E4" fillOpacity={0.5} label={{ value: "Cepat, boros", position: "insideBottomRight", fontSize: 10, fill: "#B7791F" }} />
+                  <XAxis type="number" dataKey="spi" domain={[0.4, 1.6]} ticks={[0.5, 0.75, 1, 1.25, 1.5]} tick={{ fontSize: 11, fill: "#5B6B7F" }} tickFormatter={(v: number) => v.toLocaleString("id-ID")} axisLine={{ stroke: "#E3E8EF" }} tickLine={false} />
+                  <YAxis type="number" dataKey="cpi" domain={[0.4, 1.6]} ticks={[0.5, 0.75, 1, 1.25, 1.5]} tick={{ fontSize: 11, fill: "#5B6B7F" }} tickFormatter={(v: number) => v.toLocaleString("id-ID")} axisLine={false} tickLine={false} />
+                  <ZAxis type="number" dataKey="value" range={[60, 420]} />
+                  <ReferenceLine x={1} stroke="#94A3B8" />
+                  <ReferenceLine y={1} stroke="#94A3B8" />
+                  <Tooltip
+                    cursor={false}
+                    content={({ payload }) => {
+                      const d = payload?.[0]?.payload as (typeof points)[number] | undefined;
+                      if (!d) return null;
+                      return (
+                        <div className="rounded-lg border border-line bg-white px-3 py-2 text-[12px] shadow-panel">
+                          <p className="font-semibold text-ink">{d.name}</p>
+                          <p className="text-slate-500">
+                            Waktu {d.rawSpi?.toLocaleString("id-ID")} · Biaya {d.rawCpi?.toLocaleString("id-ID")}
+                          </p>
+                        </div>
+                      );
+                    }}
+                  />
+                  <Scatter data={points} onClick={(d: { id?: string; payload?: { id: string } }) => router.push(`/projects/${d.payload?.id ?? d.id}`)} className="cursor-pointer">
+                    {points.map((p) => (
+                      <Cell key={p.id} fill={HEALTH_DOT[p.health]} fillOpacity={0.85} stroke="#fff" strokeWidth={1.5} />
+                    ))}
+                  </Scatter>
+                </ScatterChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+          <div className="mt-1 flex justify-between text-[11.5px] text-slate-500">
+            <span className="flex flex-wrap gap-x-3">
+              {[["KRITIS", "Kritis"], ["WASPADA", "Waspada"], ["ON_TRACK", "Sesuai rencana"]].map(([k, l]) => (
+                <span key={k} className="inline-flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full" style={{ background: HEALTH_DOT[k] }} />
+                  {l}
+                </span>
+              ))}
+            </span>
+            <span>Mendatar: waktu · Tegak: biaya</span>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

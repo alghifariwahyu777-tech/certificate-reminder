@@ -65,7 +65,7 @@ export function MonitoringTabs({ panels }: { panels: Record<MonitoringTabKey, Pa
 
   return (
     <div className="space-y-5">
-      <div className="-mx-1 overflow-x-auto border-b border-line dark:border-slate-800">
+      <div className="no-scrollbar -mx-1 overflow-x-auto overflow-y-hidden border-b border-line dark:border-slate-800">
         <div className="flex gap-1 px-1">
           {TABS.map((t) => {
             const badge = badgeOf(panels[t.key]);

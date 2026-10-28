@@ -344,13 +344,13 @@ export function todayInput(): string {
  * the shortcut buttons: "Update progres", "Unggah RAB", …). The "/baru" part is
  * removed again so a refresh doesn't reopen the form.
  */
-export function useOpenFromHash(section: string, open: () => void) {
+export function useOpenFromHash(section: string, open: () => void, action = "baru") {
   const ref = useRef(open);
   ref.current = open;
   useEffect(() => {
     const check = () => {
       const parts = window.location.hash.slice(1).split("/");
-      if (parts[1] === section && parts[2] === "baru") {
+      if (parts[1] === section && parts[2] === action) {
         history.replaceState(null, "", `#${parts[0]}/${parts[1]}`);
         ref.current();
       }
@@ -358,5 +358,5 @@ export function useOpenFromHash(section: string, open: () => void) {
     check();
     window.addEventListener("hashchange", check);
     return () => window.removeEventListener("hashchange", check);
-  }, [section]);
+  }, [section, action]);
 }

@@ -49,10 +49,7 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
     return { key: b.key, label: b.label, short: BRIDGE_SHORT[b.key] ?? b.label, range: [Math.min(from, run), Math.max(from, run)] as [number, number], raw: b.amount, kind: b.kind };
   });
 
-  const history = [...data.marginHistory]
-    .filter((h) => h.actualMarginPct !== null || h.forecastMarginPct !== null)
-    .sort((a, b) => a.weekKey.localeCompare(b.weekKey))
-    .map((h) => ({ ...h, label: h.weekKey.replace(/^\d{4}-W/, "M") }));
+  const history = data.marginTimeline;
 
   return (
     <div className="space-y-5">
@@ -100,26 +97,38 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
           </div>
 
           {m.hasBudget && m.hasContract && (
-            <details className="group rounded-lg bg-slate-50 px-4 py-3 text-[13px] dark:bg-slate-800/50">
-              <summary className="cursor-pointer select-none font-semibold text-ink dark:text-slate-100">Cara menghitung prakiraan</summary>
-              <p className="mt-2 text-slate-600 dark:text-slate-300">
-                Prakiraan mengasumsikan <strong>sisa pekerjaan berjalan sesuai RAB</strong>: biaya yang sudah keluar ditambah anggaran RAB untuk pekerjaan yang belum selesai.
+            <details open className="group rounded-lg border border-line bg-paper/70 px-4 py-3 text-[13px] dark:border-slate-700 dark:bg-slate-800/50">
+              <summary className="cursor-pointer select-none font-semibold text-ink dark:text-slate-100">Cara menghitung prakiraan margin akhir</summary>
+              <p className="mt-2 max-w-[80ch] text-slate-600 dark:text-slate-300">
+                Biaya yang sudah keluar dianggap final. Untuk pekerjaan yang <strong>belum selesai</strong>, biayanya diperkirakan sesuai anggaran RAB. Jadi bila biaya selama ini
+                lebih boros dari RAB, kelebihannya langsung mengurangi margin akhir; bila lebih hemat, menambah margin.
               </p>
-              <div className="mt-2 grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 text-slate-700 dark:text-slate-300 sm:max-w-md">
-                <span>Biaya yang sudah keluar</span>
-                <span className="text-right">{formatRupiah(m.actualCost, true)}</span>
+              <div className="mt-3 grid grid-cols-[1fr_auto] gap-x-6 gap-y-1.5 text-slate-700 sm:max-w-xl dark:text-slate-300">
+                <span>Biaya yang sudah keluar (realisasi)</span>
+                <span className="text-right tabular-nums">{formatRupiah(m.actualCost, true)}</span>
                 <span>
-                  Sisa RAB ({formatPercent(Math.max(0, 100 - s.actualPercent))} pekerjaan belum selesai)
+                  RAB untuk pekerjaan yang belum selesai
+                  <span className="block text-[12px] text-slate-500">
+                    {formatPercent(Math.max(0, 100 - s.actualPercent))} × RAB {formatRupiah(m.budget, true)}
+                  </span>
                 </span>
-                <span className="text-right">{formatRupiah(Math.max(0, m.eac - m.actualCost), true)}</span>
-                <span className="border-t border-line pt-1 font-semibold dark:border-slate-700">Prakiraan biaya akhir</span>
-                <span className="border-t border-line pt-1 text-right font-semibold dark:border-slate-700">{formatRupiah(m.eac, true)}</span>
-                <span>Nilai kontrak</span>
-                <span className="text-right">{formatRupiah(m.contract, true)}</span>
-                <span className="font-semibold">Prakiraan margin akhir</span>
-                <span className={cn("text-right font-semibold", m.forecastMargin < 0 && "text-signal-expired")}>
+                <span className="text-right tabular-nums">+ {formatRupiah(Math.max(0, m.eac - m.actualCost), true)}</span>
+                <span className="border-t border-line pt-1.5 font-semibold dark:border-slate-700">Prakiraan biaya akhir</span>
+                <span className="border-t border-line pt-1.5 text-right font-semibold tabular-nums dark:border-slate-700">{formatRupiah(m.eac, true)}</span>
+                <span>Nilai kontrak (pendapatan)</span>
+                <span className="text-right tabular-nums">{formatRupiah(m.contract, true)}</span>
+                <span className="border-t border-line pt-1.5 font-semibold dark:border-slate-700">Prakiraan margin akhir = kontrak − prakiraan biaya</span>
+                <span className={cn("border-t border-line pt-1.5 text-right font-semibold tabular-nums dark:border-slate-700", m.forecastMargin < 0 && "text-signal-expired")}>
                   {formatRupiah(m.forecastMargin, true)} ({formatPercent(m.forecastMarginPct)})
                 </span>
+                {m.targetMarginPct !== null && (
+                  <>
+                    <span className="text-slate-500">Dibandingkan target margin project</span>
+                    <span className={cn("text-right tabular-nums", m.belowTarget ? "text-signal-expired" : "text-signal-active")}>
+                      {formatPercent(m.targetMarginPct)} {m.belowTarget ? `(kurang ${formatRupiah(m.targetGap, true)})` : "(terpenuhi)"}
+                    </span>
+                  </>
+                )}
               </div>
             </details>
           )}
@@ -167,8 +176,8 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
                     {m.contract > 0 && <ReferenceLine y={m.contract} stroke="#123F6B" strokeDasharray="4 4" label={{ value: "Nilai kontrak", fontSize: 10, fill: "#123F6B", position: "insideTopLeft" }} />}
                     <ReferenceLine x={data.today} stroke="#CBD5E1" />
                     <Line type="monotone" dataKey="pv" name="Rencana (PV)" stroke="#94A3B8" strokeDasharray="6 4" strokeWidth={2} dot={false} />
-                    <Line type="stepAfter" dataKey="ev" name="Nilai pekerjaan selesai (EV)" stroke="#1671B8" strokeWidth={2.5} dot={false} />
-                    <Line type="stepAfter" dataKey="ac" name="Biaya aktual (AC)" stroke="#C2362F" strokeWidth={2.5} dot={false} />
+                    <Line type="linear" dataKey="ev" name="Nilai pekerjaan selesai (EV)" stroke="#1671B8" strokeWidth={2.5} dot={false} />
+                    <Line type="linear" dataKey="ac" name="Biaya aktual (AC)" stroke="#C2362F" strokeWidth={2.5} dot={false} />
                     <Line type="linear" dataKey="eac" name="Prakiraan biaya" stroke="#C2362F" strokeDasharray="2 4" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -236,32 +245,40 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
         </Card>
       </div>
 
-      {/* weekly margin trend */}
+      {/* margin forecast since the project started */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-1.5">
-            Tren prakiraan margin
-            <InfoTip label="Keterangan tren prakiraan margin">Prakiraan margin akhir setiap minggu dibandingkan target project, untuk melihat sejak kapan margin mulai tergerus.</InfoTip>
+            Perjalanan prakiraan margin
+            <InfoTip label="Keterangan perjalanan prakiraan margin">
+              Prakiraan margin akhir dihitung ulang untuk setiap tanggal sejak project dimulai, memakai biaya dan progres yang tercatat sampai tanggal itu (nilai kontrak dan RAB
+              memakai angka saat ini). Dari sini terlihat sejak kapan margin mulai tergerus.
+            </InfoTip>
           </CardTitle>
+          <p className="mt-0.5 text-[12.5px] text-slate-500">Sejak {history.length ? shortDate(history[0].t) : "-"} sampai hari ini, dibandingkan target project.</p>
         </CardHeader>
         <CardContent>
           {history.length < 2 ? (
-            <p className="text-sm text-slate-400 py-8 text-center">Riwayat akan terbentuk otomatis setiap minggu (minimal 2 minggu data).</p>
+            <p className="py-8 text-center text-sm text-slate-400">Isi nilai kontrak dan RAB untuk menampilkan perjalanan margin.</p>
           ) : (
-            <div className="h-60">
+            <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={history} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#64748B" }} />
-                  <YAxis tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} />
-                  <Tooltip formatter={(v, n) => [formatPercent(Number(v)), n]} contentStyle={tooltipStyle} />
+                  <CartesianGrid stroke="#E9EDF2" vertical={false} />
+                  <XAxis dataKey="t" type="number" scale="time" domain={["dataMin", "dataMax"]} tickFormatter={(t: number) => shortDate(t)} tick={{ fontSize: 11, fill: "#64748B" }} minTickGap={28} tickLine={false} axisLine={{ stroke: "#E2E8F0" }} />
+                  <YAxis tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} domain={["auto", "auto"]} />
+                  <Tooltip
+                    labelFormatter={(t) => shortDate(Number(t))}
+                    formatter={(v, n) => [formatPercent(Number(v)), n]}
+                    contentStyle={tooltipStyle}
+                  />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
                   <ReferenceLine y={0} stroke="#94A3B8" />
                   {m.targetMarginPct !== null && (
                     <ReferenceLine y={m.targetMarginPct} stroke="#123F6B" strokeDasharray="6 4" label={{ value: `Target ${formatPercent(m.targetMarginPct)}`, fontSize: 10, fill: "#123F6B", position: "insideTopLeft" }} />
                   )}
-                  <Line dataKey="forecastMarginPct" name="Prakiraan margin akhir" stroke="#1671B8" strokeWidth={2.5} dot={{ r: 2 }} connectNulls />
-                  <Line dataKey="actualMarginPct" name="Margin pekerjaan selesai" stroke="#9AA8B8" strokeWidth={1.5} dot={false} connectNulls />
+                  <Line type="linear" dataKey="forecastMarginPct" name="Prakiraan margin akhir" stroke="#1671B8" strokeWidth={2.5} dot={false} isAnimationActive={false} />
+                  <Line type="linear" dataKey="actualMarginPct" name="Margin pekerjaan selesai" stroke="#9AA8B8" strokeWidth={1.5} dot={false} connectNulls isAnimationActive={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>

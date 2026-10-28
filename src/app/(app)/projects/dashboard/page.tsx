@@ -11,8 +11,8 @@ import { PortfolioDashboard } from "@/components/project/monitoring/PortfolioDas
 
 export default async function ProjectPortfolioPage() {
   const session = await getSession();
-  await ensureDemoDataOnce();
-  const [{ rows }, categories] = await Promise.all([
+  const demo = await ensureDemoDataOnce();
+  const [{ rows, curve, today: todayMs }, categories] = await Promise.all([
     getProjectPortfolio(),
     prisma.projectCategory.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
@@ -25,6 +25,12 @@ export default async function ProjectPortfolioPage() {
     <>
       <Navbar title="Monitoring Project" subtitle={`Kondisi ${ongoing} project berjalan per ${today}`} adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
       <div className="space-y-5 p-5 md:p-8">
+        {session?.role === "ADMIN" && demo.state === "error" && (
+          <div className="flex flex-col gap-2 rounded-lg border border-signal-expiredBorder bg-signal-expiredBg px-4 py-3 text-[13px] text-signal-expired sm:flex-row sm:items-center sm:justify-between">
+            <span>{demo.message}</span>
+            <DemoDataButton hasDemo={false} />
+          </div>
+        )}
         {hasDemo && (
           <div className="rounded-lg border border-signal-soonBorder bg-signal-soonBg px-4 py-2.5 text-[13px] text-signal-soon">
             Sedang menampilkan data contoh (project bernomor DEMO-…). Hapus data contoh sebelum sistem dipakai dengan data asli.
@@ -47,7 +53,7 @@ export default async function ProjectPortfolioPage() {
             </Link>
           )}
         </div>
-        <PortfolioDashboard rows={rows} categories={categories} />
+        <PortfolioDashboard rows={rows} categories={categories} curve={curve} today={todayMs} />
       </div>
     </>
   );

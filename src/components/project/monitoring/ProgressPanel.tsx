@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
-import { formatPercent, interpolate, plannedPoints, suggestPlanRows } from "@/lib/project-monitoring-shared";
+import { formatPercent, interpolate, plannedPoints, suggestPlanRows, type PlanShape } from "@/lib/project-monitoring-shared";
 import { DeleteButton, EmptyState, FileLink, FileUploadField, FormError, fmtDate, todayInput, useMonitoringApi, EMPTY_FILE, useOpenFromHash } from "./shared";
 import type { ProgressReportDTO, ProjectMonitoringDTO } from "./types";
 
@@ -203,8 +203,13 @@ function PlanCard({ data }: { data: ProjectMonitoringDTO }) {
     setOpen(true);
   }
 
-  function autofill(interval: "WEEKLY" | "MONTHLY") {
-    setRows(suggestPlanRows(data.input, interval).map((r) => ({ periodDate: iso(r.periodDate), plannedPercent: String(r.plannedPercent) })));
+  const hasMilestonePlan = data.input.milestones.some((m) => m.plannedDate !== null && m.weight > 0);
+  const [shape, setShape] = useState<PlanShape>("S");
+  const [interval, setPeriod] = useState<"WEEKLY" | "MONTHLY">("MONTHLY");
+  useOpenFromHash("progres", openEditor, "rencana");
+
+  function autofill() {
+    setRows(suggestPlanRows(data.input, interval, shape).map((r) => ({ periodDate: iso(r.periodDate), plannedPercent: String(r.plannedPercent) })));
   }
 
   async function save(clear = false) {
@@ -227,12 +232,18 @@ function PlanCard({ data }: { data: ProjectMonitoringDTO }) {
         <div>
           <CardTitle className="flex items-center gap-1.5">
             Rencana progres
-            <InfoTip label="Keterangan rencana progres">{source === "MANUAL"
-              ? `${data.plans.length} periode rencana diisi manual.`
-              : source === "MILESTONE"
-                ? "Saat ini dihitung dari tanggal rencana dan bobot milestone. Isi tabel bila punya jadwal rencana resmi (mis. dari proposal/kontrak)."
-                : "Saat ini garis lurus dari tanggal mulai ke target selesai. Isi tabel atau tambahkan milestone bertanggal agar lebih akurat."}</InfoTip>
+            <InfoTip label="Keterangan rencana progres">
+              Garis rencana di kurva S diambil dari sumber pertama yang tersedia: (1) jadwal rencana di tabel ini, (2) tanggal rencana dan bobot milestone, (3) kurva S standar
+              dari tanggal mulai sampai target selesai. Bila punya jadwal resmi (time schedule di proposal atau kontrak), isi persentase kumulatifnya di sini.
+            </InfoTip>
           </CardTitle>
+          <p className="mt-0.5 text-[12.5px] text-slate-500">
+            {source === "MANUAL"
+              ? `Garis rencana memakai ${data.plans.length} periode jadwal rencana di bawah.`
+              : source === "MILESTONE"
+                ? "Garis rencana saat ini dihitung dari tanggal dan bobot milestone."
+                : "Garis rencana saat ini memakai kurva S standar karena jadwal rencana belum diisi."}
+          </p>
         </div>
         {data.canManage && (
           <Button size="sm" variant="outline" onClick={openEditor}>
@@ -243,7 +254,7 @@ function PlanCard({ data }: { data: ProjectMonitoringDTO }) {
       </CardHeader>
       <CardContent className="p-0">
         {data.plans.length === 0 ? (
-          <EmptyState icon={LineChart} text="Belum ada rencana manual. Selama kosong, rencana progres dihitung otomatis dari tanggal dan bobot milestone." />
+          <EmptyState icon={LineChart} text="Jadwal rencana belum diisi. Klik Atur rencana untuk membuatnya, bisa diisi otomatis lalu disesuaikan." />
         ) : (
           <div className="overflow-x-auto max-h-80">
             <table className="w-full text-sm">
@@ -269,17 +280,31 @@ function PlanCard({ data }: { data: ProjectMonitoringDTO }) {
       <Modal isOpen={open} onClose={() => setOpen(false)} title="Atur rencana progres" maxWidth="max-w-lg">
         <div className="space-y-4">
           <p className="text-sm text-slate-600 dark:text-slate-300">
-            Isi persentase <strong>kumulatif</strong> yang direncanakan tercapai pada akhir tiap periode. Gunakan isi otomatis sebagai titik awal lalu sesuaikan.
+            Isi persentase <strong>kumulatif</strong> yang direncanakan tercapai pada tiap tanggal, misalnya 10% di akhir bulan pertama, 35% di akhir bulan kedua, sampai 100% di
+            target selesai. Agar cepat, buat isian otomatis lalu sesuaikan angkanya.
           </p>
+          <div className="grid grid-cols-1 gap-2 rounded-lg border border-line bg-paper p-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end dark:border-slate-700 dark:bg-slate-800/40">
+            <div>
+              <Label htmlFor="plan-shape">Bentuk</Label>
+              <select id="plan-shape" value={shape} onChange={(e) => setShape(e.target.value as PlanShape)} className="mt-1 h-9 w-full rounded-md border border-line bg-white px-2 text-sm dark:border-slate-700 dark:bg-slate-900">
+                <option value="S">Kurva S standar</option>
+                {hasMilestonePlan && <option value="MILESTONE">Ikuti milestone</option>}
+                <option value="LINEAR">Garis lurus</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="plan-interval">Periode</Label>
+              <select id="plan-interval" value={interval} onChange={(e) => setPeriod(e.target.value as "WEEKLY" | "MONTHLY")} className="mt-1 h-9 w-full rounded-md border border-line bg-white px-2 text-sm dark:border-slate-700 dark:bg-slate-900">
+                <option value="MONTHLY">Akhir bulan</option>
+                <option value="WEEKLY">Mingguan</option>
+              </select>
+            </div>
+            <Button size="sm" variant="outline" onClick={autofill}>
+              <Wand2 className="h-4 w-4" />
+              Isi otomatis
+            </Button>
+          </div>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={() => autofill("WEEKLY")}>
-              <Wand2 className="h-4 w-4" />
-              Isi otomatis mingguan
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => autofill("MONTHLY")}>
-              <Wand2 className="h-4 w-4" />
-              Isi otomatis bulanan
-            </Button>
             <Button size="sm" variant="ghost" onClick={() => setRows((r) => [...r, { periodDate: "", plannedPercent: "" }])}>
               <Plus className="h-4 w-4" />
               Baris

@@ -24,7 +24,7 @@
  * Cash position (paid − AC) is shown separately and deliberately NOT called
  * margin: it swings with billing timing, not with project performance.
  */
-import { DAY_MS, actualAt, actualEvents, interpolate, plannedPoints, projectStart, type MonitoringInput, type MonitoringSummary } from "@/lib/project-monitoring-shared";
+import { DAY_MS, actualAt, actualEvents, actualLineAt, interpolate, plannedPoints, projectStart, type MonitoringInput, type MonitoringSummary } from "@/lib/project-monitoring-shared";
 
 export type Signal = "good" | "warn" | "bad" | "none";
 
@@ -297,12 +297,118 @@ export function buildCostCurve(input: MonitoringInput, summary: MonitoringSummar
       return {
         t,
         pv: Math.round((interpolate(plan, t) / 100) * m.budget),
-        ev: past ? Math.round((actualAt(events, t) / 100) * m.budget) : null,
+        ev: past ? Math.round((actualLineAt(events, start, t) / 100) * m.budget) : null,
         ac: past ? Math.round(acAt(t)) : null,
         eac: projecting ? Math.round(Math.min(m.eac, eacVal as number)) : null,
       };
     });
 }
 
+export type MarginTimelineRow = { t: number; forecastMarginPct: number | null; actualMarginPct: number | null; actualCost: number; progress: number };
+
+/**
+ * The margin forecast replayed from the project start to today: at each date,
+ * the same formula as today (cost spent so far + RAB for the work not yet done)
+ * is applied to the costs and progress known on that date. Contract value and
+ * RAB are today's figures, so the line shows how cost and progress moved the
+ * forecast, not how the RAB was revised.
+ */
+export function marginTimeline(input: MonitoringInput, today: number): MarginTimelineRow[] {
+  const contract = input.contractValue ?? 0;
+  const budget = input.budgetItems.reduce((s, b) => s + b.amount, 0);
+  if (contract <= 0 || budget <= 0) return [];
+  const start = projectStart(input);
+  const end = input.status === "ONGOING" ? today : Math.max(start, Math.min(today, input.actualEndDate ?? today));
+  if (end <= start) return [];
+  const events = actualEvents(input);
+  const costs = input.expenses.map((c) => ({ amount: c.amount, date: c.date ?? start }));
+  const span = (end - start) / DAY_MS;
+  const step = (span <= 120 ? 7 : span <= 540 ? 14 : 30) * DAY_MS;
+  const times = new Set<number>();
+  for (let t = start; t < end; t += step) times.add(t);
+  times.add(end);
+  return [...times]
+    .sort((a, b) => a - b)
+    .map((t) => {
+      const ac = costs.reduce((s, c) => (c.date <= t ? s + c.amount : s), 0);
+      const progress = Math.min(1, actualLineAt(events, start, t) / 100);
+      const eac = progress >= 1 ? ac : ac + Math.max(0, budget - progress * budget);
+      const earned = progress * contract;
+      return {
+        t,
+        forecastMarginPct: round1(((contract - eac) / contract) * 100),
+        // too early, the ratio swings wildly on tiny figures, so it starts once 10% of the work is done
+        actualMarginPct: ac > 0 && progress >= 0.1 ? round1(((earned - ac) / earned) * 100) : null,
+        actualCost: Math.round(ac),
+        progress: round1(progress * 100),
+      };
+    });
+}
+
 export const SIGNAL_LABEL: Record<Signal, string> = { good: "Baik", warn: "Waspada", bad: "Kritis", none: "Belum ada data" };
 export const CAUSE_LABEL: Record<string, string> = { NORMAL: "Normal", DELAY: "Akibat keterlambatan", EXTRA_SCOPE: "Pekerjaan tambahan" };
+
+// ---------------------------------------------------------------------------
+// Pendapatan, biaya, laba: RAB vs realisasi vs prakiraan (the finance view)
+// ---------------------------------------------------------------------------
+
+export type PnlLine = { plan: number | null; actual: number; forecast: number | null };
+export type ProfitLoss = {
+  revenue: PnlLine & { invoiced: number; paid: number };
+  cost: PnlLine;
+  profit: PnlLine;
+  marginPct: { plan: number | null; actual: number | null; forecast: number | null };
+  /** per RAB year (calendar year of the project start = "Tahun 1"), when the RAB has a yearly split */
+  years: { label: string; year: number; revenuePlan: number; revenueActual: number; costPlan: number; costActual: number; marginPlan: number | null; marginActual: number | null; current: boolean; past: boolean }[];
+};
+
+/**
+ * Revenue is recognised by progress ("progress basis", as in the RAB template):
+ * realised revenue = progress × contract value. Billing and cash received are
+ * shown alongside, since they move with the payment terms rather than the work.
+ */
+export function buildProfitLoss(
+  input: MonitoringInput,
+  summary: MonitoringSummary,
+  m: MarginAnalysis,
+  today: number,
+  rabYears: { label: string; revenue: number; cost: number }[] = []
+): ProfitLoss {
+  const pct = (a: number, b: number) => (b > 0 ? round1((a / b) * 100) : null);
+  const revenueActual = m.earnedRevenue;
+  const profitActual = revenueActual - m.actualCost;
+  const startYear = new Date(projectStart(input)).getUTCFullYear();
+  const events = actualEvents(input);
+  const thisYear = new Date(today).getUTCFullYear();
+  const years = rabYears.map((y, i) => {
+    const year = startYear + i;
+    const from = Date.UTC(year, 0, 1);
+    const to = Math.min(Date.UTC(year + 1, 0, 1) - 1, today);
+    const earnedBy = (t: number) => (actualAt(events, t) / 100) * m.contract;
+    const earned = to < from ? 0 : earnedBy(to) - earnedBy(from - 1);
+    const cost = input.expenses.filter((e) => e.date !== undefined && e.date >= from && e.date <= to).reduce((a, e) => a + e.amount, 0);
+    return {
+      label: y.label,
+      year,
+      revenuePlan: y.revenue,
+      revenueActual: Math.max(0, earned),
+      costPlan: y.cost,
+      costActual: cost,
+      marginPlan: pct(y.revenue - y.cost, y.revenue),
+      marginActual: earned > 0 ? pct(earned - cost, earned) : null,
+      current: year === thisYear,
+      past: year < thisYear,
+    };
+  });
+  return {
+    revenue: { plan: m.hasContract ? m.baselineContract : null, actual: revenueActual, forecast: m.hasContract ? m.contract : null, invoiced: summary.invoiced, paid: summary.paid },
+    cost: { plan: m.hasBudget ? m.baselineBudget : null, actual: m.actualCost, forecast: m.hasBudget ? m.eac : null },
+    profit: {
+      plan: m.hasBudget && m.hasContract ? m.plannedMargin : null,
+      actual: profitActual,
+      forecast: m.hasBudget && m.hasContract ? m.forecastMargin : null,
+    },
+    marginPct: { plan: m.plannedMarginPct, actual: m.actualMarginPct, forecast: m.hasBudget ? m.forecastMarginPct : null },
+    years,
+  };
+}

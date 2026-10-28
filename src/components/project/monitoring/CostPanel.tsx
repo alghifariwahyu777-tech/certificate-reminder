@@ -148,6 +148,9 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
   const [form, setForm] = useState<ExpenseForm | null>(null);
   const [error, setError] = useState<string | null>(null);
   const base = `/api/projects/${data.projectId}/expenses`;
+  const [showAll, setShowAll] = useState(false);
+  const LIMIT = 10;
+  const shownExpenses = showAll ? data.expenses : data.expenses.slice(0, LIMIT);
 
   function openForm(e: ExpenseDTO | null) {
     setEditing(e);
@@ -205,6 +208,7 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
         {data.expenses.length === 0 ? (
           <EmptyState icon={Wallet} text="Belum ada realisasi biaya. Catat satu per satu, atau impor dari Excel keuangan." action={data.canManage ? { label: "Catat biaya", onClick: () => openForm(null) } : undefined} />
         ) : (
+          <>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -217,7 +221,7 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
                 </tr>
               </thead>
               <tbody>
-                {data.expenses.map((e) => (
+                {shownExpenses.map((e) => (
                   <tr key={e.id} className="border-b border-slate-50 dark:border-slate-800/60 align-top">
                     <td className="px-5 py-2.5 whitespace-nowrap">{fmtDate(e.expenseDate)}</td>
                     <td className="px-3 py-2.5">
@@ -250,6 +254,14 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
               </tbody>
             </table>
           </div>
+            {data.expenses.length > LIMIT && (
+              <div className="border-t border-line px-5 py-3 text-center dark:border-slate-800">
+                <button type="button" onClick={() => setShowAll((v) => !v)} className="text-[13px] font-semibold text-accent hover:underline">
+                  {showAll ? "Tampilkan 10 transaksi terbaru saja" : `Tampilkan semua ${data.expenses.length} transaksi`}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
 

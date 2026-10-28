@@ -4,6 +4,7 @@ import { HEALTH_LABEL, MILESTONE_STATUS_LABEL, TERM_STATUS_LABEL, ISSUE_IMPACT_L
 import { certWarnings } from "@/lib/personnel-mapping";
 import { formatLongDate, jakartaDay } from "@/lib/week";
 import { PDF_COLOR, createReport, type PdfLine } from "@/lib/pdf-kit";
+import { buildProfitLoss, marginTimeline } from "@/lib/project-margin";
 
 /**
  * Detailed report of ONE project, for management wanting the full picture of a
@@ -207,9 +208,51 @@ export async function generateProjectReportPdf(projectId: string): Promise<{ pdf
   else r.paragraph("Termin pembayaran belum diisi.", { color: MUTED });
 
   // ------------------------------------------------------------ 5. RAB vs actual
-  r.section("RAB dan realisasi biaya", 120);
+  r.section("RAB, pendapatan, dan biaya", 150);
   if (!m.hasBudget) r.paragraph("RAB belum diunggah.", { color: MUTED });
   else {
+    const rev = p.rabRevisions[0] ? await prisma.projectRabRevision.findUnique({ where: { id: p.rabRevisions[0].id }, select: { dataJson: true } }) : null;
+    let years: { label: string; revenue: number; cost: number }[] = [];
+    try {
+      years = rev ? (JSON.parse(rev.dataJson).years ?? []) : [];
+    } catch {
+      years = [];
+    }
+    const pl = buildProfitLoss(input, s, m, today, years);
+    const rp = (v: number | null) => (v === null ? "-" : formatRupiah(v, true));
+    r.table(
+      [
+        { header: "", width: 110 },
+        { header: "RAB", width: 110, align: "right" },
+        { header: "Realisasi s.d. saat ini", width: 140, align: "right" },
+        { header: "Prakiraan akhir", width: 110, align: "right" },
+      ],
+      [
+        { cells: ["Pendapatan", rp(pl.revenue.plan), [{ text: rp(pl.revenue.actual), bold: true }, { text: `ditagih ${rp(pl.revenue.invoiced)}, diterima ${rp(pl.revenue.paid)}`, color: MUTED, size: 7 }], rp(pl.revenue.forecast)] },
+        { cells: ["Biaya", rp(pl.cost.plan), rp(pl.cost.actual), rp(pl.cost.forecast)], color: (c) => (c === 3 && (pl.cost.forecast ?? 0) > (pl.cost.plan ?? Infinity) + 1 ? BAD : undefined) },
+        { cells: ["Laba", rp(pl.profit.plan), rp(pl.profit.actual), rp(pl.profit.forecast)], bold: () => true },
+        { cells: ["Margin", formatPercent(pl.marginPct.plan), formatPercent(pl.marginPct.actual), formatPercent(pl.marginPct.forecast)], bold: () => true, color: (c) => (c === 3 ? SIG_COLOR[m.signals.margin] : undefined) },
+      ]
+    );
+    r.note("Pendapatan diakui sesuai progres pekerjaan (progress basis); ditagih dan diterima mengikuti termin. Laba operasi belum dikurangi overhead.");
+    if (pl.years.length > 1) {
+      doc.moveDown(0.4);
+      r.table(
+        [
+          { header: "Per tahun", width: 90 },
+          { header: "Pendapatan RAB", width: 80, align: "right" },
+          { header: "Pendapatan realisasi", width: 80, align: "right" },
+          { header: "Biaya RAB", width: 80, align: "right" },
+          { header: "Biaya realisasi", width: 80, align: "right" },
+          { header: "Margin RAB / realisasi", width: 90, align: "right" },
+        ],
+        pl.years.map((y) => ({
+          cells: [`${y.label} (${y.year})`, rp(y.revenuePlan), y.past || y.current ? rp(y.revenueActual) : "-", rp(y.costPlan), y.past || y.current ? rp(y.costActual) : "-", `${formatPercent(y.marginPlan)} / ${formatPercent(y.marginActual)}`],
+          color: (c) => (c === 4 && y.costActual > y.costPlan ? BAD : undefined),
+        }))
+      );
+    }
+    doc.moveDown(0.4);
     const byCat = new Map<string, { budget: number; actual: number }>();
     for (const b of p.budgetItems) byCat.set(b.category, { budget: (byCat.get(b.category)?.budget ?? 0) + Number(b.amount), actual: 0 });
     for (const e of p.expenses) {
@@ -268,6 +311,30 @@ export async function generateProjectReportPdf(projectId: string): Promise<{ pdf
       }))
     );
     if (m.cause) r.paragraph(m.cause, { size: 8.5 });
+    const tl = marginTimeline(input, today);
+    if (tl.length >= 2) {
+      doc.moveDown(0.4);
+      r.note("Perjalanan prakiraan margin akhir sejak project dimulai (dihitung ulang dengan biaya dan progres pada setiap tanggal).");
+      const vals = tl.flatMap((x) => [x.forecastMarginPct, x.actualMarginPct]).filter((v): v is number => v !== null).concat(m.targetMarginPct ?? 0, 0);
+      const stepY = 10;
+      const lo = Math.floor(Math.min(...vals) / stepY) * stepY;
+      const hi = Math.ceil(Math.max(...vals) / stepY) * stepY || stepY;
+      const yTicks: number[] = [];
+      for (let v = lo; v <= hi; v += Math.max(stepY, Math.ceil((hi - lo) / 5 / stepY) * stepY)) yTicks.push(v);
+      if (yTicks[yTicks.length - 1] < hi) yTicks.push(hi);
+      r.lineChart(
+        [
+          { points: tl.map((x) => ({ x: x.t, y: x.forecastMarginPct })), color: BLUE, label: "Prakiraan margin akhir" },
+          { points: tl.map((x) => ({ x: x.t, y: x.actualMarginPct })), color: "#94A3B8", label: "Margin pekerjaan selesai" },
+        ],
+        {
+          height: 110,
+          yTicks,
+          xLabels: tl.filter((_, i) => i % Math.max(1, Math.ceil(tl.length / 6)) === 0).map((x) => ({ x: x.t, text: shortDate(x.t) })),
+          hLines: m.targetMarginPct !== null ? [{ y: m.targetMarginPct, color: "#123F6B", text: `Target ${formatPercent(m.targetMarginPct)}` }] : undefined,
+        }
+      );
+    }
   }
 
   // ------------------------------------------------------------ 7. issues

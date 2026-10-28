@@ -10,7 +10,7 @@ import { getDaysRemaining } from "@/lib/status";
 import { Pencil, Download, ArrowLeft, FileWarning, TrendingUp } from "lucide-react";
 import { deviationTrend, getProjectWithMonitoring } from "@/lib/project-monitoring";
 import { PROJECT_COST_CATEGORIES, formatRupiah as formatRupiahShared, padSchedule } from "@/lib/project-monitoring-shared";
-import { buildCostCurve } from "@/lib/project-margin";
+import { buildCostCurve, buildProfitLoss, marginTimeline } from "@/lib/project-margin";
 import { prisma } from "@/lib/prisma";
 import { certWarnings } from "@/lib/personnel-mapping";
 import { TeamPanel } from "@/components/project/monitoring/TeamPanel";
@@ -25,7 +25,7 @@ import { CostPanel } from "@/components/project/monitoring/CostPanel";
 import { IssuePanel } from "@/components/project/monitoring/IssuePanel";
 import type { ProjectMonitoringDTO } from "@/components/project/monitoring/types";
 import type { RabData } from "@/lib/project-rab-import";
-import { WeeklyTrendChart } from "@/components/project/monitoring/WeeklyTrendChart";
+import { DeviationChart } from "@/components/project/monitoring/DeviationChart";
 
 const STATUS_LABEL: Record<string, string> = { ONGOING: "Berjalan", COMPLETED: "Selesai", CANCELLED: "Dibatalkan" };
 
@@ -209,6 +209,7 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
     employees: employees.map((e) => ({ id: e.id, name: e.name, nip: e.employeeId, position: e.position })),
     margin: loaded.margin,
     costCurve: buildCostCurve(loaded.input, summary, loaded.margin, loaded.today),
+    marginTimeline: marginTimeline(loaded.input, loaded.today),
     categorySuggestions: [...new Set([...PROJECT_COST_CATEGORIES, ...usedCategories.map((c) => c.category)])].sort((a, b) => a.localeCompare(b)),
     baseline: project.baselineLockedAt
       ? {
@@ -241,6 +242,7 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
       })),
     },
     targetMarginPct: project.targetMarginPct,
+    pnl: buildProfitLoss(loaded.input, summary, loaded.margin, loaded.today, parsedRab?.years ?? []),
   };
 
   const days = getDaysRemaining(project.targetEndDate);
@@ -345,62 +347,92 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
     </div>
   );
 
-  const meta: [string, string][] = [
-    ["Klien", project.clientName],
-    ["Nilai kontrak", formatRupiahCompact(n(project.contractValue))],
-    ["PIC", project.pic],
-    ["Target selesai", formatDate(project.targetEndDate)],
+  const startMs = (project.startDate ?? project.createdAt).getTime();
+  const endMs = (project.actualEndDate ?? project.targetEndDate).getTime();
+  const durationDays = Math.max(1, Math.round((project.targetEndDate.getTime() - startMs) / 86400000));
+  const elapsed = Math.min(100, Math.max(0, summary.timeElapsedPercent));
+  const meta: { k: string; v: string; sub?: string }[] = [
+    { k: "Klien", v: project.clientName },
+    { k: "Nilai kontrak", v: formatRupiahCompact(n(project.contractValue)) },
+    { k: "PIC", v: project.pic },
+    { k: "Tanggal mulai", v: formatDate(project.startDate ?? project.createdAt), sub: project.startDate ? undefined : "tanggal project dibuat" },
+    {
+      k: project.actualEndDate ? "Selesai aktual" : "Target selesai",
+      v: formatDate(new Date(endMs)),
+      sub: project.status === "ONGOING" ? (summary.daysRemaining >= 0 ? `${summary.daysRemaining} hari lagi` : `terlambat ${Math.abs(summary.daysRemaining)} hari`) : undefined,
+    },
+    { k: "Durasi", v: `${durationDays.toLocaleString("id-ID")} hari`, sub: project.status === "ONGOING" ? `${Math.round(elapsed)}% waktu berjalan` : undefined },
   ];
 
   return (
     <>
       <Navbar title="Monitoring Project" subtitle={project.projectNumber} adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
-      <div className="max-w-6xl space-y-5 p-5 md:p-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <Link href="/projects/dashboard" className="inline-flex items-center gap-1 text-[13px] text-slate-500 hover:text-ink">
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Monitoring Project
-            </Link>
-            <h1 className="mt-1 text-[24px] font-bold leading-tight text-ink dark:text-slate-100">{project.projectName}</h1>
-            <p className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[13.5px] text-slate-500">
-              {meta.map(([k, v]) => (
-                <span key={k}>
-                  {k} <span className="font-semibold text-ink dark:text-slate-100">{v}</span>
-                </span>
-              ))}
-              <span>
-                {project.category.name} · {STATUS_LABEL[project.status]}
-              </span>
-            </p>
-          </div>
-          <div className="flex shrink-0 flex-wrap gap-2">
-            <a href={`/api/projects/${project.id}/report`}>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4" />
-                Laporan project (PDF)
-              </Button>
-            </a>
-          {session?.role === "ADMIN" && (
-            <>
-              <Link href={`/projects/${project.id}/edit`}>
-                <Button variant="outline" size="sm">
-                  <Pencil className="h-4 w-4" />
-                  Edit project
-                </Button>
+      <div className="space-y-5 p-5 md:p-8">
+        <section className="overflow-hidden rounded-xl border border-line bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex flex-col gap-4 px-5 pb-4 pt-4 md:px-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <Link href="/projects/dashboard" className="inline-flex items-center gap-1 text-[12.5px] text-slate-500 hover:text-ink dark:hover:text-slate-200">
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Monitoring Project
               </Link>
-              {project.status === "ONGOING" && (
-                <a href="#jadwal/progres/baru">
-                  <Button size="sm">
-                    <TrendingUp className="h-4 w-4" />
-                    Update progres
-                  </Button>
-                </a>
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                <h1 className="text-[22px] font-bold leading-tight text-ink md:text-[24px] dark:text-slate-100">{project.projectName}</h1>
+                <span className="rounded-full border border-line bg-paper px-2.5 py-0.5 text-[12px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                  {STATUS_LABEL[project.status]}
+                </span>
+              </div>
+              <p className="mt-1 text-[13px] text-slate-500">
+                {project.projectNumber} · {project.category.name}
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <a href={`/api/projects/${project.id}/report`}>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4" />
+                  Laporan project (PDF)
+                </Button>
+              </a>
+              {session?.role === "ADMIN" && (
+                <>
+                  <Link href={`/projects/${project.id}/edit`}>
+                    <Button variant="outline" size="sm">
+                      <Pencil className="h-4 w-4" />
+                      Edit project
+                    </Button>
+                  </Link>
+                  {project.status === "ONGOING" && (
+                    <a href="#jadwal/progres/baru">
+                      <Button size="sm">
+                        <TrendingUp className="h-4 w-4" />
+                        Update progres
+                      </Button>
+                    </a>
+                  )}
+                </>
               )}
-            </>
-          )}
+            </div>
           </div>
-        </div>
+          <dl className="grid grid-cols-2 border-t border-line bg-paper/60 sm:grid-cols-3 xl:grid-cols-6 dark:border-slate-800 dark:bg-slate-800/30">
+            {meta.map((x) => (
+              <div key={x.k} className="min-w-0 border-b border-r border-line px-5 py-3 md:px-6 xl:border-b-0 dark:border-slate-800">
+                <dt className="text-[12px] text-slate-500">{x.k}</dt>
+                <dd className="mt-0.5 truncate text-[14px] font-semibold text-ink dark:text-slate-100" title={x.v}>
+                  {x.v}
+                </dd>
+                {x.k === "Durasi" && project.status === "ONGOING" ? (
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                      <div className="h-full rounded-full bg-brand-blueDark dark:bg-slate-300" style={{ width: `${elapsed}%` }} />
+                    </div>
+                    <span className="text-[11.5px] text-slate-500">{Math.round(elapsed)}%</span>
+                  </div>
+                ) : (
+                  x.sub && <p className={x.sub.startsWith("terlambat") ? "text-[11.5px] font-semibold text-signal-expired" : "text-[11.5px] text-slate-500"}>{x.sub}</p>
+                )}
+              </div>
+            ))}
+          </dl>
+        </section>
 
         <MonitoringTabs
           panels={{
@@ -412,17 +444,15 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
                 node: (
                   <div className="space-y-4">
                     <ProgressPanel data={monitoring} />
-                    {monitoring.snapshots.length >= 2 && (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Riwayat mingguan</CardTitle>
-                          <p className="mt-0.5 text-[12.5px] text-slate-500">Progres dan deviasi setiap minggu, dicatat otomatis.</p>
-                        </CardHeader>
-                        <CardContent>
-                          <WeeklyTrendChart snapshots={monitoring.snapshots} />
-                        </CardContent>
-                      </Card>
-                    )}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Deviasi progres sejak project dimulai</CardTitle>
+                        <p className="mt-0.5 text-[12.5px] text-slate-500">Realisasi dikurangi rencana pada setiap periode. Hijau: sesuai atau mendahului rencana, kuning: tertinggal, merah: tertinggal lebih dari 5 poin.</p>
+                      </CardHeader>
+                      <CardContent>
+                        <DeviationChart input={monitoring.input} today={monitoring.today} />
+                      </CardContent>
+                    </Card>
                   </div>
                 ),
               },

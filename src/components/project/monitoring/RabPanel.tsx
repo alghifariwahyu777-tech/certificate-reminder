@@ -85,16 +85,7 @@ export function RabCard({ data }: { data: ProjectMonitoringDTO }) {
         </div>
       </div>
       <CardContent className="space-y-5">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-3 lg:grid-cols-4">
-          <Figure label="Nilai proyek" value={formatRupiah(m.contract || current?.contractValue || null, true)} sub="Pendapatan, tanpa PPN" />
-          <Figure label="Total RAB" value={formatRupiah(m.budget, true)} sub={latest ? `Biaya proyek + biaya tak terduga ${formatPercent(latest.contingencyPct)}` : "Jumlah anggaran"} />
-          <Figure
-            label="Laba operasi (RAB)"
-            value={formatRupiah(m.contract - m.budget, true)}
-            sub={latest && latest.overhead ? `Belum termasuk overhead ${formatRupiah(latest.overhead, true)}` : "Nilai proyek dikurangi total RAB"}
-          />
-          <Figure label="Target margin" value={formatPercent(m.targetMarginPct)} sub={m.targetSource === "project" ? "Ditetapkan dari RAB" : "Dari baseline (nilai kontrak awal − RAB awal)"} strong />
-        </div>
+        <PnlTable data={data} />
 
         <div>
           <div className="mb-2 flex items-baseline justify-between gap-3">
@@ -559,5 +550,128 @@ export function RabUploadDialog({ data }: { data: ProjectMonitoringDTO }) {
         </div>
       </Modal>
     </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Pendapatan, biaya, laba: RAB vs realisasi vs prakiraan
+// ---------------------------------------------------------------------------
+
+function PnlTable({ data }: { data: ProjectMonitoringDTO }) {
+  const p = data.pnl;
+  const m = data.margin;
+  const rp = (v: number | null) => (v === null ? "-" : formatRupiah(v, true));
+  const share = (a: number, b: number | null) => (b ? ` (${formatPercent((a / b) * 100, 0)})` : "");
+  const rows: { label: string; plan: string; actual: React.ReactNode; forecast: string; tone?: "bad" | "good"; bold?: boolean }[] = [
+    {
+      label: "Pendapatan",
+      plan: rp(p.revenue.plan),
+      actual: (
+        <>
+          {rp(p.revenue.actual)}
+          <span className="text-slate-400">{share(p.revenue.actual, p.revenue.forecast)}</span>
+          <span className="block text-[11.5px] font-normal text-slate-500">
+            Ditagih {rp(p.revenue.invoiced)} · diterima {rp(p.revenue.paid)}
+          </span>
+        </>
+      ),
+      forecast: rp(p.revenue.forecast),
+    },
+    {
+      label: "Biaya",
+      plan: rp(p.cost.plan),
+      actual: (
+        <>
+          {rp(p.cost.actual)}
+          <span className="text-slate-400">{share(p.cost.actual, p.cost.plan)}</span>
+        </>
+      ),
+      forecast: rp(p.cost.forecast),
+      tone: p.cost.forecast !== null && p.cost.plan !== null && p.cost.forecast > p.cost.plan + 1 ? "bad" : undefined,
+    },
+    { label: "Laba", plan: rp(p.profit.plan), actual: rp(p.profit.actual), forecast: rp(p.profit.forecast), bold: true, tone: p.profit.forecast !== null && p.profit.forecast < 0 ? "bad" : undefined },
+    {
+      label: "Margin",
+      plan: formatPercent(p.marginPct.plan),
+      actual: formatPercent(p.marginPct.actual),
+      forecast: formatPercent(p.marginPct.forecast),
+      bold: true,
+      tone: m.belowTarget ? "bad" : m.signals.margin === "good" ? "good" : undefined,
+    },
+  ];
+  return (
+    <div>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <p className="flex items-center gap-1.5 text-[13px] font-semibold text-ink dark:text-slate-100">
+          Pendapatan, biaya, dan laba
+          <InfoTip label="Keterangan pendapatan dan biaya">
+            <strong>RAB</strong> = rencana awal (baseline). <strong>Realisasi</strong> = s.d. hari ini; pendapatan diakui sesuai progres pekerjaan (progress basis), sedangkan
+            ditagih dan diterima mengikuti termin. <strong>Prakiraan akhir</strong> = bila sisa pekerjaan berjalan sesuai RAB. Laba operasi belum dikurangi overhead
+            {data.rab.latest?.overhead ? ` (${formatRupiah(data.rab.latest.overhead, true)})` : ""}.
+          </InfoTip>
+        </p>
+        <span className="rounded-full bg-sky-50 px-2.5 py-0.5 text-[12px] font-semibold text-brand-blueDark dark:bg-sky-900/30 dark:text-sky-200">
+          Target margin {formatPercent(m.targetMarginPct)}
+        </span>
+      </div>
+      <div className="overflow-x-auto rounded-lg border border-line dark:border-slate-700">
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="bg-slate-50/80 text-left text-[12px] text-slate-500 dark:bg-slate-800/40">
+              <th className="px-4 py-2 font-semibold" />
+              <th className="px-4 py-2 text-right font-semibold">RAB</th>
+              <th className="px-4 py-2 text-right font-semibold">Realisasi s.d. saat ini</th>
+              <th className="px-4 py-2 text-right font-semibold">Prakiraan akhir</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.label} className="border-t border-line align-top dark:border-slate-800">
+                <td className={cn("px-4 py-2.5", r.bold ? "font-semibold text-ink dark:text-slate-100" : "text-slate-600 dark:text-slate-300")}>{r.label}</td>
+                <td className="px-4 py-2.5 text-right text-slate-600 dark:text-slate-300">{r.plan}</td>
+                <td className="px-4 py-2.5 text-right font-semibold text-ink dark:text-slate-100">{r.actual}</td>
+                <td className={cn("px-4 py-2.5 text-right font-semibold", r.tone === "bad" ? "text-signal-expired" : r.tone === "good" ? "text-signal-active" : "text-ink dark:text-slate-100")}>{r.forecast}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {p.years.length > 1 && (
+        <div className="mt-3 overflow-x-auto rounded-lg border border-line dark:border-slate-700">
+          <table className="w-full text-[13px]">
+            <thead>
+              <tr className="bg-slate-50/80 text-left text-[12px] text-slate-500 dark:bg-slate-800/40">
+                <th className="px-4 py-2 font-semibold">Per tahun</th>
+                <th className="px-4 py-2 text-right font-semibold">Pendapatan RAB / realisasi</th>
+                <th className="px-4 py-2 text-right font-semibold">Biaya RAB / realisasi</th>
+                <th className="px-4 py-2 text-right font-semibold">Margin RAB / realisasi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {p.years.map((y) => (
+                <tr key={y.label} className="border-t border-line dark:border-slate-800">
+                  <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">
+                    {y.label} ({y.year}){y.current && <span className="ml-1.5 text-[11.5px] text-accent">berjalan</span>}
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <span className="text-slate-500">{rp(y.revenuePlan)} / </span>
+                    <strong>{y.past || y.current ? rp(y.revenueActual) : "-"}</strong>
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <span className="text-slate-500">{rp(y.costPlan)} / </span>
+                    <strong className={cn(y.costActual > y.costPlan && "text-signal-expired")}>{y.past || y.current ? rp(y.costActual) : "-"}</strong>
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <span className="text-slate-500">{formatPercent(y.marginPlan)} / </span>
+                    <strong>{formatPercent(y.marginActual)}</strong>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }

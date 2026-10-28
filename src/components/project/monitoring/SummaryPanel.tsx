@@ -3,17 +3,13 @@
 import { InfoTip } from "@/components/ui/InfoTip";
 import { CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardTitle } from "@/components/ui/Card";
-import { HEALTH_BADGE_CLASS, HEALTH_LABEL, formatPercent, formatRupiah, shortDate } from "@/lib/project-monitoring-shared";
+import { HEALTH_BADGE_CLASS, HEALTH_LABEL, formatPercent, formatRupiah, projectStart, shortDate } from "@/lib/project-monitoring-shared";
 import { cn } from "@/lib/utils";
 import { SCurveChart } from "./SCurveChart";
 import { ConstraintTile, Stat, type Tone } from "./shared";
 import type { ProjectMonitoringDTO } from "./types";
 
-const PLAN_SOURCE_TEXT = {
-  MANUAL: "Rencana dari tabel rencana progres.",
-  MILESTONE: "Rencana dihitung dari tanggal rencana dan bobot milestone.",
-  LINEAR: "Belum ada rencana progres; dipakai garis lurus dari tanggal mulai ke target selesai.",
-};
+const PLAN_SOURCE_LABEL = { MANUAL: "jadwal rencana project", MILESTONE: "tanggal dan bobot milestone", STANDARD: "kurva S standar" };
 
 /** The one sentence a manager reads first: schedule condition, margin against target, and the main cause. */
 function verdict(data: ProjectMonitoringDTO): string {
@@ -141,14 +137,62 @@ export function SummaryPanel({ data }: { data: ProjectMonitoringDTO }) {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
         <Card>
-          <div className="px-5 pt-4">
-            <CardTitle className="flex items-center gap-1.5">
-            Kurva S
-            <InfoTip label="Keterangan kurva s">{PLAN_SOURCE_TEXT[s.planSource]}</InfoTip>
-          </CardTitle>
+          <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2 px-5 pt-4">
+            <div>
+              <CardTitle className="flex items-center gap-1.5">
+                Kurva S
+                <InfoTip label="Keterangan kurva S">
+                  Garis putus-putus adalah <strong>rencana</strong> progres kumulatif, garis biru adalah <strong>realisasi</strong>. Titik biru menandai tanggal laporan
+                  progres atau milestone selesai. Rencana saat ini dibentuk dari {PLAN_SOURCE_LABEL[s.planSource]}
+                  {s.planSource === "STANDARD" ? " (mulai pelan, tercepat di tengah, melambat di akhir) karena jadwal rencana belum diisi" : ""}.
+                </InfoTip>
+              </CardTitle>
+              <p className="mt-0.5 text-[12.5px] text-slate-500">
+                {shortDate(projectStart(data.input))} sampai {shortDate(new Date(data.targetEndDate).getTime())} · rencana dari {PLAN_SOURCE_LABEL[s.planSource]}
+                {data.canManage && (
+                  <>
+                    {" · "}
+                    <a href="#jadwal/progres/rencana" className="font-semibold text-accent hover:underline">
+                      Atur rencana
+                    </a>
+                  </>
+                )}
+              </p>
+            </div>
+            <div className="flex items-center gap-4 text-[12px] text-slate-500">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-0 w-5 border-t-2 border-dashed border-slate-400" />
+                Rencana
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-[3px] w-5 rounded bg-accent" />
+                Realisasi
+              </span>
+            </div>
           </div>
           <CardContent>
             <SCurveChart input={data.input} today={data.today} />
+            <dl className="mt-3 grid grid-cols-2 gap-3 border-t border-line pt-3 text-[12.5px] sm:grid-cols-4 dark:border-slate-800">
+              <div>
+                <dt className="text-slate-500">Realisasi</dt>
+                <dd className="text-[15px] font-bold text-accent">{formatPercent(s.actualPercent)}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Rencana s.d. hari ini</dt>
+                <dd className="text-[15px] font-bold text-ink dark:text-slate-100">{formatPercent(s.plannedPercent)}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Deviasi</dt>
+                <dd className={cn("text-[15px] font-bold", s.deviation < -0.05 ? "text-signal-expired" : "text-signal-active")}>
+                  {s.deviation > 0 ? "+" : ""}
+                  {s.deviation.toLocaleString("id-ID", { maximumFractionDigits: 1 })} poin
+                </dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Laporan terakhir</dt>
+                <dd className="text-[15px] font-bold text-ink dark:text-slate-100">{s.lastProgressUpdate ? shortDate(s.lastProgressUpdate) : "Belum ada"}</dd>
+              </div>
+            </dl>
           </CardContent>
         </Card>
         <Card>
@@ -203,7 +247,7 @@ export function SummaryPanel({ data }: { data: ProjectMonitoringDTO }) {
 function SetupChecklist({ data }: { data: ProjectMonitoringDTO }) {
   const steps = [
     { done: data.rab.revisions.length > 0 || data.budgetItems.length > 0, label: "RAB", hint: "Dasar perhitungan biaya dan target margin.", href: "#keuangan/biaya/baru", action: "Unggah RAB" },
-    { done: data.summary.planSource !== "LINEAR", label: "Rencana jadwal (milestone)", hint: "Dasar kurva S dan perbandingan progres dengan rencana.", href: "#jadwal/milestone/baru", action: "Buat milestone" },
+    { done: data.summary.planSource !== "STANDARD", label: "Jadwal rencana (kurva S)", hint: "Saat ini dipakai kurva S standar. Isi jadwal rencana atau milestone bertanggal agar lebih akurat.", href: "#jadwal/progres/rencana", action: "Atur rencana" },
     { done: data.terms.length > 0, label: "Termin pembayaran", hint: "Dasar penagihan dan PAD.", href: "#keuangan/termin/baru", action: "Isi termin" },
     { done: data.team.length > 0, label: "Tim project", hint: "Dasar mapping personil dan pemantauan sertifikasi.", href: "#tim/personil/baru", action: "Tugaskan tim" },
     { done: data.reports.length > 0, label: "Laporan progres", hint: "Progres realisasi terbaru dari PIC.", href: "#jadwal/progres/baru", action: "Update progres" },

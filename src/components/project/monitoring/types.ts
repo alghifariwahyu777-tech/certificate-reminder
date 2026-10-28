@@ -1,7 +1,7 @@
 import type { RabData, RabRevisionSummary } from "@/lib/project-rab-import";
 import type { MonitoringInput, MonitoringSummary, MonitoringThresholds, PadBucket } from "@/lib/project-monitoring-shared";
 import type { CertWarning } from "@/lib/personnel-mapping";
-import type { CostCurveRow, MarginAnalysis } from "@/lib/project-margin";
+import type { CostCurveRow, MarginTimelineRow, MarginAnalysis, ProfitLoss } from "@/lib/project-margin";
 
 /** Dates are "YYYY-MM-DD" strings (date-only), amounts are plain numbers. */
 export type MilestoneDTO = {
@@ -112,12 +112,14 @@ export type ProjectMonitoringDTO = {
   // margin / triple constraint
   margin: MarginAnalysis;
   costCurve: CostCurveRow[];
+  marginTimeline: MarginTimelineRow[];
   categorySuggestions: string[];
   baseline: { lockedAt: string; lockedBy: string | null; contractValue: number | null; budget: number | null; endDate: string | null } | null;
   marginHistory: { weekKey: string; actualMarginPct: number | null; forecastMarginPct: number | null; plannedMarginPct: number | null }[];
   /** RAB Sucofindo: every uploaded version (newest first) and the full content of the current one */
   rab: { revisions: RabRevisionSummary[]; latest: RabData | null };
   targetMarginPct: number | null;
+  pnl: ProfitLoss;
 };
 
 export type CloseoutDTO = {

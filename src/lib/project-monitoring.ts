@@ -4,6 +4,13 @@ import { getJakartaToday } from "@/lib/status";
 import { isoWeekKey } from "@/lib/week";
 import { analyzeMargin, type MarginAnalysis } from "@/lib/project-margin";
 import {
+  DAY_MS,
+  actualAt,
+  actualLineAt,
+  actualEvents,
+  interpolate,
+  plannedPoints,
+  projectStart,
   computeMonitoring,
   padSchedule,
   DEFAULT_THRESHOLDS,
@@ -143,14 +150,49 @@ export function isCloseoutComplete(c: ProjectWithMonitoring["closeout"]): boolea
 }
 
 /** One computed row per (non-deleted) project — the data behind the portfolio dashboard and export. */
-export async function getProjectPortfolio(): Promise<{ rows: PortfolioRow[]; thresholds: MonitoringThresholds; today: number }> {
+export type PortfolioCurvePoint = { t: number; planned: number; actual: number | null };
+
+/** Portfolio S-curve of the running projects, each weighted by its contract value (equal weights when values are missing). */
+export function portfolioSCurve(inputs: MonitoringInput[], today: number): PortfolioCurvePoint[] {
+  const list = inputs.filter((i) => i.status === "ONGOING");
+  if (!list.length) return [];
+  const starts = list.map((i) => projectStart(i));
+  const from = Math.min(...starts);
+  const to = Math.max(...list.map((i) => i.targetEndDate), today);
+  const weights = list.map((i) => (i.contractValue && i.contractValue > 0 ? i.contractValue : 0));
+  const useEqual = weights.every((w) => w === 0);
+  const totalW = useEqual ? list.length : weights.reduce((a, b) => a + b, 0);
+  const plans = list.map((i) => plannedPoints(i).points);
+  const events = list.map((i) => actualEvents(i));
+  const span = Math.max(1, (to - from) / DAY_MS);
+  const step = (span <= 180 ? 7 : span <= 720 ? 14 : 30) * DAY_MS;
+  const times: number[] = [];
+  for (let t = from; t < to; t += step) times.push(t);
+  times.push(to);
+  if (today > from && today < to && !times.includes(today)) times.push(today);
+  times.sort((a, b) => a - b);
+  return times.map((t) => {
+    let pl = 0;
+    let ac = 0;
+    list.forEach((_, k) => {
+      const w = useEqual ? 1 : weights[k];
+      pl += interpolate(plans[k], t) * w;
+      ac += actualLineAt(events[k], starts[k], t) * w;
+    });
+    return { t, planned: Math.round((pl / totalW) * 10) / 10, actual: t <= today ? Math.round((ac / totalW) * 10) / 10 : null };
+  });
+}
+
+export async function getProjectPortfolio(): Promise<{ rows: PortfolioRow[]; thresholds: MonitoringThresholds; today: number; curve: PortfolioCurvePoint[] }> {
   const [projects, thresholds] = await Promise.all([
     prisma.project.findMany({ where: { deletedAt: null }, include: MONITORING_INCLUDE, orderBy: { targetEndDate: "asc" } }),
     getMonitoringThresholds(),
   ]);
   const today = getJakartaToday().getTime();
+  const inputs: MonitoringInput[] = [];
   const rows = projects.map((p) => {
     const input = toMonitoringInput(p);
+    inputs.push(input);
     const summary = computeMonitoring(input, today, thresholds);
     return {
     id: p.id,
@@ -171,5 +213,5 @@ export async function getProjectPortfolio(): Promise<{ rows: PortfolioRow[]; thr
     margin: analyzeMargin(input, summary, today, thresholds.marginDropAlert),
     };
   });
-  return { rows, thresholds, today };
+  return { rows, thresholds, today, curve: portfolioSCurve(inputs, today) };
 }

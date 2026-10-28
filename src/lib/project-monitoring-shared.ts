@@ -127,12 +127,13 @@ export function dateOnly(ms: number): number {
 }
 
 /** Where the planned curve comes from — shown in the UI so users know. */
-export type PlanSource = "MANUAL" | "MILESTONE" | "LINEAR";
+export type PlanSource = "MANUAL" | "MILESTONE" | "STANDARD";
 
 /**
  * Planned S-curve control points, cumulative %, sorted by date.
  * Priority: explicit plan rows → milestone planned dates × weights → a
- * straight line from start to target end.
+ * standard S-shaped curve from start to target end (slow start, fastest in
+ * the middle, slow finish — the usual shape of project work).
  */
 export function plannedPoints(input: MonitoringInput): { source: PlanSource; points: CurvePoint[] } {
   const start = projectStart(input);
@@ -159,17 +160,72 @@ export function plannedPoints(input: MonitoringInput): { source: PlanSource; poi
     return { source: "MILESTONE", points: pts };
   }
 
-  return {
-    source: "LINEAR",
-    points: [
-      { t: start, value: 0 },
-      { t: Math.max(start, input.targetEndDate), value: 100 },
-    ],
-  };
+  return { source: "STANDARD", points: standardSCurve(start, Math.max(start, input.targetEndDate)) };
 }
 
-/** Piecewise-linear interpolation of a planned curve at time t. */
+/** Cumulative share of work done at fraction x (0..1) of the duration for a standard S-curve (smoothstep). */
+export function standardShare(x: number): number {
+  const v = Math.min(1, Math.max(0, x));
+  return v * v * (3 - 2 * v);
+}
+
+/** A standard S-curve sampled densely enough to look smooth when drawn. */
+export function standardSCurve(start: number, end: number, samples = 24): CurvePoint[] {
+  if (end <= start) return [{ t: start, value: 100 }];
+  const pts: CurvePoint[] = [];
+  for (let i = 0; i <= samples; i++) pts.push({ t: Math.round(start + ((end - start) * i) / samples), value: round1(standardShare(i / samples) * 100) });
+  return pts;
+}
+
+/**
+ * Planned value at time t: a smooth curve through the plan points (monotone
+ * cubic, so it passes exactly through every point, never overshoots and never
+ * goes down), which turns a handful of milestone dates into a proper S-curve
+ * instead of straight segments.
+ */
 export function interpolate(points: CurvePoint[], t: number): number {
+  const n = points.length;
+  if (n < 3) return interpolateLinear(points, t);
+  if (t <= points[0].t) return t < points[0].t ? 0 : points[0].value;
+  if (t >= points[n - 1].t) return points[n - 1].value;
+  const d: number[] = [];
+  for (let k = 0; k < n - 1; k++) {
+    const h = points[k + 1].t - points[k].t;
+    if (h <= 0) return interpolateLinear(points, t);
+    d.push((points[k + 1].value - points[k].value) / h);
+  }
+  const m: number[] = new Array(n);
+  m[0] = d[0];
+  m[n - 1] = d[n - 2];
+  for (let k = 1; k < n - 1; k++) m[k] = d[k - 1] * d[k] <= 0 ? 0 : (d[k - 1] + d[k]) / 2;
+  for (let k = 0; k < n - 1; k++) {
+    if (d[k] === 0) {
+      m[k] = 0;
+      m[k + 1] = 0;
+      continue;
+    }
+    const a = m[k] / d[k];
+    const b = m[k + 1] / d[k];
+    const sq = a * a + b * b;
+    if (sq > 9) {
+      const tau = 3 / Math.sqrt(sq);
+      m[k] = tau * a * d[k];
+      m[k + 1] = tau * b * d[k];
+    }
+  }
+  let k = 0;
+  while (k < n - 2 && t > points[k + 1].t) k++;
+  const x0 = points[k].t;
+  const h = points[k + 1].t - x0;
+  const u = (t - x0) / h;
+  const u2 = u * u;
+  const u3 = u2 * u;
+  const v = (2 * u3 - 3 * u2 + 1) * points[k].value + (u3 - 2 * u2 + u) * h * m[k] + (-2 * u3 + 3 * u2) * points[k + 1].value + (u3 - u2) * h * m[k + 1];
+  return Math.min(100, Math.max(0, v));
+}
+
+/** Piecewise-linear interpolation between points. */
+export function interpolateLinear(points: CurvePoint[], t: number): number {
   if (points.length === 0) return 0;
   if (t <= points[0].t) return t < points[0].t ? 0 : points[0].value;
   for (let i = 1; i < points.length; i++) {
@@ -209,6 +265,25 @@ export function actualEvents(input: MonitoringInput): CurvePoint[] {
 
   events.sort((a, b) => a.t - b.t || Number(a.manual) - Number(b.manual));
   return events.map(({ t, value }) => ({ t, value }));
+}
+
+/**
+ * Actual progress for drawing: a straight line between consecutive reports
+ * (starting from 0% at the project start) instead of a staircase, held flat
+ * after the latest report. The figures used for status still come from
+ * actualAt — this only changes how the line between reports looks.
+ */
+export function actualLineAt(events: CurvePoint[], start: number, t: number): number {
+  if (!events.length || t < start) return 0;
+  const pts = events[0].t > start ? [{ t: start, value: 0 }, ...events] : events;
+  if (t >= pts[pts.length - 1].t) return pts[pts.length - 1].value;
+  // same-day events: keep the last one
+  const clean: CurvePoint[] = [];
+  for (const p of pts) {
+    if (clean.length && clean[clean.length - 1].t === p.t) clean[clean.length - 1] = p;
+    else clean.push(p);
+  }
+  return interpolateLinear(clean, t);
 }
 
 export function actualAt(events: CurvePoint[], t: number): number {
@@ -402,7 +477,7 @@ export function isInvoiceOverdue(
 // Kurva S series (for charts)
 // ---------------------------------------------------------------------------
 
-export type SCurveRow = { t: number; label: string; planned: number; actual: number | null };
+export type SCurveRow = { t: number; label: string; planned: number; actual: number | null; report?: boolean };
 
 /**
  * Samples planned & actual curves on an adaptive grid (weekly for short
@@ -427,6 +502,7 @@ export function buildSCurve(input: MonitoringInput, today: number): SCurveRow[] 
   if (today > start && today < end) times.add(today);
 
   const actualCutoff = input.status === "ONGOING" ? today : Math.max(lastEvent, input.actualEndDate ?? lastEvent);
+  const eventTimes = new Set(events.map((e) => e.t));
   return [...times]
     .filter((t) => t >= start)
     .sort((a, b) => a - b)
@@ -434,15 +510,22 @@ export function buildSCurve(input: MonitoringInput, today: number): SCurveRow[] 
       t,
       label: shortDate(t),
       planned: round1(interpolate(plan.points, t)),
-      actual: t <= actualCutoff ? round1(actualAt(events, t)) : null,
+      actual: t <= actualCutoff ? round1(eventTimes.has(t) ? actualAt(events, t) : actualLineAt(events, start, t)) : null,
+      report: eventTimes.has(t) || undefined,
     }));
 }
 
 /** Evenly spaced plan rows (weekly/monthly) derived from the current plan — used by "Isi otomatis". */
-export function suggestPlanRows(input: MonitoringInput, interval: "WEEKLY" | "MONTHLY"): { periodDate: number; plannedPercent: number }[] {
+export type PlanShape = "S" | "MILESTONE" | "LINEAR";
+export function suggestPlanRows(input: MonitoringInput, interval: "WEEKLY" | "MONTHLY", shape: PlanShape = "S"): { periodDate: number; plannedPercent: number }[] {
   const start = projectStart(input);
   const end = Math.max(start, input.targetEndDate);
-  const base = plannedPoints({ ...input, plans: [] }).points;
+  const base =
+    shape === "LINEAR"
+      ? [{ t: start, value: 0 }, { t: end, value: 100 }]
+      : shape === "MILESTONE"
+        ? plannedPoints({ ...input, plans: [] }).points
+        : standardSCurve(start, end, 200);
   const rows: { periodDate: number; plannedPercent: number }[] = [];
   if (interval === "WEEKLY") {
     for (let t = start + 7 * DAY_MS; t < end; t += 7 * DAY_MS) rows.push({ periodDate: t, plannedPercent: round1(interpolate(base, t)) });

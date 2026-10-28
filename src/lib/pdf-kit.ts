@@ -188,7 +188,7 @@ export function createReport(opts: { title: string; headerLeft: string; headerRi
   }
 
   /** Simple line chart (two series, 0–100 %), e.g. the S-curve. */
-  function lineChart(series: { points: { x: number; y: number | null }[]; color: string; dash?: boolean; label: string }[], o: { height?: number; xLabels?: { x: number; text: string }[]; marker?: { x: number; text: string } } = {}) {
+  function lineChart(series: { points: { x: number; y: number | null }[]; color: string; dash?: boolean; label: string }[], o: { height?: number; xLabels?: { x: number; text: string }[]; marker?: { x: number; text: string }; yTicks?: number[]; ySuffix?: string; hLines?: { y: number; color: string; text: string }[] } = {}) {
     const h = o.height ?? 150;
     ensure(h + 34);
     const x0 = left + 26;
@@ -198,10 +198,17 @@ export function createReport(opts: { title: string; headerLeft: string; headerRi
     const minX = Math.min(...xs);
     const maxX = Math.max(...xs);
     const px = (x: number) => x0 + ((x - minX) / Math.max(1, maxX - minX)) * w;
-    const py = (y: number) => y0 + h - (y / 100) * h;
-    [0, 25, 50, 75, 100].forEach((g) => {
+    const yt = o.yTicks ?? [0, 25, 50, 75, 100];
+    const yMin = Math.min(...yt);
+    const yMax = Math.max(...yt);
+    const py = (y: number) => y0 + h - ((Math.min(yMax, Math.max(yMin, y)) - yMin) / Math.max(1e-9, yMax - yMin)) * h;
+    yt.forEach((g) => {
       doc.moveTo(x0, py(g)).lineTo(x0 + w, py(g)).lineWidth(0.4).strokeColor("#E2E8F0").stroke();
-      doc.font(REG).fontSize(6.5).fillColor(MUTED).text(`${g}%`, left, py(g) - 3, { width: 22, align: "right", lineBreak: false });
+      doc.font(REG).fontSize(6.5).fillColor(MUTED).text(`${g.toLocaleString("id-ID")}${o.ySuffix ?? "%"}`, left - 4, py(g) - 3, { width: 26, align: "right", lineBreak: false });
+    });
+    (o.hLines ?? []).forEach((l) => {
+      doc.moveTo(x0, py(l.y)).lineTo(x0 + w, py(l.y)).lineWidth(0.8).dash(3, { space: 2 }).strokeColor(l.color).stroke().undash();
+      doc.font(REG).fontSize(6.5).fillColor(l.color).text(l.text, x0 + 3, py(l.y) - 9, { lineBreak: false });
     });
     if (o.marker && o.marker.x >= minX && o.marker.x <= maxX) {
       doc.moveTo(px(o.marker.x), y0).lineTo(px(o.marker.x), y0 + h).lineWidth(0.6).dash(2, { space: 2 }).strokeColor(MUTED).stroke().undash();

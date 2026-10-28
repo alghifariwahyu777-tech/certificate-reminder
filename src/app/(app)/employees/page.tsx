@@ -21,7 +21,7 @@ export default async function EmployeesPage() {
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}
       />
-      <div className="p-5 md:p-8 max-w-5xl">
+      <div className="p-5 md:p-8">
         <EmployeeManager
           canManage={session?.role === "ADMIN"}
           departments={departments.map((d) => ({ id: d.id, name: d.name }))}
