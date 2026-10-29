@@ -32,7 +32,7 @@ ${params.subtitle ? `<td valign="middle" align="right" style="font-size:11px;col
 <tr><td style="height:2px;background:#0EA89B;font-size:0;line-height:0;">&nbsp;</td></tr>
 <tr><td style="padding:22px 24px;font-size:14px;line-height:1.55;color:#334155;">${params.body}
 </td></tr>
-<tr><td style="padding:12px 24px;border-top:1px solid #E2E8F0;background:#F8FAFC;font-size:11px;color:#94A3B8;">Email ini dikirim otomatis oleh Reminder System — PT Sucofindo (Persero). Mohon tidak membalas email ini.</td></tr>
+<tr><td style="padding:12px 24px;border-top:1px solid #E2E8F0;background:#F8FAFC;font-size:11px;color:#94A3B8;">Email ini dikirim otomatis oleh Reminder System, PT Sucofindo (Persero). Mohon tidak membalas email ini.</td></tr>
 </table></td></tr></table></body></html>`;
 }
 
@@ -49,7 +49,7 @@ export async function sendHtmlMail(params: {
 }): Promise<{ status: "SENT" | "FAILED" | "SKIPPED"; errorMessage?: string }> {
   const transporter = getTransporter();
   if (!transporter) {
-    return { status: "SKIPPED", errorMessage: "GMAIL_USER dan GMAIL_APP_PASSWORD belum dikonfigurasi — email tidak dikirim (mode simulasi)." };
+    return { status: "SKIPPED", errorMessage: "GMAIL_USER dan GMAIL_APP_PASSWORD belum dikonfigurasi, email tidak dikirim (mode simulasi)." };
   }
   const fromName = process.env.EMAIL_FROM_NAME || "Reminder System - PT Sucofindo (Persero)";
   try {

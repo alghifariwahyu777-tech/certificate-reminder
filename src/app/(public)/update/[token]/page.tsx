@@ -17,7 +17,6 @@ export default async function UpdateByLinkPage(context: { params: Promise<{ toke
     <PicShell>
       {!ctx ? (
         <div className="rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-5 py-10 text-center">
-          <LinkIcon className="h-8 w-8 mx-auto text-slate-400" />
           <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{"error" in r ? r.error : "Project tidak ditemukan."}</p>
         </div>
       ) : (

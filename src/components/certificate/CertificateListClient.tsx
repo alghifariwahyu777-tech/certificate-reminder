@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { SearchPopoverButton } from "@/components/ui/SearchPopoverButton";
+import { filterGroupClass, toolbarActionsClass, toolbarClass } from "@/components/ui/Toolbar";
 import { SkeletonTableRows } from "@/components/ui/Skeleton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useToast } from "@/components/ui/Toast";
@@ -25,10 +26,10 @@ import { formatDate } from "@/lib/utils";
 import type { CategoryLite, ClientLite, DepartmentLite, CertificateWithCategory, Pagination } from "@/types/certificate";
 
 const SORT_OPTIONS = [
-  { value: "expiryDate", label: "Tanggal Expired" },
-  { value: "issueDate", label: "Tanggal Terbit" },
+  { value: "expiryDate", label: "Tanggal berakhir" },
+  { value: "issueDate", label: "Tanggal terbit" },
   { value: "certificateName", label: "Nama" },
-  { value: "certificateNumber", label: "Nomor Sertifikat" },
+  { value: "certificateNumber", label: "Nomor sertifikat" },
 ];
 
 export function CertificateListClient({
@@ -176,18 +177,18 @@ export function CertificateListClient({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col lg:flex-row lg:items-center gap-3 justify-between">
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 flex-1">
-          <div className="col-span-2 sm:col-span-1">
+      <div className={toolbarClass}>
+        <div className={filterGroupClass}>
+          <div>
             <SearchPopoverButton
               value={search}
               onChange={setSearch}
-              label="Cari Sertifikat"
+              label="Cari sertifikat"
               placeholder="Nama, nomor, klien, atau PIC..."
             />
           </div>
           <Select value={clientId} onChange={(e) => setClientId(e.target.value)}>
-            <option value="">Semua Klien</option>
+            <option value="">Semua klien</option>
             {clients.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -195,7 +196,7 @@ export function CertificateListClient({
             ))}
           </Select>
           <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-            <option value="">Semua Kategori</option>
+            <option value="">Semua kategori</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -203,7 +204,7 @@ export function CertificateListClient({
             ))}
           </Select>
           <Select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
-            <option value="">Semua Divisi</option>
+            <option value="">Semua divisi</option>
             {departments.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.name}
@@ -211,13 +212,13 @@ export function CertificateListClient({
             ))}
           </Select>
           <Select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="">Semua Status</option>
+            <option value="">Semua status</option>
             <option value="ACTIVE">Aktif</option>
             <option value="EXPIRING_SOON">Segera berakhir</option>
             <option value="EXPIRED">Berakhir</option>
           </Select>
           <Select value={year} onChange={(e) => setYear(e.target.value)}>
-            <option value="">Semua Tahun</option>
+            <option value="">Semua tahun</option>
             {years.map((y) => (
               <option key={y} value={y}>
                 {y}
@@ -226,17 +227,17 @@ export function CertificateListClient({
           </Select>
         </div>
         {canManage && (
-          <div className="flex gap-2 w-full lg:w-auto">
+          <div className={toolbarActionsClass}>
             <Link href="/certificate/import" className="flex-1 lg:flex-none">
               <Button variant="outline" className="whitespace-nowrap w-full">
                 <Upload className="h-4 w-4" />
-                Import Excel
+                Impor Excel
               </Button>
             </Link>
             <Link href="/certificate/add" className="flex-1 lg:flex-none">
               <Button className="whitespace-nowrap w-full">
                 <Plus className="h-4 w-4" />
-                Tambah Sertifikat
+                Tambah sertifikat
               </Button>
             </Link>
           </div>
@@ -255,7 +256,7 @@ export function CertificateListClient({
             </Button>
             <Button variant="danger" size="sm" onClick={() => setBulkDeleteOpen(true)}>
               <Trash2 className="h-3.5 w-3.5" />
-              Hapus Terpilih
+              Hapus terpilih
             </Button>
           </div>
         </div>
@@ -265,7 +266,7 @@ export function CertificateListClient({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-slate-500 border-b border-slate-100 bg-slate-50/60">
+              <tr className="th-row">
                 {canManage && (
                   <th className="px-4 py-3 w-10">
                     <input
@@ -277,12 +278,8 @@ export function CertificateListClient({
                     />
                   </th>
                 )}
-                <th className="px-4 py-3 font-medium w-10">No</th>
                 <th className="px-4 py-3 font-medium">
-                  <SortHeader label="Nomor" field="certificateNumber" current={sortBy} dir={sortDir} onToggle={toggleSort} />
-                </th>
-                <th className="px-4 py-3 font-medium">
-                  <SortHeader label="Nama Sertifikat" field="certificateName" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                  <SortHeader label="Nama sertifikat" field="certificateName" current={sortBy} dir={sortDir} onToggle={toggleSort} />
                 </th>
                 <th className="px-4 py-3 font-medium">
                   <SortHeader label="Klien" field="clientName" current={sortBy} dir={sortDir} onToggle={toggleSort} />
@@ -291,7 +288,7 @@ export function CertificateListClient({
                   <SortHeader label="Kategori" field="categoryName" current={sortBy} dir={sortDir} onToggle={toggleSort} />
                 </th>
                 <th className="px-4 py-3 font-medium">
-                  <SortHeader label="Expired" field="expiryDate" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                  <SortHeader label="Berakhir" field="expiryDate" current={sortBy} dir={sortDir} onToggle={toggleSort} />
                 </th>
                 <th className="px-4 py-3 font-medium">
                   <SortHeader label="PIC" field="pic" current={sortBy} dir={sortDir} onToggle={toggleSort} />
@@ -302,10 +299,10 @@ export function CertificateListClient({
             </thead>
             <tbody>
               {loading ? (
-                <SkeletonTableRows columns={9} showCheckbox={canManage} />
+                <SkeletonTableRows columns={7} showCheckbox={canManage} />
               ) : certificates.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
                     Tidak ada sertifikat yang cocok dengan pencarian/filter.
                   </td>
                 </tr>
@@ -328,14 +325,15 @@ export function CertificateListClient({
                         />
                       </td>
                     )}
-                    <td className="px-4 py-3 text-slate-400">
-                      {((pagination?.page || 1) - 1) * (pagination?.pageSize || 10) + i + 1}
+                    <td className="px-4 py-3">
+                      <Link href={`/certificate/${c.id}`} className="font-semibold text-ink hover:text-accent dark:text-slate-100">
+                        {c.certificateName}
+                      </Link>
+                      <span className="block text-xs text-slate-500">{c.certificateNumber}</span>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-slate-600">{c.certificateNumber}</td>
-                    <td className="px-4 py-3 font-medium text-ink">{c.certificateName}</td>
                     <td className="px-4 py-3 text-slate-600">{c.client.name}</td>
                     <td className="px-4 py-3 text-slate-600">{c.category.name}</td>
-                    <td className="px-4 py-3 text-slate-600">{formatDate(c.expiryDate)}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDate(c.expiryDate)}</td>
                     <td className="px-4 py-3 text-slate-600">{c.pic}</td>
                     <td className="px-4 py-3">
                       <StatusBadge expiryDate={c.expiryDate} />
@@ -354,7 +352,7 @@ export function CertificateListClient({
                             <Link
                               href={`/certificate/edit/${c.id}`}
                               className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
-                              aria-label="Edit"
+                              aria-label="Ubah"
                             >
                               <Pencil className="h-4 w-4" />
                             </Link>
@@ -407,7 +405,7 @@ export function CertificateListClient({
         )}
       </Card>
 
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus Sertifikat">
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus sertifikat">
         <p className="text-sm text-slate-600">
           Apakah Anda yakin ingin menghapus sertifikat{" "}
           <strong className="text-ink">{deleteTarget?.certificateName}</strong>? Tindakan ini tidak dapat
@@ -423,7 +421,7 @@ export function CertificateListClient({
         </div>
       </Modal>
 
-      <Modal isOpen={bulkDeleteOpen} onClose={() => setBulkDeleteOpen(false)} title="Hapus Sertifikat Terpilih">
+      <Modal isOpen={bulkDeleteOpen} onClose={() => setBulkDeleteOpen(false)} title="Hapus sertifikat terpilih">
         <p className="text-sm text-slate-600">
           Apakah Anda yakin ingin menghapus <strong className="text-ink">{selectedIds.size} sertifikat</strong>{" "}
           yang dipilih? Dokumen yang sudah diunggah juga akan ikut terhapus. Tindakan ini tidak dapat dibatalkan.

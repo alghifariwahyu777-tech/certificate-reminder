@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { SupervisorManager } from "@/components/SupervisorManager";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function SupervisorsPage() {
   const session = await getSession();
@@ -16,11 +17,11 @@ export default async function SupervisorsPage() {
     <>
       <Navbar
         title="Atasan (Supervisor)"
-        subtitle="Direktori atasan terpusat untuk CC reminder di seluruh fitur"
+        subtitle="Atasan yang menerima salinan semua email pengingat"
         adminName={session.name}
         role={session.role}
       />
-      <div className="p-5 md:p-8">
+      <PageBody>
         <SupervisorManager
           canManage={session.role === "ADMIN"}
           initialSupervisors={supervisors.map((s) => ({
@@ -31,7 +32,7 @@ export default async function SupervisorsPage() {
             isActive: s.isActive,
           }))}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

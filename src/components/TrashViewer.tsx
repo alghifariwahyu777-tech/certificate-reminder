@@ -1,5 +1,7 @@
 "use client";
 
+import { IconBox } from "@/components/ui/IconBox";
+import { ENTITY_ICON } from "@/lib/entity-icons";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { RotateCcw, Trash2, FileBadge2, Award, FolderClock, Wrench } from "lucide-react";
@@ -57,17 +59,17 @@ type TrashItem = {
 };
 
 const KIND_LABEL: Record<TrashItem["kind"], string> = {
-  CERTIFICATE: "Sertifikat Klien",
-  PERSONNEL_CERTIFICATION: "Sertifikasi Personil",
+  CERTIFICATE: "Sertifikat klien",
+  PERSONNEL_CERTIFICATION: "Sertifikasi personil",
   PROJECT: "Project",
-  EQUIPMENT: "Equipment",
+  EQUIPMENT: "Alat",
 };
 
 const KIND_ICON: Record<TrashItem["kind"], typeof FileBadge2> = {
-  CERTIFICATE: FileBadge2,
-  PERSONNEL_CERTIFICATION: Award,
-  PROJECT: FolderClock,
-  EQUIPMENT: Wrench,
+  CERTIFICATE: ENTITY_ICON.certificate,
+  PERSONNEL_CERTIFICATION: ENTITY_ICON.personnelCert,
+  PROJECT: ENTITY_ICON.project,
+  EQUIPMENT: ENTITY_ICON.equipment,
 };
 
 export function TrashViewer() {
@@ -88,7 +90,7 @@ export function TrashViewer() {
         id: c.id,
         kind: "CERTIFICATE" as const,
         title: c.certificateName,
-        subtitle: `${c.certificateNumber} · ${c.client.name} · ${c.category.name}`,
+        subtitle: `${c.certificateNumber}, ${c.client.name}, ${c.category.name}`,
         deletedAt: c.deletedAt,
         detailHref: `/certificate/${c.id}`,
       }));
@@ -98,7 +100,7 @@ export function TrashViewer() {
           id: p.id,
           kind: "PERSONNEL_CERTIFICATION" as const,
           title: p.certificationName,
-          subtitle: `${p.certificationNumber || "-"} · ${p.employee.name} · ${p.category.name}`,
+          subtitle: `${p.certificationNumber || "-"}, ${p.employee.name}, ${p.category.name}`,
           deletedAt: p.deletedAt,
           detailHref: `/personnel-certifications/${p.id}`,
         })
@@ -108,7 +110,7 @@ export function TrashViewer() {
         id: p.id,
         kind: "PROJECT" as const,
         title: p.projectName,
-        subtitle: `${p.projectNumber} · ${p.clientName} · ${p.category.name}`,
+        subtitle: `${p.projectNumber}, ${p.clientName}, ${p.category.name}`,
         deletedAt: p.deletedAt,
         detailHref: `/projects/${p.id}`,
       }));
@@ -117,7 +119,7 @@ export function TrashViewer() {
         id: e.id,
         kind: "EQUIPMENT" as const,
         title: e.name,
-        subtitle: `${e.assetNumber || "-"} · ${e.pic.name} · ${e.category.name}`,
+        subtitle: `${e.assetNumber || "-"}, ${e.pic.name}, ${e.category.name}`,
         deletedAt: e.deletedAt,
         detailHref: `/equipment/${e.id}`,
       }));
@@ -128,7 +130,7 @@ export function TrashViewer() {
         )
       );
     } catch {
-      showToast("Gagal memuat data Trash.", "error");
+      showToast("Gagal memuat data Sampah.", "error");
     } finally {
       setLoading(false);
     }
@@ -176,16 +178,15 @@ export function TrashViewer() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-slate-500">
-        {loading ? "Memuat…" : `${items.length} item di Trash (sertifikat, sertifikasi personil, project, & alat)`}
+        {loading ? "Memuat…" : `${items.length} item di Sampah (sertifikat, sertifikasi personil, project, dan alat)`}
       </p>
 
       <Card>
         {loading ? (
           <SkeletonListItems items={5} />
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-14 text-slate-400">
-            <FileBadge2 className="h-8 w-8" />
-            <p className="text-sm">Trash kosong — tidak ada data yang dihapus.</p>
+          <div className="py-10 text-center text-slate-500">
+            <p className="text-sm">Sampah kosong. Tidak ada data yang dihapus.</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -193,13 +194,10 @@ export function TrashViewer() {
               const Icon = KIND_ICON[item.kind];
               return (
                 <div key={item.id} className="flex items-center justify-between gap-3 px-5 py-3.5">
+                  <div className="flex min-w-0 items-start gap-3">
+                  <IconBox icon={Icon} />
                   <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <Icon className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                      <span className="text-[10px] font-mono text-slate-400">
-                        {KIND_LABEL[item.kind]}
-                      </span>
-                    </div>
+                    <span className="text-xs font-medium text-slate-500">{KIND_LABEL[item.kind]}</span>
                     {item.detailHref ? (
                       <Link href={item.detailHref} className="text-sm font-medium text-ink hover:text-accent">
                         {item.title}
@@ -207,8 +205,9 @@ export function TrashViewer() {
                     ) : (
                       <p className="text-sm font-medium text-ink">{item.title}</p>
                     )}
-                    <p className="text-xs text-slate-400 font-mono mt-0.5">{item.subtitle}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Dihapus {formatDate(item.deletedAt)}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{item.subtitle}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Dihapus {formatDate(item.deletedAt)}</p>
+                  </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Button
@@ -222,7 +221,7 @@ export function TrashViewer() {
                     </Button>
                     <Button variant="danger" size="sm" onClick={() => setDeleteTarget(item)}>
                       <Trash2 className="h-3.5 w-3.5" />
-                      Hapus Permanen
+                      Hapus permanen
                     </Button>
                   </div>
                 </div>
@@ -232,7 +231,7 @@ export function TrashViewer() {
         )}
       </Card>
 
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus Permanen">
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus permanen">
         <p className="text-sm text-slate-600 dark:text-slate-300">
           <strong className="text-ink dark:text-slate-100">{deleteTarget?.title}</strong> akan dihapus permanen
           beserta dokumennya. <strong>Tindakan ini tidak dapat dibatalkan.</strong>
@@ -242,7 +241,7 @@ export function TrashViewer() {
             Batal
           </Button>
           <Button variant="danger" isLoading={deleting} onClick={handlePermanentDelete}>
-            Hapus Permanen
+            Hapus permanen
           </Button>
         </div>
       </Modal>

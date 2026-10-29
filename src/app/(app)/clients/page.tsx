@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { ClientManager } from "@/components/client/ClientManager";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function ClientsPage() {
   const session = await getSession();
@@ -12,8 +13,8 @@ export default async function ClientsPage() {
 
   return (
     <>
-      <Navbar title="Klien" subtitle="Kelola data klien pengguna jasa" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
-      <div className="p-5 md:p-8 max-w-4xl">
+      <Navbar title="Klien" subtitle="Daftar klien pengguna jasa" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
+      <PageBody>
         <ClientManager
           canManage={session?.role === "ADMIN"}
           initialClients={clients.map((c) => ({
@@ -26,7 +27,7 @@ export default async function ClientsPage() {
             certificateCount: c._count.certificates,
           }))}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

@@ -84,7 +84,7 @@ export function ProgressUpdateForm({
     return (
       <div className="rounded-md border border-signal-activeBorder bg-signal-activeBg px-5 py-8 text-center">
         <CheckCircle2 className="h-10 w-10 mx-auto text-signal-active" />
-        <p className="mt-3 font-display font-semibold text-ink dark:text-slate-100">Terima kasih, update terkirim.</p>
+        <p className="mt-3 font-display font-semibold text-ink dark:text-slate-100">Terima kasih, pembaruan terkirim.</p>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
           Progres {ctx.projectName} tercatat {formatPercent(Number(percent))}.
         </p>
@@ -97,7 +97,7 @@ export function ProgressUpdateForm({
       <div className="rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
         <p className="font-display font-semibold text-ink dark:text-slate-100">{ctx.projectName}</p>
         <p className="text-xs text-slate-500 mt-0.5">
-          <span className="font-mono">{ctx.projectNumber}</span> · {ctx.clientName} · target selesai {fmtDate(ctx.targetEndDate)}
+          <span className="font-mono">{ctx.projectNumber}</span>, {ctx.clientName}, target selesai {fmtDate(ctx.targetEndDate)}
         </p>
         <div className="flex justify-between text-xs text-slate-500 mt-3 mb-1.5">
           <span>Tercatat saat ini {formatPercent(ctx.actualPercent)}</span>
@@ -105,7 +105,7 @@ export function ProgressUpdateForm({
         </div>
         <ProgressBar value={ctx.actualPercent} marker={ctx.plannedPercent} />
         <p className="text-[11px] text-slate-400 mt-2">
-          {ctx.lastReportDate ? `Update terakhir ${fmtDate(ctx.lastReportDate)}` : "Belum pernah ada update progres"}
+          {ctx.lastReportDate ? `Diperbarui terakhir ${fmtDate(ctx.lastReportDate)}` : "Belum pernah ada pembaruan progres"}
         </p>
       </div>
 
@@ -122,7 +122,7 @@ export function ProgressUpdateForm({
                 <span className="flex-1 text-sm text-ink dark:text-slate-100">{m.name}</span>
                 <span className="text-xs text-slate-400 tabular-nums">
                   {totalWeight > 0 ? `${m.weight.toLocaleString("id-ID")}%` : ""}
-                  {m.plannedDate ? ` · ${fmtDate(m.plannedDate)}` : ""}
+                  {m.plannedDate ? `, ${fmtDate(m.plannedDate)}` : ""}
                 </span>
               </label>
             ))}
@@ -176,7 +176,7 @@ export function ProgressUpdateForm({
       </div>
 
       <details className="text-sm">
-        <summary className="cursor-pointer text-slate-500 select-none">Lampiran & tanggal laporan</summary>
+        <summary className="cursor-pointer text-slate-500 select-none">Lampiran dan tanggal laporan</summary>
         <div className="mt-3 space-y-3">
           <FileUploadField label="Lampiran (foto/dokumen, opsional)" value={file} onChange={setFile} uploadUrl={uploadUrl} />
           <div className="max-w-[12rem]">
@@ -189,7 +189,7 @@ export function ProgressUpdateForm({
       <FormError message={error} />
       <Button className="w-full" size="lg" isLoading={saving} onClick={submit}>
         <Send className="h-4 w-4" />
-        Kirim update
+        Kirim pembaruan
       </Button>
     </div>
   );

@@ -118,7 +118,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     action: "CREATE",
     entityType: "Certificate",
     entityId: certificate.id,
-    description: `Menerbitkan sertifikat "${certificate.certificateName}" (${certificate.certificateNumber}) dari permohonan ${application.applicationNumber} — permohonan otomatis diselesaikan.`,
+    description: `Menerbitkan sertifikat "${certificate.certificateName}" (${certificate.certificateNumber}) dari permohonan ${application.applicationNumber}, permohonan otomatis diselesaikan.`,
   });
 
   return NextResponse.json({ certificate }, { status: 201 });

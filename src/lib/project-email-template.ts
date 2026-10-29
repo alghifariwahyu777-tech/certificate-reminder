@@ -20,14 +20,14 @@ function daysRemainingText(daysRemaining: number): string {
 
 export const PROJECT_PLACEHOLDER_TOKENS: { token: string; label: string }[] = [
   { token: "{{pic}}", label: "Nama PIC" },
-  { token: "{{projectName}}", label: "Nama Project" },
-  { token: "{{projectNumber}}", label: "Nomor Project" },
+  { token: "{{projectName}}", label: "Nama project" },
+  { token: "{{projectNumber}}", label: "Nomor project" },
   { token: "{{categoryName}}", label: "Kategori / Portofolio" },
   { token: "{{clientName}}", label: "Klien / Pemberi Kerja" },
-  { token: "{{targetEndDate}}", label: "Target Selesai" },
+  { token: "{{targetEndDate}}", label: "Target selesai" },
   { token: "{{daysRemainingText}}", label: "Sisa Hari (mis. '14 hari lagi')" },
   { token: "{{appUrl}}", label: "URL aplikasi (dari APP_URL di .env)" },
-  { token: "{{statusColor}}", label: "Warna sesuai urgensi (merah/oranye/teal) — pakai di style color:" },
+  { token: "{{statusColor}}", label: "Warna sesuai urgensi (merah/oranye/teal), pakai di style color:" },
 ];
 
 export const DEFAULT_PROJECT_SUBJECT = "[Project Monitoring] Target Selesai Project Akan Tercapai";

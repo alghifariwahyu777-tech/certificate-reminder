@@ -42,7 +42,7 @@ export function WeeklyReportSettingsForm({ canManage, initial, embedded = false 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Laporan mingguan dan permintaan update ke PIC</CardTitle>
+        <CardTitle>Laporan mingguan dan permintaan pembaruan ke PIC</CardTitle>
         <p className="text-xs text-slate-500 mt-1">Dikirim otomatis oleh job harian (sekitar pukul 08.00 WIB) pada hari yang dipilih.</p>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -100,10 +100,10 @@ export function WeeklyReportSettingsForm({ canManage, initial, embedded = false 
         <div className="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-5">
           <label className="flex items-center gap-2 text-sm font-medium text-ink dark:text-slate-200">
             <input type="checkbox" disabled={!canManage} className="h-4 w-4 rounded border-slate-300" checked={v.picUpdateRequestEnabled} onChange={(e) => setV((s) => ({ ...s, picUpdateRequestEnabled: e.target.checked }))} />
-            Kirim email permintaan update progres ke PIC
+            Kirim email permintaan pembaruan progres ke PIC
           </label>
           <p className="text-xs text-slate-500">
-            Satu email per PIC berisi semua project berjalannya, masing-masing dengan link update tanpa login. Atur hari ini sebelum hari laporan agar laporan memakai data terbaru.
+            Setiap PIC menerima satu email berisi tautan pembaruan untuk semua project berjalannya, tanpa perlu masuk. Pilih hari sebelum hari laporan agar data laporan terbaru.
           </p>
           <div className="max-w-[12rem]">
             <Label htmlFor="pu-day">Hari kirim</Label>
@@ -118,7 +118,7 @@ export function WeeklyReportSettingsForm({ canManage, initial, embedded = false 
           {canManage && (
             <Button size="sm" variant="outline" isLoading={busy === "pic"} onClick={() => call("pic", "/api/pic-update-request/send", "POST", undefined, "Permintaan update dikirim (yang belum menerima minggu ini).")}>
               <Send className="h-4 w-4" />
-              Kirim permintaan update sekarang
+              Kirim permintaan pembaruan sekarang
             </Button>
           )}
         </div>

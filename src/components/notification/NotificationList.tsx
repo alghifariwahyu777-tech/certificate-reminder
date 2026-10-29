@@ -1,9 +1,12 @@
 "use client";
 
+import { Segmented } from "@/components/ui/Segmented";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, TimerReset, ClipboardList, CheckCheck, Check } from "lucide-react";
+import { CheckCheck, Check } from "lucide-react";
 import { Card } from "@/components/ui/Card";
+import { IconBox } from "@/components/ui/IconBox";
+import { ENTITY_ICON } from "@/lib/entity-icons";
 import { Button } from "@/components/ui/Button";
 import { SkeletonListItems } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
@@ -33,12 +36,21 @@ type NotificationItem = {
   application: { id: string; applicationNumber: string } | null;
 };
 
+function entityIcon(n: NotificationItem) {
+  if (n.certificate) return ENTITY_ICON.certificate;
+  if (n.personnelCertification) return ENTITY_ICON.personnelCert;
+  if (n.project) return ENTITY_ICON.project;
+  if (n.equipment) return ENTITY_ICON.equipment;
+  if (n.application) return ENTITY_ICON.application;
+  return ENTITY_ICON.notification;
+}
+
 function iconFor(type: NotificationItem["type"]) {
-  if (type === "EXPIRED") return { Icon: AlertTriangle, color: "text-signal-expired" };
-  if (type === "EXPIRING_SOON") return { Icon: TimerReset, color: "text-signal-soon" };
-  if (type === "PROJECT_DEVIATION_CRITICAL" || type === "PROJECT_INVOICE_OVERDUE") return { Icon: AlertTriangle, color: "text-signal-expired" };
-  if (type === "PROJECT_PROGRESS_STALE" || type === "PROJECT_TERM_DUE") return { Icon: TimerReset, color: "text-signal-soon" };
-  return { Icon: ClipboardList, color: "text-accent" };
+  if (type === "EXPIRED") return { color: "bg-signal-expired" };
+  if (type === "EXPIRING_SOON") return { color: "bg-signal-soonBar" };
+  if (type === "PROJECT_DEVIATION_CRITICAL" || type === "PROJECT_INVOICE_OVERDUE") return { color: "bg-signal-expired" };
+  if (type === "PROJECT_PROGRESS_STALE" || type === "PROJECT_TERM_DUE") return { color: "bg-signal-soonBar" };
+  return { color: "bg-accent" };
 }
 
 function linkFor(n: NotificationItem) {
@@ -64,8 +76,8 @@ function refFor(n: NotificationItem) {
 const TABS: { value: string; label: string }[] = [
   { value: "", label: "Semua" },
   { value: "NEW", label: "Baru" },
-  { value: "READ", label: "Sudah Dibaca" },
-  { value: "DONE", label: "Selesai Ditindaklanjuti" },
+  { value: "READ", label: "Sudah dibaca" },
+  { value: "DONE", label: "Selesai ditindaklanjuti" },
 ];
 
 export function NotificationList() {
@@ -110,41 +122,29 @@ export function NotificationList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-1.5">
-        {TABS.map((t) => (
-          <button
-            key={t.value}
-            onClick={() => setTab(t.value)}
-            className={cn(
-              "px-3 py-1.5 rounded text-xs font-medium border transition-colors",
-              tab === t.value
-                ? "bg-ink text-white border-ink"
-                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <Segmented value={tab} onChange={setTab} options={TABS.map((t) => [t.value, t.label] as const)} />
 
       <Card>
         {loading ? (
           <SkeletonListItems items={6} />
         ) : notifications.length === 0 ? (
-          <p className="px-5 py-10 text-center text-sm text-slate-400">Tidak ada notifikasi pada kategori ini.</p>
+          <p className="px-5 py-10 text-center text-sm text-slate-500">Tidak ada notifikasi pada kategori ini.</p>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {notifications.map((n) => {
-              const { Icon, color } = iconFor(n.type);
+              const { color } = iconFor(n.type);
               return (
                 <div key={n.id} className="flex items-start gap-3 px-5 py-4">
-                  <Icon className={cn("h-4.5 w-4.5 mt-0.5 shrink-0", color)} />
+                  <span className="relative">
+                    <IconBox icon={entityIcon(n)} />
+                    <span aria-hidden className={cn("absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-slate-900", color)} />
+                  </span>
                   <div className="min-w-0 flex-1">
                     <Link href={linkFor(n)} className="text-sm text-ink hover:text-accent">
                       {n.message}
                     </Link>
-                    <p className="text-xs text-slate-400 mt-1 font-mono">
-                      {refFor(n)} · {formatDate(n.createdAt)}
+                    <p className="mt-1 text-xs text-slate-500">
+                      {refFor(n)}, {formatDate(n.createdAt)}
                     </p>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">

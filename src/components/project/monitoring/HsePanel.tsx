@@ -143,11 +143,11 @@ export function HsePanel({ data }: { data: ProjectMonitoringDTO }) {
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={chart} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-                  <CartesianGrid stroke="#E9EDF2" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#64748B" }} axisLine={{ stroke: "#E2E8F0" }} tickLine={false} />
+                  <CartesianGrid stroke="#E6EBF1" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#64748B" }} axisLine={{ stroke: "#E6EBF1" }} tickLine={false} />
                   <YAxis yAxisId="n" allowDecimals={false} tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} />
                   <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #E2E8F0", fontSize: 12 }} />
+                  <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #E6EBF1", fontSize: 12 }} />
                   {[...HSE_LEVELS].reverse().filter((l) => l.key !== "unsafeObservations").map((l, i, arr) => (
                     <Bar key={l.key} yAxisId="n" dataKey={l.key} name={l.short} stackId="i" fill={l.color} maxBarSize={28} radius={i === arr.length - 1 ? [3, 3, 0, 0] : undefined} isAnimationActive={false} />
                   ))}
@@ -180,7 +180,7 @@ export function HsePanel({ data }: { data: ProjectMonitoringDTO }) {
             <div className="overflow-x-auto">
               <table className="w-full text-[13px]">
                 <thead>
-                  <tr className="border-b border-line text-left text-[12px] text-slate-500 dark:border-slate-800">
+                  <tr className="th-row">
                     <th className="px-5 py-2.5 font-medium">Bulan</th>
                     <th className="px-3 py-2.5 text-right font-medium">Jam kerja</th>
                     <th className="px-3 py-2.5 text-right font-medium">Fatal</th>
@@ -209,7 +209,7 @@ export function HsePanel({ data }: { data: ProjectMonitoringDTO }) {
                       <td className="px-5 py-2.5">
                         {data.canManage && (
                           <div className="flex justify-end gap-1">
-                            <button type="button" aria-label="Edit" onClick={() => openForm(r)} className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-ink dark:hover:bg-slate-800">
+                            <button type="button" aria-label="Ubah" onClick={() => openForm(r)} className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-ink dark:hover:bg-slate-800">
                               <Pencil className="h-4 w-4" />
                             </button>
                             <DeleteButton what="laporan HSE" onConfirm={() => send("DELETE", `${base}/${r.id}`, undefined, "Laporan HSE dihapus.")} />
@@ -225,7 +225,7 @@ export function HsePanel({ data }: { data: ProjectMonitoringDTO }) {
         </Card>
       )}
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit laporan HSE" : "Isi laporan HSE"} maxWidth="max-w-xl">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Ubah laporan HSE" : "Isi laporan HSE"} maxWidth="max-w-xl">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -321,19 +321,21 @@ export function SafetyPyramid({ summary }: { summary: ReturnType<typeof summariz
             );
           })}
         </div>
-        <div className="flex min-w-0 flex-1">
-          <div className="flex-1">
-            {HSE_LEVELS.map((l, i) => (
-              <div key={l.key} className="flex h-9 items-center gap-2 text-[12px] leading-tight text-slate-700 dark:text-slate-300" style={{ marginTop: i ? 2 : 0 }}>
-                <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: l.color }} />
-                {l.label}
-              </div>
-            ))}
-          </div>
-          <div className="ml-2 flex w-5 flex-col text-[10px] font-semibold text-slate-500">
-            <span className="flex flex-1 items-center justify-center border-l-2 border-[#B42318]/50 [writing-mode:vertical-rl]">Cedera tercatat</span>
-            <span className="mt-1 flex flex-1 items-center justify-center border-l-2 border-[#E9B21F]/70 [writing-mode:vertical-rl]">Peringatan dini</span>
-          </div>
+        <div className="min-w-0 flex-1">
+          {HSE_LEVELS.map((l, i) => (
+            <div
+              key={l.key}
+              className={cn(
+                "flex h-9 items-center gap-2 border-l-2 pl-2.5 text-[12px] leading-tight text-slate-700 dark:text-slate-300",
+                l.group === "lagging" ? "border-[#B42318]/60" : "border-[#E9B21F]/80"
+              )}
+              style={{ marginTop: i ? 2 : 0 }}
+            >
+              <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: l.color }} />
+              {l.label}
+            </div>
+          ))}
+          <p className="mt-2 pl-3 text-[11px] text-slate-500">Garis merah: cedera tercatat. Garis kuning: peringatan dini.</p>
         </div>
       </div>
     </div>

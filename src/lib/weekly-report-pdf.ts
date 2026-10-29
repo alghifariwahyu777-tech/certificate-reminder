@@ -50,7 +50,7 @@ export function generateWeeklyReportPdf(r: WeeklyReportData): Promise<Buffer> {
       layout: "portrait",
       margins: { top: MARGIN_TOP, bottom: MARGIN_BOTTOM, left: MARGIN_X, right: MARGIN_X },
       bufferPages: true,
-      info: { Title: `Laporan Mingguan Monitoring Project ${r.weekKey}`, Author: "PT Sucofindo (Persero) — Reminder System" },
+      info: { Title: `Laporan Mingguan Monitoring Project ${r.weekKey}`, Author: "PT Sucofindo (Persero), Reminder System" },
     });
     const chunks: Buffer[] = [];
     doc.on("data", (c) => chunks.push(c));
@@ -167,7 +167,7 @@ export function generateWeeklyReportPdf(r: WeeklyReportData): Promise<Buffer> {
       ["Tanggal laporan", formatLongDate(jakartaDay(r.generatedAt))],
       ["Data per", `${formatLongDate(jakartaDay(r.generatedAt))}, pukul ${dataAs} WIB`],
       ["Cakupan", `${k.ongoing} project berjalan`],
-      ["Sumber data", "Reminder System — Project Monitoring (data dari PIC dan admin project)"],
+      ["Sumber data", "Reminder System, Project Monitoring (data dari PIC dan admin project)"],
     ];
     meta.forEach(([a, b]) => {
       const y = doc.y;
@@ -182,16 +182,16 @@ export function generateWeeklyReportPdf(r: WeeklyReportData): Promise<Buffer> {
 
     // 3 x 2 key figures, formal boxed grid
     const figures: [string, string, string, string?][] = [
-      ["Project berjalan", String(k.ongoing), `Kritis ${k.kritis}  ·  Waspada ${k.waspada}  ·  Sesuai rencana ${k.onTrack}`, k.kritis ? HEALTH_COLOR.KRITIS : undefined],
+      ["Project berjalan", String(k.ongoing), `Kritis ${k.kritis}, Waspada ${k.waspada}, Sesuai rencana ${k.onTrack}`, k.kritis ? HEALTH_COLOR.KRITIS : undefined],
       ["Progres portofolio", formatPercent(k.actual), `Dari rencana ${formatPercent(k.planned)} (dibobot nilai kontrak)`],
-      ["Nilai kontrak berjalan", formatRupiah(k.contract, true), `Dibayar ${formatRupiah(k.paid, true)}  ·  piutang ${formatRupiah(k.outstandingOngoing, true)}  ·  belum ditagih ${formatRupiah(k.unbilled, true)}`],
+      ["Nilai kontrak berjalan", formatRupiah(k.contract, true), `Dibayar ${formatRupiah(k.paid, true)}, piutang ${formatRupiah(k.outstandingOngoing, true)}, belum ditagih ${formatRupiah(k.unbilled, true)}`],
       ["Piutang (ditagih, belum dibayar)", formatRupiah(k.outstanding, true), k.overdueInvoiceCount ? `${k.overdueInvoiceCount} invoice melewati jatuh tempo (${formatRupiah(k.overdueInvoiceAmount, true)})` : "Tidak ada invoice yang melewati jatuh tempo", k.overdueInvoiceCount ? HEALTH_COLOR.KRITIS : undefined],
       ["PAD project berjalan", formatRupiah(k.padOngoing, true), `Piutang ${formatRupiah(k.outstandingOngoing, true)} + belum ditagih ${formatRupiah(k.unbilled, true)}`],
       ["PAD project selesai", formatRupiah(k.padCompleted, true), k.completedUnpaid ? `${k.completedUnpaid} project telah selesai, belum lunas` : "Seluruh project yang selesai telah lunas", k.padCompleted ? HEALTH_COLOR.WASPADA : undefined],
       [
         "Di bawah target margin",
         k.marginTracked ? `${k.belowTarget} dari ${k.marginTracked} project` : "-",
-        k.marginTracked ? (k.belowTarget ? "Prakiraan margin akhir di bawah target project masing-masing" : "Seluruhnya diprakirakan memenuhi target") : "Belum ada project dengan data RAB dan biaya",
+        k.marginTracked ? (k.belowTarget ? "Proyeksi margin akhir di bawah target project masing-masing" : "Seluruhnya diproyeksikan memenuhi target") : "Belum ada project dengan data RAB dan biaya",
         k.belowTarget ? HEALTH_COLOR.KRITIS : undefined,
       ],
       ["Kekurangan dari target margin", k.belowTarget ? formatRupiah(k.belowTargetGap, true) : "-", k.belowTarget ? "Jumlah selisih terhadap target seluruh project tersebut" : "Tidak ada kekurangan", k.belowTarget ? HEALTH_COLOR.KRITIS : undefined],
@@ -213,7 +213,7 @@ export function generateWeeklyReportPdf(r: WeeklyReportData): Promise<Buffer> {
     doc.y = gy + ch * gridRows + 4;
     doc.x = left;
     doc.font(REG).fontSize(7).fillColor(MUTED).text(
-      "Setiap project memiliki target margin sendiri (dari RAB), sehingga margin tidak dirata-ratakan antarproject. Prakiraan margin akhir = nilai kontrak dikurangi (biaya yang telah keluar + sisa RAB untuk pekerjaan yang belum selesai). Piutang adalah invoice yang telah dikirim namun belum dibayar klien. PAD (Pendapatan yang Akan Diterima) adalah seluruh nilai kontrak yang belum diterima, yaitu piutang ditambah bagian kontrak yang belum ditagih. Nilai kontrak berjalan = dibayar + piutang + belum ditagih.",
+      "Setiap project memiliki target margin sendiri (dari RAB), sehingga margin tidak dirata-ratakan antarproject. Proyeksi margin akhir = nilai kontrak dikurangi (biaya yang telah keluar + sisa RAB untuk pekerjaan yang belum selesai). Piutang adalah invoice yang telah dikirim namun belum dibayar klien. PAD (Pendapatan yang Akan Diterima) adalah seluruh nilai kontrak yang belum diterima, yaitu piutang ditambah bagian kontrak yang belum ditagih. Nilai kontrak berjalan = dibayar + piutang + belum ditagih.",
       left,
       doc.y,
       { width }
@@ -325,7 +325,7 @@ export function generateWeeklyReportPdf(r: WeeklyReportData): Promise<Buffer> {
         r.projects.map((p, i) => ({
           cells: [
             String(i + 1),
-            `${p.name}\n${p.client}\n${p.number}  ·  PIC ${p.pic}`,
+            `${p.name}\n${p.client}\n${p.number}, PIC ${p.pic}`,
             p.contractValue ? formatRupiah(p.contractValue, true) : "-",
             [
               { text: formatPercent(p.actual), bold: true, color: BLUE, size: 9 },
@@ -367,7 +367,7 @@ export function generateWeeklyReportPdf(r: WeeklyReportData): Promise<Buffer> {
               { header: "Waktu (SPI)", width: 46, align: "center" },
               { header: "Biaya (CPI)", width: 46, align: "center" },
               { header: "Lingkup", width: 46, align: "center" },
-              { header: "Margin prakiraan / target", width: 74, align: "right" },
+              { header: "Margin proyeksi / target", width: 74, align: "right" },
               { header: "Penyebab utama", width: 163 },
             ],
             [...withCost]
@@ -390,7 +390,7 @@ export function generateWeeklyReportPdf(r: WeeklyReportData): Promise<Buffer> {
                     { text: `target ${formatPercent(p.targetMarginPct)}`, color: MUTED, size: 7.5 },
                   ],
                   p.forecastMarginPct === null
-                    ? "Prakiraan belum dapat dihitung."
+                    ? "Proyeksi belum dapat dihitung."
                     : p.signals.margin === "good"
                       ? "Sesuai target"
                       : p.marginCause.replace(/^Penyebab utama: /, "").replace(/^./, (c) => c.toUpperCase()) || "-",
@@ -398,7 +398,7 @@ export function generateWeeklyReportPdf(r: WeeklyReportData): Promise<Buffer> {
               }))
           );
           doc.font(REG).fontSize(7).fillColor(MUTED).text(
-            "SPI = progres realisasi dibagi rencana; CPI = nilai pekerjaan selesai (berdasarkan RAB) dibagi biaya aktual. Nilai 1 atau lebih berarti sesuai/lebih baik dari rencana. Lingkup menilai pekerjaan tambahan yang belum tertutup addendum. Kolom margin: prakiraan margin akhir (tebal) dibandingkan target margin project tersebut.",
+            "SPI = progres realisasi dibagi rencana; CPI = nilai pekerjaan selesai (berdasarkan RAB) dibagi biaya aktual. Nilai 1 atau lebih berarti sesuai/lebih baik dari rencana. Lingkup menilai pekerjaan tambahan yang belum tertutup addendum. Kolom margin: proyeksi margin akhir (tebal) dibandingkan target margin project tersebut.",
             left,
             doc.y,
             { width }
@@ -496,7 +496,7 @@ export function generateWeeklyReportPdf(r: WeeklyReportData): Promise<Buffer> {
       // writing below the bottom margin would make PDFKit open a new page — lift the margin while drawing
       doc.page.margins.bottom = 0;
       doc.moveTo(left, fy - 6).lineTo(left + width, fy - 6).lineWidth(0.5).strokeColor(LINE).stroke();
-      doc.font(REG).fontSize(7).fillColor(MUTED).text("PT Sucofindo (Persero)  ·  Dokumen internal — tidak untuk disebarluaskan", left, fy, { width: width / 2, lineBreak: false });
+      doc.font(REG).fontSize(7).fillColor(MUTED).text("PT Sucofindo (Persero)  |  Dokumen internal, tidak untuk disebarluaskan", left, fy, { width: width / 2, lineBreak: false });
       doc.text(`Halaman ${i + 1} dari ${range.count}`, left + width / 2, fy, { width: width / 2, align: "right", lineBreak: false });
       doc.page.margins.bottom = MARGIN_BOTTOM;
     }

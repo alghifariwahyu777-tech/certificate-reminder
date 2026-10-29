@@ -28,6 +28,7 @@ import {
   STAGE_STATUS_LABELS,
   STAGE_STATUS_COLORS,
 } from "@/lib/application";
+import { Notice } from "@/components/ui/Notice";
 
 type ApplicationInfo = {
   id: string;
@@ -74,9 +75,9 @@ type CertificateInfo = { id: string; certificateNumber: string };
 type SelectOption = { id: string; name: string };
 
 const DOC_STATUS_LABELS: Record<string, string> = {
-  UPLOADED: "Menunggu Review",
+  UPLOADED: "Menunggu review",
   APPROVED: "Disetujui",
-  REVISION_REQUIRED: "Perlu Revisi",
+  REVISION_REQUIRED: "Perlu revisi",
 };
 const DOC_STATUS_COLORS: Record<string, string> = {
   UPLOADED: "text-accent bg-accent/5 border-accent/20",
@@ -328,7 +329,7 @@ export function ApplicationReviewDetail({
       <div className="lg:col-span-2 space-y-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Informasi Permohonan</CardTitle>
+            <CardTitle>Informasi permohonan</CardTitle>
             <span className={`stamp-badge ${APPLICATION_STATUS_COLORS[application.status]}`}>
               {APPLICATION_STATUS_LABELS[application.status]}
             </span>
@@ -357,36 +358,35 @@ export function ApplicationReviewDetail({
             )}
             {application.description && (
               <p>
-                <span className="text-slate-400">Catatan Klien:</span> {application.description}
+                <span className="text-slate-400">Catatan klien:</span> {application.description}
               </p>
             )}
             <p className="text-xs text-slate-400 pt-1">
               Dibuat {formatDate(application.createdAt)}
-              {application.submittedAt ? ` · Diajukan ${formatDate(application.submittedAt)}` : ""}
+              {application.submittedAt ? `, Diajukan ${formatDate(application.submittedAt)}` : ""}
             </p>
           </CardContent>
         </Card>
 
         {certificate ? (
-          <div className="flex items-center gap-2.5 rounded-md border border-signal-activeBorder bg-signal-activeBg px-4 py-3 text-sm text-signal-active">
-            <Award className="h-4 w-4 shrink-0" />
+          <Notice tone="success">
             <span>
               Sertifikat <strong>{certificate.certificateNumber}</strong> telah diterbitkan.
             </span>
             <Link href={`/certificate/${certificate.id}`} className="ml-auto underline font-medium">
-              Lihat Sertifikat
+              Lihat sertifikat
             </Link>
-          </div>
+          </Notice>
         ) : (
           canManage &&
           application.status === "APPROVED" && (
             <div className="flex items-center justify-between gap-3 rounded-md border border-accent/20 bg-accent/5 px-4 py-3">
               <p className="text-sm text-ink">
-                Permohonan ini sudah disetujui — siap diterbitkan sertifikatnya.
+                Permohonan ini sudah disetujui, siap diterbitkan sertifikatnya.
               </p>
               <Button size="sm" onClick={() => setIssueOpen(true)}>
                 <Award className="h-3.5 w-3.5" />
-                Terbitkan Sertifikat
+                Terbitkan sertifikat
               </Button>
             </div>
           )
@@ -394,7 +394,7 @@ export function ApplicationReviewDetail({
 
         <Card>
           <CardHeader>
-            <CardTitle>Dokumen Permohonan</CardTitle>
+            <CardTitle>Dokumen permohonan</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-slate-100">
@@ -444,7 +444,7 @@ export function ApplicationReviewDetail({
                           {canManage && (
                             <Button variant="outline" size="sm" onClick={() => openReview(r.id, doc, r.documentTypeName)}>
                               <MessageSquare className="h-3.5 w-3.5" />
-                              Review
+                              Tinjau
                             </Button>
                           )}
                         </>
@@ -460,8 +460,7 @@ export function ApplicationReviewDetail({
         {stageList.length > 0 && (
           <Card>
             <CardHeader className="flex flex-row items-center gap-2">
-              <Workflow className="h-4 w-4 text-slate-400" />
-              <CardTitle>Tracking Proses</CardTitle>
+              <CardTitle>Pelacakan proses</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y divide-slate-100">
@@ -486,8 +485,8 @@ export function ApplicationReviewDetail({
                         </div>
                         <p className="text-xs text-slate-400 mt-0.5">
                           {s.picName ? `PIC: ${s.picName}` : ""}
-                          {s.targetDate ? `${s.picName ? " · " : ""}Target ${formatDate(s.targetDate)}` : ""}
-                          {s.completedDate ? `${s.picName || s.targetDate ? " · " : ""}Selesai ${formatDate(s.completedDate)}` : ""}
+                          {s.targetDate ? `${s.picName ? ", " : ""}Target ${formatDate(s.targetDate)}` : ""}
+                          {s.completedDate ? `${s.picName || s.targetDate ? ", " : ""}Selesai ${formatDate(s.completedDate)}` : ""}
                         </p>
                         {s.internalNote && <p className="text-xs text-slate-500 mt-1">{s.internalNote}</p>}
                       </div>
@@ -496,7 +495,7 @@ export function ApplicationReviewDetail({
                       <button
                         onClick={() => openStageEdit(s)}
                         className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent shrink-0"
-                        aria-label="Edit tahap"
+                        aria-label="Ubah tahap"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
@@ -513,11 +512,11 @@ export function ApplicationReviewDetail({
         <div>
           <Card>
             <CardHeader>
-              <CardTitle>Ubah Status</CardTitle>
+              <CardTitle>Ubah status</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="app-status">Status Permohonan</Label>
+                <Label htmlFor="app-status">Status permohonan</Label>
                 <Select id="app-status" value={status} onChange={(e) => setStatus(e.target.value)}>
                   {Object.entries(APPLICATION_STATUS_LABELS)
                     .filter(([key]) => key !== "COMPLETED")
@@ -529,7 +528,7 @@ export function ApplicationReviewDetail({
                 </Select>
               </div>
               <div>
-                <Label htmlFor="app-notes">Catatan Internal</Label>
+                <Label htmlFor="app-notes">Catatan internal</Label>
                 <Textarea
                   id="app-notes"
                   rows={4}
@@ -546,11 +545,11 @@ export function ApplicationReviewDetail({
 
           <Card className="mt-6">
             <CardHeader>
-              <CardTitle>Nilai Kontrak</CardTitle>
+              <CardTitle>Nilai kontrak</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="app-contract-value">Nilai Kontrak (Rp)</Label>
+                <Label htmlFor="app-contract-value">Nilai kontrak (Rp)</Label>
                 <Input
                   id="app-contract-value"
                   type="number"
@@ -561,25 +560,25 @@ export function ApplicationReviewDetail({
                 />
               </div>
               {contractError && (
-                <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+                <Notice tone="danger">
                   {contractError}
-                </div>
+                </Notice>
               )}
               <Button onClick={handleSaveContractValue} isLoading={contractSaving} className="w-full">
-                Simpan Nilai Kontrak
+                Simpan nilai kontrak
               </Button>
               <p className="text-xs text-slate-400">
-                Dipakai untuk halaman Monitoring — tidak terlihat oleh klien.
+                Dipakai untuk halaman Monitoring, tidak terlihat oleh klien.
               </p>
             </CardContent>
           </Card>
         </div>
       )}
 
-      <Modal isOpen={!!stageEditTarget} onClose={() => setStageEditTarget(null)} title={`Edit Tahap: ${stageEditTarget?.name || ""}`}>
+      <Modal isOpen={!!stageEditTarget} onClose={() => setStageEditTarget(null)} title={`Ubah tahap: ${stageEditTarget?.name || ""}`}>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="stage-edit-status">Status Tahap</Label>
+            <Label htmlFor="stage-edit-status">Status tahap</Label>
             <Select id="stage-edit-status" value={stageEditStatus} onChange={(e) => setStageEditStatus(e.target.value)}>
               {Object.entries(STAGE_STATUS_LABELS).map(([key, label]) => (
                 <option key={key} value={key}>
@@ -593,7 +592,7 @@ export function ApplicationReviewDetail({
             <Input id="stage-edit-pic" value={stageEditPic} onChange={(e) => setStageEditPic(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="stage-edit-note">Catatan Internal (opsional)</Label>
+            <Label htmlFor="stage-edit-note">Catatan internal (opsional)</Label>
             <Textarea id="stage-edit-note" rows={3} value={stageEditNote} onChange={(e) => setStageEditNote(e.target.value)} />
           </div>
           <div className="flex justify-end gap-2">
@@ -628,7 +627,7 @@ export function ApplicationReviewDetail({
               isLoading={reviewSaving === "REVISION_REQUIRED"}
               onClick={() => handleReview("REVISION_REQUIRED")}
             >
-              Minta Revisi
+              Minta revisi
             </Button>
             <Button isLoading={reviewSaving === "APPROVED"} onClick={() => handleReview("APPROVED")}>
               Setujui
@@ -637,11 +636,11 @@ export function ApplicationReviewDetail({
         </div>
       </Modal>
 
-      <Modal isOpen={issueOpen} onClose={() => setIssueOpen(false)} title="Terbitkan Sertifikat" maxWidth="max-w-lg">
+      <Modal isOpen={issueOpen} onClose={() => setIssueOpen(false)} title="Terbitkan sertifikat" maxWidth="max-w-lg">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="issue-number">Nomor Sertifikat</Label>
+              <Label htmlFor="issue-number">Nomor sertifikat</Label>
               <Input
                 id="issue-number"
                 value={issueForm.certificateNumber}
@@ -665,7 +664,7 @@ export function ApplicationReviewDetail({
           </div>
 
           <div>
-            <Label htmlFor="issue-name">Nama Sertifikat</Label>
+            <Label htmlFor="issue-name">Nama sertifikat</Label>
             <Input
               id="issue-name"
               value={issueForm.certificateName}
@@ -690,7 +689,7 @@ export function ApplicationReviewDetail({
               </Select>
             </div>
             <div>
-              <Label htmlFor="issue-issuing-body">Instansi Penerbit (opsional)</Label>
+              <Label htmlFor="issue-issuing-body">Instansi penerbit (opsional)</Label>
               <Input
                 id="issue-issuing-body"
                 value={issueForm.issuingBody}
@@ -701,7 +700,7 @@ export function ApplicationReviewDetail({
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="issue-issuedate">Tanggal Terbit</Label>
+              <Label htmlFor="issue-issuedate">Tanggal terbit</Label>
               <Input
                 id="issue-issuedate"
                 type="date"
@@ -710,7 +709,7 @@ export function ApplicationReviewDetail({
               />
             </div>
             <div>
-              <Label htmlFor="issue-validfrom">Berlaku Sejak</Label>
+              <Label htmlFor="issue-validfrom">Berlaku sejak</Label>
               <Input
                 id="issue-validfrom"
                 type="date"
@@ -719,7 +718,7 @@ export function ApplicationReviewDetail({
               />
             </div>
             <div>
-              <Label htmlFor="issue-expiry">Tanggal Berakhir</Label>
+              <Label htmlFor="issue-expiry">Tanggal berakhir</Label>
               <Input
                 id="issue-expiry"
                 type="date"
@@ -750,7 +749,7 @@ export function ApplicationReviewDetail({
           </div>
 
           <div>
-            <Label htmlFor="issue-doc">Dokumen Sertifikat</Label>
+            <Label htmlFor="issue-doc">Dokumen sertifikat</Label>
             <label className="cursor-pointer block">
               <input
                 type="file"
@@ -771,9 +770,9 @@ export function ApplicationReviewDetail({
           </div>
 
           {issueError && (
-            <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+            <Notice tone="danger">
               {issueError}
-            </div>
+            </Notice>
           )}
 
           <div className="flex justify-end gap-2 pt-1">
@@ -782,7 +781,7 @@ export function ApplicationReviewDetail({
             </Button>
             <Button onClick={handleIssueCertificate} isLoading={issueSaving}>
               <Award className="h-4 w-4" />
-              Terbitkan & Selesaikan Permohonan
+              Terbitkan dan selesaikan permohonan
             </Button>
           </div>
         </div>

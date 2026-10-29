@@ -49,9 +49,9 @@ export async function GET(request: NextRequest) {
 
   // --- Sheet 1: one row per project -----------------------------------------
   const ws = wb.addWorksheet("Monitoring Project", { views: [{ state: "frozen", ySplit: 4, xSplit: 2 }] });
-  ws.getCell(1, 1).value = "Monitoring Realisasi Project — PT Sucofindo (Persero)";
+  ws.getCell(1, 1).value = "Monitoring Realisasi Project, PT Sucofindo (Persero)";
   ws.getCell(1, 1).font = { bold: true, size: 13 };
-  ws.getCell(2, 1).value = `Dibuat: ${new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} · ${filtered.length} project`;
+  ws.getCell(2, 1).value = `Dibuat: ${new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })}, ${filtered.length} project`;
   ws.getCell(2, 1).font = { italic: true, size: 9, color: { argb: "FF64748B" } };
   ws.addRow([]);
 
@@ -87,8 +87,8 @@ export async function GET(request: NextRequest) {
     { header: "Kendala Terbuka", width: 10 },
     { header: "Margin Rencana (%)", width: 11, fmt: PCT },
     { header: "Margin Aktual (%)", width: 11, fmt: PCT },
-    { header: "Prakiraan Margin Akhir (%)", width: 12, fmt: PCT },
-    { header: "Prakiraan Biaya Akhir", width: 18, fmt: RUPIAH },
+    { header: "Proyeksi Margin Akhir (%)", width: 12, fmt: PCT },
+    { header: "Proyeksi Biaya Akhir", width: 18, fmt: RUPIAH },
     { header: "Biaya Akibat Keterlambatan", width: 18, fmt: RUPIAH },
     { header: "Biaya Pekerjaan Tambahan", width: 18, fmt: RUPIAH },
     { header: "Penyebab Margin Tergerus", width: 60 },
@@ -176,7 +176,7 @@ export async function GET(request: NextRequest) {
     { header: "Jatuh Tempo", width: 12, fmt: "dd/mm/yyyy" },
     { header: "Tgl Bayar", width: 12, fmt: "dd/mm/yyyy" },
     { header: "Nominal Dibayar", width: 18, fmt: RUPIAH },
-    { header: "Lewat Jatuh Tempo", width: 10 },
+    { header: "Lewat jatuh tempo", width: 10 },
   ];
   styleHeader(ts.addRow(tcols.map((c) => c.header)));
   tcols.forEach((c, i) => {

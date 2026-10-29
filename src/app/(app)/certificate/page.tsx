@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { CertificateListClient } from "@/components/certificate/CertificateListClient";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function CertificatePage() {
   const session = await getSession();
@@ -15,18 +16,18 @@ export default async function CertificatePage() {
     <>
       <Navbar
         title="Sertifikat Klien"
-        subtitle="Seluruh data sertifikat dalam registry"
+        subtitle="Daftar seluruh sertifikat klien"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}
       />
-      <div className="p-5 md:p-8">
+      <PageBody>
         <CertificateListClient
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
           clients={clients.map((c) => ({ id: c.id, name: c.name }))}
           departments={departments.map((d) => ({ id: d.id, name: d.name }))}
           canManage={session?.role === "ADMIN"}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

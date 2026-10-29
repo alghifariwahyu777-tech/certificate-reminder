@@ -1,5 +1,7 @@
 "use client";
 
+import { SearchPopoverButton } from "@/components/ui/SearchPopoverButton";
+import { filterGroupClass, toolbarClass } from "@/components/ui/Toolbar";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Search, FileSpreadsheet } from "lucide-react";
@@ -63,19 +65,13 @@ export function MonitoringTable({ initialRows }: { initialRows: MonitoringRow[] 
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-        <div className="flex flex-col sm:flex-row gap-3 flex-1">
-          <div className="relative max-w-sm flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Cari nomor, klien, atau layanan..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+      <div className={toolbarClass}>
+        <div className={filterGroupClass}>
+          <div>
+            <SearchPopoverButton value={search} onChange={setSearch} label="Cari permohonan" placeholder="Nomor, klien, atau layanan..." />
           </div>
-          <Select value={stateFilter} onChange={(e) => setStateFilter(e.target.value)} className="sm:w-48">
-            <option value="">Semua Status</option>
+          <Select value={stateFilter} onChange={(e) => setStateFilter(e.target.value)}>
+            <option value="">Semua status</option>
             <option value="BERJALAN">Berjalan</option>
             <option value="SELESAI">Selesai</option>
             <option value="BERHENTI">Berhenti</option>
@@ -83,7 +79,7 @@ export function MonitoringTable({ initialRows }: { initialRows: MonitoringRow[] 
         </div>
         <Button variant="outline" onClick={handleExport} isLoading={exporting}>
           <FileSpreadsheet className="h-4 w-4" />
-          Export Excel
+          Ekspor Excel
         </Button>
       </div>
 
@@ -91,21 +87,21 @@ export function MonitoringTable({ initialRows }: { initialRows: MonitoringRow[] 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-slate-500 border-b border-slate-100 bg-slate-50/60">
+              <tr className="th-row">
                 <th className="px-4 py-3 font-medium">Nomor</th>
                 <th className="px-4 py-3 font-medium">Klien</th>
                 <th className="px-4 py-3 font-medium">Layanan</th>
-                <th className="px-4 py-3 font-medium">Tahap Saat Ini</th>
-                <th className="px-4 py-3 font-medium text-right">Hari di Tahap Ini</th>
-                <th className="px-4 py-3 font-medium text-right">Total Hari</th>
+                <th className="px-4 py-3 font-medium">Tahap saat ini</th>
+                <th className="px-4 py-3 font-medium text-right">Hari di tahap ini</th>
+                <th className="px-4 py-3 font-medium text-right">Total hari</th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium text-right">Nilai Kontrak</th>
+                <th className="px-4 py-3 font-medium text-right">Nilai kontrak</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
                     Tidak ada permohonan yang cocok.
                   </td>
                 </tr>

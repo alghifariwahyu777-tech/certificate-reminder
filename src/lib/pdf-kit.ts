@@ -39,7 +39,7 @@ export function createReport(opts: { title: string; headerLeft: string; headerRi
     layout: "portrait",
     margins: { top: MARGIN_TOP, bottom: MARGIN_BOTTOM, left: MARGIN_X, right: MARGIN_X },
     bufferPages: true,
-    info: { Title: opts.title, Author: "PT Sucofindo (Persero) — Reminder System" },
+    info: { Title: opts.title, Author: "PT Sucofindo (Persero), Reminder System" },
   });
   const chunks: Buffer[] = [];
   const done = new Promise<Buffer>((resolve, reject) => {

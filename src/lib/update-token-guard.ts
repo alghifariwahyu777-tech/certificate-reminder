@@ -16,8 +16,8 @@ export async function resolveUpdateToken(token: string) {
   });
   if (!project) return { error: "Project tidak ditemukan." } as const;
   if (t.email && (project.picEmail || "").trim().toLowerCase() !== t.email.trim().toLowerCase()) {
-    return { error: "PIC project ini sudah berganti — link ini tidak berlaku lagi." } as const;
+    return { error: "PIC project ini sudah berganti, link ini tidak berlaku lagi." } as const;
   }
-  if (project.status !== "ONGOING") return { error: "Project ini sudah tidak berjalan — update progres ditutup." } as const;
+  if (project.status !== "ONGOING") return { error: "Project ini sudah tidak berjalan, update progres ditutup." } as const;
   return { project } as const;
 }

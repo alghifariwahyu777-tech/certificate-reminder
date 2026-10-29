@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
 import { useToast } from "@/components/ui/Toast";
+import { Notice } from "@/components/ui/Notice";
 
 function toDateInputValue(value?: string | null) {
   if (!value) return "";
@@ -115,18 +116,18 @@ export function EquipmentForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <Card>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="eq-name">Nama Alat</Label>
+              <Label htmlFor="eq-name">Nama alat</Label>
               <Input id="eq-name" {...register("name")} error={errors.name?.message} placeholder="Contoh: Multimeter Digital" />
             </div>
             <div>
               <Label htmlFor="eq-category">Kategori</Label>
               <Select id="eq-category" {...register("categoryId")} error={errors.categoryId?.message}>
-                <option value="">— Pilih kategori —</option>
+                <option value="">Pilih kategori</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -138,11 +139,11 @@ export function EquipmentForm({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="eq-asset">Nomor Aset/CODE</Label>
+              <Label htmlFor="eq-asset">Kode aset</Label>
               <Input id="eq-asset" {...register("assetNumber")} error={errors.assetNumber?.message} />
             </div>
             <div>
-              <Label htmlFor="eq-serial">Serial Number</Label>
+              <Label htmlFor="eq-serial">Nomor seri</Label>
               <Input id="eq-serial" {...register("serialNumber")} error={errors.serialNumber?.message} />
             </div>
           </div>
@@ -164,35 +165,35 @@ export function EquipmentForm({
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <Label htmlFor="eq-condition">Kondisi Barang</Label>
+              <Label htmlFor="eq-condition">Kondisi barang</Label>
               <Select id="eq-condition" {...register("condition")} error={errors.condition?.message}>
-                <option value="">— Pilih —</option>
+                <option value="">Pilih</option>
                 <option value="Baik">Baik</option>
                 <option value="Cukup">Cukup</option>
-                <option value="Rusak Ringan">Rusak Ringan</option>
-                <option value="Rusak Berat">Rusak Berat</option>
+                <option value="Rusak Ringan">Rusak ringan</option>
+                <option value="Rusak Berat">Rusak berat</option>
               </Select>
             </div>
             <div>
-              <Label htmlFor="eq-usageStatus">Status Barang</Label>
+              <Label htmlFor="eq-usageStatus">Status barang</Label>
               <Select id="eq-usageStatus" {...register("usageStatus")} error={errors.usageStatus?.message}>
-                <option value="">— Pilih —</option>
+                <option value="">Pilih</option>
                 <option value="Terpakai">Terpakai</option>
-                <option value="Tidak Terpakai">Tidak Terpakai</option>
-                <option value="Dalam Perbaikan">Dalam Perbaikan</option>
+                <option value="Tidak Terpakai">Tidak terpakai</option>
+                <option value="Dalam Perbaikan">Dalam perbaikan</option>
                 <option value="Afkir">Afkir</option>
               </Select>
             </div>
             <div>
-              <Label htmlFor="eq-ownerUnit">Unit Kerja Pemilik</Label>
+              <Label htmlFor="eq-ownerUnit">Unit kerja pemilik</Label>
               <Input id="eq-ownerUnit" {...register("ownerUnit")} error={errors.ownerUnit?.message} placeholder="Contoh: SCI Cilacap" />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="eq-pic">PIC Alat</Label>
+            <Label htmlFor="eq-pic">PIC alat</Label>
             <Select id="eq-pic" {...register("picId")} error={errors.picId?.message}>
-              <option value="">— Pilih personil —</option>
+              <option value="">Pilih personil</option>
               {employees.map((e) => (
                 <option key={e.id} value={e.id}>
                   {e.name}
@@ -200,53 +201,53 @@ export function EquipmentForm({
                 </option>
               ))}
             </Select>
-            <p className="text-xs text-slate-400 mt-1">Reminder kalibrasi akan dikirim ke email PIC ini.</p>
+            <p className="text-xs text-slate-400 mt-1">Pengingat kalibrasi dikirim ke email PIC ini.</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="eq-calNumber">Nomor Sertifikat Kalibrasi</Label>
+              <Label htmlFor="eq-calNumber">Nomor sertifikat kalibrasi</Label>
               <Input id="eq-calNumber" {...register("calibrationNumber")} error={errors.calibrationNumber?.message} />
             </div>
             <div>
-              <Label htmlFor="eq-calBy">Lembaga Kalibrasi</Label>
+              <Label htmlFor="eq-calBy">Lembaga kalibrasi</Label>
               <Input id="eq-calBy" {...register("calibratedBy")} error={errors.calibratedBy?.message} />
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <Label htmlFor="eq-calType">Jenis Kalibrasi</Label>
+              <Label htmlFor="eq-calType">Jenis kalibrasi</Label>
               <Select id="eq-calType" {...register("calibrationType")} error={errors.calibrationType?.message}>
-                <option value="">— Pilih —</option>
+                <option value="">Pilih</option>
                 <option value="Internal">Internal</option>
                 <option value="Eksternal">Eksternal</option>
               </Select>
             </div>
             <div>
-              <Label htmlFor="eq-calInterval">Interval Kalibrasi</Label>
+              <Label htmlFor="eq-calInterval">Interval kalibrasi</Label>
               <Select id="eq-calInterval" {...register("calibrationInterval")} error={errors.calibrationInterval?.message}>
-                <option value="">— Pilih —</option>
+                <option value="">Pilih</option>
                 <option value="6 Bulan">6 Bulan</option>
                 <option value="1 Tahun">1 Tahun</option>
                 <option value="2 Tahun">2 Tahun</option>
               </Select>
             </div>
             <div>
-              <Label htmlFor="eq-range">Range / Kapasitas</Label>
+              <Label htmlFor="eq-range">Range / kapasitas</Label>
               <Input id="eq-range" {...register("measurementRange")} error={errors.measurementRange?.message} placeholder="Contoh: 0 - 210 °C" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="eq-lastCal">Kalibrasi Terakhir</Label>
+              <Label htmlFor="eq-lastCal">Kalibrasi terakhir</Label>
               <Input id="eq-lastCal" type="date" {...register("lastCalibrationDate")} error={errors.lastCalibrationDate?.message} />
             </div>
             <div>
-              <Label htmlFor="eq-nextCal">Kalibrasi Berikutnya</Label>
+              <Label htmlFor="eq-nextCal">Kalibrasi berikutnya</Label>
               <Input id="eq-nextCal" type="date" {...register("nextCalibrationDate")} error={errors.nextCalibrationDate?.message} />
-              <p className="text-xs text-slate-400 mt-1">Reminder dihitung dari tanggal ini.</p>
+              <p className="text-xs text-slate-400 mt-1">Pengingat dihitung dari tanggal ini.</p>
             </div>
           </div>
 
@@ -256,9 +257,9 @@ export function EquipmentForm({
           </div>
 
           <div>
-            <Label>Sertifikat Kalibrasi</Label>
+            <Label>Sertifikat kalibrasi</Label>
             <label className="cursor-pointer block">
-              <div className="flex items-center gap-2 rounded border border-dashed border-slate-300 px-3 py-2.5 text-sm text-slate-500 hover:border-accent hover:bg-accent/5">
+              <div className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 px-4 py-5 text-sm text-slate-500 transition-colors hover:border-accent hover:bg-accent/5 dark:border-slate-600">
                 {fileUrl && !uploading ? <FileText className="h-4 w-4 text-accent" /> : <UploadCloud className="h-4 w-4" />}
                 {uploading ? "Mengunggah..." : fileName || "Klik untuk unggah PDF, JPG, atau PNG (maks. 20 MB)"}
               </div>
@@ -275,19 +276,18 @@ export function EquipmentForm({
       </Card>
 
       {serverError && (
-        <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2.5 text-sm text-signal-expired">
+        <Notice tone="danger">
           {serverError}
-        </div>
+        </Notice>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={() => router.back()}>
+          Batal
+        </Button>
         <Button type="submit" isLoading={isSubmitting} disabled={uploading}>
           <Save className="h-4 w-4" />
-          Simpan
-        </Button>
-        <Button type="button" variant="outline" onClick={() => router.back()}>
-          <X className="h-4 w-4" />
-          Batal
+          {isEdit ? "Simpan perubahan" : "Simpan alat"}
         </Button>
       </div>
     </form>

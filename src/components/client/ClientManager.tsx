@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { IconBox } from "@/components/ui/IconBox";
+import { ENTITY_ICON } from "@/lib/entity-icons";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Pencil, Trash2, Building2, Mail, Phone, MapPin, User, KeyRound } from "lucide-react";
@@ -11,6 +13,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { clientSchema, type ClientInput } from "@/lib/validations";
 import { ClientPortalUsersModal } from "@/components/client/ClientPortalUsersModal";
+import { Notice } from "@/components/ui/Notice";
 
 type ClientItem = {
   id: string;
@@ -124,7 +127,7 @@ export function ClientManager({
         {canManage && (
           <Button onClick={openAdd}>
             <Plus className="h-4 w-4" />
-            Tambah Klien
+            Tambah klien
           </Button>
         )}
       </div>
@@ -132,16 +135,14 @@ export function ClientManager({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {clients.length === 0 && (
           <Card className="sm:col-span-2">
-            <p className="px-5 py-10 text-center text-sm text-slate-400">Belum ada klien terdaftar.</p>
+            <p className="px-5 py-10 text-center text-sm text-slate-500">Belum ada klien terdaftar.</p>
           </Card>
         )}
         {clients.map((client) => (
           <Card key={client.id} className="p-5">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3 min-w-0">
-                <div className="h-9 w-9 rounded bg-ink/5 text-ink flex items-center justify-center border border-ink/10 shrink-0">
-                  <Building2 className="h-4.5 w-4.5" />
-                </div>
+                <IconBox icon={ENTITY_ICON.client} />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-ink truncate">{client.name}</p>
                   <p className="text-xs text-slate-400 font-mono mt-0.5">
@@ -155,14 +156,14 @@ export function ClientManager({
                     onClick={() => setPortalUsersTarget(client)}
                     className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
                     aria-label="Kelola akun portal"
-                    title="Akun Portal"
+                    title="Akun portal"
                   >
                     <KeyRound className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => openEdit(client)}
                     className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
-                    aria-label="Edit klien"
+                    aria-label="Ubah klien"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
@@ -211,16 +212,16 @@ export function ClientManager({
       <Modal
         isOpen={formOpen}
         onClose={() => setFormOpen(false)}
-        title={editTarget ? "Edit Klien" : "Tambah Klien"}
+        title={editTarget ? "Ubah klien" : "Tambah klien"}
         maxWidth="max-w-lg"
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div>
-            <Label htmlFor="client-name">Nama Perusahaan</Label>
+            <Label htmlFor="client-name">Nama perusahaan</Label>
             <Input id="client-name" error={errors.name?.message} {...register("name")} />
           </div>
           <div>
-            <Label htmlFor="client-contact">Contact Person</Label>
+            <Label htmlFor="client-contact">Narahubung</Label>
             <Input id="client-contact" error={errors.contactPerson?.message} {...register("contactPerson")} />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -239,9 +240,9 @@ export function ClientManager({
           </div>
 
           {serverError && (
-            <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+            <Notice tone="danger">
               {serverError}
-            </div>
+            </Notice>
           )}
 
           <div className="flex justify-end gap-2 pt-1">
@@ -255,14 +256,14 @@ export function ClientManager({
         </form>
       </Modal>
 
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus Klien">
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus klien">
         <p className="text-sm text-slate-600">
           Apakah Anda yakin ingin menghapus klien <strong className="text-ink">{deleteTarget?.name}</strong>?
         </p>
         {deleteError && (
-          <div className="mt-3 rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+          <Notice tone="danger" className="mt-3">
             {deleteError}
-          </div>
+          </Notice>
         )}
         <div className="flex justify-end gap-2 mt-5">
           <Button variant="outline" onClick={() => setDeleteTarget(null)}>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus, Eye, Pencil, Trash2, X, ArrowUpDown } from "lucide-react";
 import { SearchPopoverButton } from "@/components/ui/SearchPopoverButton";
+import { filterGroupClass, toolbarActionsClass, toolbarClass } from "@/components/ui/Toolbar";
 import { Input, Select } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -48,10 +49,12 @@ export function ProjectListClient({
   initialProjects,
   categories,
   canManage = true,
+  extraActions,
 }: {
   initialProjects: ProjectItem[];
   categories: { id: string; name: string }[];
   canManage?: boolean;
+  extraActions?: React.ReactNode;
 }) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -140,7 +143,7 @@ export function ProjectListClient({
         return;
       }
       setItems((prev) => prev.filter((i) => i.id !== deleteTarget.id));
-      showToast("Project dipindahkan ke Trash.");
+      showToast("Project dipindahkan ke Sampah.");
       setDeleteTarget(null);
       router.refresh();
     } finally {
@@ -173,9 +176,9 @@ export function ProjectListClient({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
-          <div className="col-span-2 sm:col-span-1">
+      <div className={toolbarClass}>
+        <div className={filterGroupClass}>
+          <div>
             <SearchPopoverButton
               value={search}
               onChange={setSearch}
@@ -206,14 +209,17 @@ export function ProjectListClient({
             ))}
           </Select>
         </div>
-        {canManage && (
-          <Link href="/projects/new">
-            <Button>
-              <Plus className="h-4 w-4" />
-              Project baru
-            </Button>
-          </Link>
-        )}
+        <div className={toolbarActionsClass}>
+          {extraActions}
+          {canManage && (
+            <Link href="/projects/new">
+              <Button className="w-full">
+                <Plus className="h-4 w-4" />
+                Tambah project
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
 
       {canManage && selectedIds.size > 0 && (
@@ -238,7 +244,7 @@ export function ProjectListClient({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-slate-500 border-b border-slate-100 bg-slate-50/60">
+              <tr className="th-row">
                 {canManage && (
                   <th className="px-4 py-3 font-medium w-10">
                     <input
@@ -269,7 +275,7 @@ export function ProjectListClient({
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={canManage ? 8 : 7} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={canManage ? 8 : 7} className="px-4 py-10 text-center text-slate-500">
                     Belum ada project yang cocok.
                   </td>
                 </tr>
@@ -293,7 +299,7 @@ export function ProjectListClient({
                           {p.projectName}
                         </Link>
                         <p className="text-xs text-slate-500">
-                          {p.projectNumber} · {p.categoryName} · PIC {p.pic}
+                          {p.projectNumber}, {p.categoryName}, PIC {p.pic}
                         </p>
                       </td>
                       <td className="px-4 py-3 text-slate-600">{p.clientName}</td>
@@ -338,7 +344,7 @@ export function ProjectListClient({
                               <Link
                                 href={`/projects/${p.id}/edit`}
                                 className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
-                                aria-label="Edit"
+                                aria-label="Ubah"
                               >
                                 <Pencil className="h-4 w-4" />
                               </Link>
@@ -362,11 +368,11 @@ export function ProjectListClient({
         </div>
       </Card>
 
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus Project">
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus project">
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Apakah Anda yakin ingin menghapus project{" "}
           <strong className="text-ink dark:text-slate-100">{deleteTarget?.projectName}</strong>? Data akan
-          dipindahkan ke Trash dan bisa dipulihkan.
+          dipindahkan ke Sampah dan bisa dipulihkan.
         </p>
         <div className="flex justify-end gap-2 mt-5">
           <Button variant="outline" onClick={() => setDeleteTarget(null)}>
@@ -378,10 +384,10 @@ export function ProjectListClient({
         </div>
       </Modal>
 
-      <Modal isOpen={bulkDeleteOpen} onClose={() => setBulkDeleteOpen(false)} title="Hapus Project Terpilih">
+      <Modal isOpen={bulkDeleteOpen} onClose={() => setBulkDeleteOpen(false)} title="Hapus project terpilih">
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          Akan memindahkan <strong>{selectedIds.size}</strong> project ke Trash. Data bisa dipulihkan
-          nanti dari halaman Trash. Lanjutkan?
+          Akan memindahkan <strong>{selectedIds.size}</strong> project ke Sampah. Data bisa dipulihkan
+          nanti dari halaman Sampah. Lanjutkan?
         </p>
         <div className="flex justify-end gap-2 mt-5">
           <Button variant="outline" onClick={() => setBulkDeleteOpen(false)}>

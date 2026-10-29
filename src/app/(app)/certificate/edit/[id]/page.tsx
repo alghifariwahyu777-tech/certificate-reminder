@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { CertificateForm } from "@/components/certificate/CertificateForm";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function EditCertificatePage(context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -22,7 +23,7 @@ export default async function EditCertificatePage(context: { params: Promise<{ i
   return (
     <>
       <Navbar title="Ubah Sertifikat" subtitle={certificate.certificateName} adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
-      <div className="p-5 md:p-8 max-w-3xl">
+      <PageBody width="form">
         <CertificateForm
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
           clients={clients.map((c) => ({ id: c.id, name: c.name }))}
@@ -36,7 +37,7 @@ export default async function EditCertificatePage(context: { params: Promise<{ i
             updatedAt: certificate.updatedAt.toISOString(),
           }}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

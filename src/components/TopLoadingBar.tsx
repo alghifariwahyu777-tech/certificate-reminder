@@ -24,7 +24,7 @@ export function TopLoadingBar() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   function start() {
-    if (timerRef.current) return; // already running — don't restart mid-flight
+    if (timerRef.current) return; // already running, don't restart mid-flight
     setVisible(true);
     setWidth(20);
     timerRef.current = setInterval(() => {

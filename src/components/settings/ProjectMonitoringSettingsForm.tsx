@@ -51,16 +51,16 @@ export function ProjectMonitoringSettingsForm({ canManage, initial }: { canManag
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Monitoring Project</CardTitle>
-        <p className="text-xs text-slate-500 mt-1">Ambang untuk status kesehatan project dan reminder realisasi harian.</p>
+        <CardTitle>Monitoring project</CardTitle>
+        <p className="text-xs text-slate-500 mt-1">Ambang untuk status kesehatan project dan pengingat realisasi harian.</p>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
-          {field("projectDeviationWarning", "Ambang Waspada", "Terlambat dari rencana sebesar ini → Waspada.", "poin %")}
-          {field("projectDeviationCritical", "Ambang Kritis", "Terlambat sebesar ini → Kritis + email ke PIC.", "poin %")}
-          {field("projectProgressStaleDays", "Progres tidak diperbarui", "Kirim pengingat update progres setelah sekian hari.", "hari")}
+          {field("projectDeviationWarning", "Ambang waspada", "Project berstatus waspada bila terlambat dari rencana sebesar ini.", "poin %")}
+          {field("projectDeviationCritical", "Ambang kritis", "Project berstatus kritis dan PIC menerima email bila terlambat sebesar ini.", "poin %")}
+          {field("projectProgressStaleDays", "Progres tidak diperbarui", "Kirim pengingat pembaruan progres setelah sekian hari.", "hari")}
           {field("projectInvoiceOverdueDays", "Invoice tanpa jatuh tempo", "Dianggap telat setelah sekian hari sejak tgl invoice.", "hari")}
-          {field("projectMarginDropAlert", "Margin tergerus", "Margin aktual/prakiraan turun sebesar ini dari rencana → masuk laporan sebagai hal yang perlu keputusan.", "poin %")}
+          {field("projectMarginDropAlert", "Margin tergerus", "Masuk laporan sebagai hal yang perlu keputusan bila proyeksi margin turun sebesar ini dari rencana.", "poin %")}
         </div>
         {error && <p className="text-sm text-signal-expired">{error}</p>}
         {canManage && (

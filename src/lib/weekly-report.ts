@@ -319,7 +319,7 @@ export async function buildWeeklyReport(): Promise<WeeklyReportData> {
       tone: "bad",
       project: r.projectName,
       projectId: r.id,
-      text: `prakiraan margin akhir ${formatPercent(m.forecastMarginPct)}, di bawah target project ${formatPercent(m.targetMarginPct)} (kurang ${formatRupiah(m.targetGap, true)} dari target). ${m.cause}`.trim(),
+      text: `proyeksi margin akhir ${formatPercent(m.forecastMarginPct)}, di bawah target project ${formatPercent(m.targetMarginPct)} (kurang ${formatRupiah(m.targetGap, true)} dari target). ${m.cause}`.trim(),
       suggestion: marginSuggestion(m),
     });
   }
@@ -448,10 +448,10 @@ export function renderWeeklyReportEmail(r: WeeklyReportData, opts: { logoSrc?: s
     `<h3 style="font-size:15px;color:#123F6B;margin:22px 0 6px;padding-bottom:4px;border-bottom:1px solid #E3E8EF;">${n}. ${esc(t)}</h3>`;
   const k = r.kpi;
   const kpis = `<table width="100%" cellpadding="0" cellspacing="6" style="margin:8px -6px 4px;"><tr>
-${kpiCell("Project berjalan", String(k.ongoing), `${k.kritis} kritis · ${k.waspada} waspada · ${k.onTrack} sesuai rencana`, k.kritis ? "#B91C1C" : "#0F172A")}
+${kpiCell("Project berjalan", String(k.ongoing), `${k.kritis} kritis, ${k.waspada} waspada, ${k.onTrack} sesuai rencana`, k.kritis ? "#B91C1C" : "#0F172A")}
 ${kpiCell("Progres", formatPercent(k.actual), `dari rencana ${formatPercent(k.planned)}`)}
-${kpiCell("Piutang", formatRupiah(k.outstanding, true), `sudah ditagih, belum dibayar${k.overdueInvoiceCount ? ` · ${k.overdueInvoiceCount} invoice melewati jatuh tempo` : ""}`, k.overdueInvoiceCount ? "#B91C1C" : "#0F172A")}
-${kpiCell("PAD", formatRupiah(k.pad, true), `project berjalan ${formatRupiah(k.padOngoing, true)} · project selesai ${formatRupiah(k.padCompleted, true)}`)}
+${kpiCell("Piutang", formatRupiah(k.outstanding, true), `sudah ditagih, belum dibayar${k.overdueInvoiceCount ? `, ${k.overdueInvoiceCount} invoice melewati jatuh tempo` : ""}`, k.overdueInvoiceCount ? "#B91C1C" : "#0F172A")}
+${kpiCell("PAD", formatRupiah(k.pad, true), `project berjalan ${formatRupiah(k.padOngoing, true)}, project selesai ${formatRupiah(k.padCompleted, true)}`)}
 </tr></table>`;
 
   // numbered list; the number's colour carries the urgency (red = segera, amber = perlu dipantau) — no extra bullet
@@ -474,7 +474,7 @@ ${kpiCell("PAD", formatRupiah(k.pad, true), `project berjalan ${formatRupiah(k.p
 ${urgentList(
   r.urgentCerts.slice(0, 5).map(
     (c) =>
-      `<li>${esc(c.employee)} — ${esc(c.cert)}: <span style="color:${c.days < 0 ? "#B91C1C" : "#B45309"};">${c.days < 0 ? `telah berakhir ${Math.abs(c.days)} hari lalu` : `berakhir dalam ${c.days} hari`}</span>${c.onProjects.length ? ` <span style="color:#64748B;">(sedang bertugas di ${c.onProjects.length} project)</span>` : ""}</li>`
+      `<li>${esc(c.employee)}, ${esc(c.cert)}: <span style="color:${c.days < 0 ? "#B91C1C" : "#B45309"};">${c.days < 0 ? `telah berakhir ${Math.abs(c.days)} hari lalu` : `berakhir dalam ${c.days} hari`}</span>${c.onProjects.length ? ` <span style="color:#64748B;">(sedang bertugas di ${c.onProjects.length} project)</span>` : ""}</li>`
   )
 )}
 ${urgentList(
@@ -489,10 +489,10 @@ ${urgentList(
   const hm = r.hse.month;
   const hseRisk = (n: number) => `${h3(n, "HSE dan risiko")}
 <table width="100%" cellpadding="0" cellspacing="6" style="margin:4px -6px 2px;"><tr>
-${kpiCell(`Kecelakaan kerja ${r.hse.monthLabel}`, String(hm.fatality + hm.lti), `${hm.fatality} fatal · ${hm.lti} hilang hari kerja · ${hm.medical} perawatan medis`, hm.fatality + hm.lti ? "#B91C1C" : "#15803D")}
-${kpiCell("Nyaris celaka", String(hm.nearMiss), `${hm.firstAid} P3K · ${hm.manHours.toLocaleString("id-ID")} jam kerja`)}
+${kpiCell(`Kecelakaan kerja ${r.hse.monthLabel}`, String(hm.fatality + hm.lti), `${hm.fatality} fatal, ${hm.lti} hilang hari kerja, ${hm.medical} perawatan medis`, hm.fatality + hm.lti ? "#B91C1C" : "#15803D")}
+${kpiCell("Nyaris celaka", String(hm.nearMiss), `${hm.firstAid} P3K, ${hm.manHours.toLocaleString("id-ID")} jam kerja`)}
 ${kpiCell("LTIFR / TRIR", `${(r.hse.total.ltifr ?? 0).toLocaleString("id-ID")} / ${(r.hse.total.trir ?? 0).toLocaleString("id-ID")}`, "kumulatif per 1 juta jam kerja", r.hse.total.ltifr ? "#B91C1C" : "#15803D")}
-${kpiCell("Risiko terbuka", String(r.riskCounts.open), `${r.riskCounts.extreme} ekstrem · ${r.riskCounts.high} tinggi · ${r.riskCounts.late} lewat target`, r.riskCounts.extreme ? "#B91C1C" : "#0F172A")}
+${kpiCell("Risiko terbuka", String(r.riskCounts.open), `${r.riskCounts.extreme} ekstrem, ${r.riskCounts.high} tinggi, ${r.riskCounts.late} lewat target`, r.riskCounts.extreme ? "#B91C1C" : "#0F172A")}
 </tr></table>
 ${hm.expected ? `<p style="margin:2px 0 0;font-size:12.5px;color:${r.hse.missing.length ? "#B45309" : "#334155"};">Laporan HSE ${esc(r.hse.monthLabel)}: ${hm.reported} dari ${hm.expected} project sudah melapor${r.hse.missing.length ? ` (belum: ${esc(r.hse.missing.slice(0, 3).join(", "))}${r.hse.missing.length > 3 ? ", …" : ""})` : ""}.</p>` : ""}
 ${
@@ -500,7 +500,7 @@ ${
     ? `<table width="100%" cellpadding="0" cellspacing="0" style="font-size:12.5px;border-collapse:collapse;margin-top:8px;">${r.topRisks
         .map(
           (x) =>
-            `<tr><td valign="top" width="64" style="padding:5px 6px 5px 0;"><span style="display:inline-block;padding:1px 6px;border-radius:4px;background:${LEVEL_COLOR[x.level]};color:#fff;font-size:11px;font-weight:bold;">${esc(x.level)}</span></td><td style="padding:5px 0;border-bottom:1px solid #F1F5F9;"><strong>${esc(x.title)}</strong><br/><span style="color:#64748B;">${esc(x.project)}${x.category ? ` · ${esc(x.category)}` : ""}${x.owner ? ` · ${esc(x.owner)}` : ""}</span>${x.late ? ` <span style="color:#B91C1C;font-weight:bold;">· lewat target</span>` : ""}</td></tr>`
+            `<tr><td valign="top" width="64" style="padding:5px 6px 5px 0;"><span style="display:inline-block;padding:1px 6px;border-radius:4px;background:${LEVEL_COLOR[x.level]};color:#fff;font-size:11px;font-weight:bold;">${esc(x.level)}</span></td><td style="padding:5px 0;border-bottom:1px solid #F1F5F9;"><strong>${esc(x.title)}</strong><br/><span style="color:#64748B;">${esc(x.project)}${x.category ? `, ${esc(x.category)}` : ""}${x.owner ? `, ${esc(x.owner)}` : ""}</span>${x.late ? `, <span style="color:#B91C1C;font-weight:bold;">lewat target</span>` : ""}</td></tr>`
         )
         .join("")}</table>`
     : `<p style="margin:6px 0 0;font-size:13px;color:#15803D;">Tidak ada risiko tingkat tinggi atau ekstrem yang terbuka.</p>`
@@ -512,10 +512,10 @@ ${
   const table = r.projects.length
     ? `${h3(r.urgentCerts.length || r.urgentEquipment.length ? 5 : 4, critical.length ? "Project yang memerlukan perhatian" : "Project berjalan")}
 <table width="100%" cellpadding="0" cellspacing="0" style="font-size:12px;border-collapse:collapse;">
-<tr style="color:#64748B;text-align:left;"><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;">Project</th><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;text-align:right;">Nilai</th><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;text-align:right;">Progres <span style="font-weight:normal;">(<span style="color:#1671B8;">realisasi</span> / rencana)</span></th><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;text-align:right;">Target selesai</th><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;text-align:right;">Dev.</th><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;text-align:right;">Margin <span style="font-weight:normal;">(prakiraan / target)</span></th><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;">Status</th></tr>
+<tr style="color:#64748B;text-align:left;"><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;">Project</th><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;text-align:right;">Nilai</th><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;text-align:right;">Progres <span style="font-weight:normal;">(<span style="color:#1671B8;">realisasi</span> / rencana)</span></th><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;text-align:right;">Target selesai</th><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;text-align:right;">Dev.</th><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;text-align:right;">Margin <span style="font-weight:normal;">(proyeksi / target)</span></th><th style="padding:6px 4px;border-bottom:1px solid #E2E8F0;">Status</th></tr>
 ${shown
   .map(
-    (p) => `<tr><td style="padding:6px 4px;border-bottom:1px solid #F1F5F9;"><a href="${esc(appUrl(`/projects/${p.id}`))}" style="color:#0F172A;text-decoration:none;font-weight:bold;">${esc(p.name)}</a><br/><span style="color:#334155;">${esc(p.client)}</span><br/><span style="color:#64748B;">PIC ${esc(p.pic)}${p.note ? ` · ${esc(p.note)}` : ""}</span></td>
+    (p) => `<tr><td style="padding:6px 4px;border-bottom:1px solid #F1F5F9;"><a href="${esc(appUrl(`/projects/${p.id}`))}" style="color:#0F172A;text-decoration:none;font-weight:bold;">${esc(p.name)}</a><br/><span style="color:#334155;">${esc(p.client)}</span><br/><span style="color:#64748B;">PIC ${esc(p.pic)}${p.note ? `, ${esc(p.note)}` : ""}</span></td>
 <td style="padding:6px 4px;border-bottom:1px solid #F1F5F9;text-align:right;white-space:nowrap;">${p.contractValue ? esc(formatRupiah(p.contractValue, true)) : "-"}</td>
 <td style="padding:6px 4px;border-bottom:1px solid #F1F5F9;text-align:right;white-space:nowrap;"><strong style="color:#1671B8;">${formatPercent(p.actual)}</strong><br/><span style="color:#94A3B8;font-size:11px;">rencana ${formatPercent(p.planned)}</span>${
       p.stale ? `<br/><span style="color:#B45309;font-size:11px;">data ${p.daysSinceUpdate} hari lalu</span>` : ""
@@ -536,7 +536,7 @@ ${shown
     : "";
 
   const body = `<p style="margin:0;font-size:17px;font-weight:bold;color:#0F172A;letter-spacing:0.02em;">LAPORAN MINGGUAN MONITORING PROJECT</p>
-<p style="margin:2px 0 14px;font-size:12px;color:#64748B;">Periode ${esc(wk.label)} · data per ${esc(formatLongDate(jakartaDay(r.generatedAt)))}</p>
+<p style="margin:2px 0 14px;font-size:12px;color:#64748B;">Periode ${esc(wk.label)}, data per ${esc(formatLongDate(jakartaDay(r.generatedAt)))}</p>
 ${h3(1, "Ringkasan")}
 <p style="margin:0 0 6px;font-size:14px;color:#0F172A;"><strong>${esc(r.headline)}</strong></p>
 ${kpis}
@@ -544,8 +544,8 @@ ${
   k.marginTracked > 0
     ? `<p style="margin:4px 0 0;font-size:13px;color:#334155;">${
         k.belowTarget
-          ? `<strong style="color:#B91C1C;">${k.belowTarget} dari ${k.marginTracked} project</strong> diprakirakan berakhir di bawah target marginnya masing-masing, dengan total kekurangan ${esc(formatRupiah(k.belowTargetGap, true))} dari target.`
-          : `Seluruh ${k.marginTracked} project yang memiliki data biaya diprakirakan memenuhi target marginnya masing-masing.`
+          ? `<strong style="color:#B91C1C;">${k.belowTarget} dari ${k.marginTracked} project</strong> diproyeksikan berakhir di bawah target marginnya masing-masing, dengan total kekurangan ${esc(formatRupiah(k.belowTargetGap, true))} dari target.`
+          : `Seluruh ${k.marginTracked} project yang memiliki data biaya diproyeksikan memenuhi target marginnya masing-masing.`
       }${k.noCostData ? ` ${k.noCostData} project belum memiliki data biaya.` : ""}</p>`
     : ""
 }

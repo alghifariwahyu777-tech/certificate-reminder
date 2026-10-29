@@ -6,6 +6,7 @@ import Link from "next/link";
 import { KeyRound, ArrowLeft } from "lucide-react";
 import { Input, Label } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { Notice } from "@/components/ui/Notice";
 
 export function ResetPasswordForm() {
   const router = useRouter();
@@ -23,15 +24,15 @@ export function ResetPasswordForm() {
     setError(null);
 
     if (!token) {
-      setError("Tautan tidak valid — token tidak ditemukan.");
+      setError("Tautan tidak valid, token tidak ditemukan.");
       return;
     }
     if (newPassword.length < 8) {
-      setError("Password baru minimal 8 karakter.");
+      setError("Kata sandi baru minimal 8 karakter.");
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError("Konfirmasi password tidak cocok.");
+      setError("Konfirmasi kata sandi tidak cocok.");
       return;
     }
 
@@ -44,7 +45,7 @@ export function ResetPasswordForm() {
       });
       const body = await res.json();
       if (!res.ok) {
-        setError(body.message || "Gagal reset password.");
+        setError(body.message || "Gagal reset kata sandi.");
         return;
       }
       setSuccess(true);
@@ -58,10 +59,10 @@ export function ResetPasswordForm() {
     return (
       <div className="text-center space-y-4">
         <p className="text-sm text-signal-expired">
-          Tautan reset password tidak valid. Silakan minta tautan baru.
+          Tautan atur ulang kata sandi tidak valid. Silakan minta tautan baru.
         </p>
         <Link href="/portal/forgot-password" className="text-sm text-accent hover:text-accent-light">
-          Minta Tautan Baru
+          Minta tautan baru
         </Link>
       </div>
     );
@@ -70,8 +71,8 @@ export function ResetPasswordForm() {
   if (success) {
     return (
       <div className="text-center space-y-2">
-        <p className="text-sm text-signal-active font-medium">Password berhasil diubah!</p>
-        <p className="text-sm text-slate-500">Mengarahkan ke halaman login...</p>
+        <p className="text-sm text-signal-active font-medium">Kata sandi berhasil diubah.</p>
+        <p className="text-sm text-slate-500">Mengarahkan ke halaman masuk...</p>
       </div>
     );
   }
@@ -80,13 +81,13 @@ export function ResetPasswordForm() {
     <>
       <div className="flex items-center gap-2 mb-1.5">
         <KeyRound className="h-5 w-5 text-accent" />
-        <h1 className="font-display text-xl font-semibold text-ink dark:text-slate-100">Buat Password Baru</h1>
+        <h1 className="font-display text-xl font-semibold text-ink dark:text-slate-100">Buat kata sandi baru</h1>
       </div>
-      <p className="text-sm text-slate-500 mb-6">Masukkan password baru untuk akun Client Portal Anda.</p>
+      <p className="text-sm text-slate-500 mb-6">Masukkan kata sandi baru untuk akun Portal Klien Anda.</p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <Label htmlFor="reset-new-password">Password Baru</Label>
+          <Label htmlFor="reset-new-password">Kata sandi baru</Label>
           <Input
             id="reset-new-password"
             type="password"
@@ -97,7 +98,7 @@ export function ResetPasswordForm() {
           <p className="text-xs text-slate-400 mt-1">Minimal 8 karakter.</p>
         </div>
         <div>
-          <Label htmlFor="reset-confirm-password">Konfirmasi Password</Label>
+          <Label htmlFor="reset-confirm-password">Konfirmasi kata sandi</Label>
           <Input
             id="reset-confirm-password"
             type="password"
@@ -108,13 +109,13 @@ export function ResetPasswordForm() {
         </div>
 
         {error && (
-          <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+          <Notice tone="danger">
             {error}
-          </div>
+          </Notice>
         )}
 
         <Button type="submit" isLoading={loading} className="w-full">
-          Simpan Password Baru
+          Simpan kata sandi baru
         </Button>
       </form>
 
@@ -123,7 +124,7 @@ export function ResetPasswordForm() {
         className="mt-5 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-ink dark:hover:text-slate-200"
       >
         <ArrowLeft className="h-4 w-4" />
-        Kembali ke Login
+        Kembali ke halaman masuk
       </Link>
     </>
   );

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { UserManager } from "@/components/user/UserManager";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function UsersPage() {
   const session = await getSession();
@@ -16,13 +17,13 @@ export default async function UsersPage() {
 
   return (
     <>
-      <Navbar title="Pengguna" subtitle="Kelola pengguna & hak akses" adminName={session.name} role={session.role} />
-      <div className="p-5 md:p-8 max-w-3xl">
+      <Navbar title="Pengguna" subtitle="Akun pengguna dan hak aksesnya" adminName={session.name} role={session.role} />
+      <PageBody>
         <UserManager
           currentUserId={session.userId}
           initialUsers={users.map((u) => ({ ...u, createdAt: u.createdAt.toISOString() }))}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

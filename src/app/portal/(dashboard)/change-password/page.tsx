@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input, Label } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
+import { Notice } from "@/components/ui/Notice";
 
 export default function ChangePasswordPage() {
   const { showToast } = useToast();
@@ -20,11 +21,11 @@ export default function ChangePasswordPage() {
     setError(null);
 
     if (newPassword.length < 8) {
-      setError("Password baru minimal 8 karakter.");
+      setError("Kata sandi baru minimal 8 karakter.");
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError("Konfirmasi password tidak cocok.");
+      setError("Konfirmasi kata sandi tidak cocok.");
       return;
     }
 
@@ -37,10 +38,10 @@ export default function ChangePasswordPage() {
       });
       const body = await res.json();
       if (!res.ok) {
-        setError(body.message || "Gagal mengubah password.");
+        setError(body.message || "Gagal mengubah kata sandi.");
         return;
       }
-      showToast("Password berhasil diubah.");
+      showToast("Kata sandi berhasil diubah.");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -54,14 +55,13 @@ export default function ChangePasswordPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <KeyRound className="h-5 w-5 text-accent" />
-            <CardTitle>Ubah Password</CardTitle>
+            <CardTitle>Ubah kata sandi</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="current-password">Password Saat Ini</Label>
+              <Label htmlFor="current-password">Kata sandi saat ini</Label>
               <Input
                 id="current-password"
                 type="password"
@@ -71,7 +71,7 @@ export default function ChangePasswordPage() {
               />
             </div>
             <div>
-              <Label htmlFor="new-password">Password Baru</Label>
+              <Label htmlFor="new-password">Kata sandi baru</Label>
               <Input
                 id="new-password"
                 type="password"
@@ -82,7 +82,7 @@ export default function ChangePasswordPage() {
               <p className="text-xs text-slate-400 mt-1">Minimal 8 karakter.</p>
             </div>
             <div>
-              <Label htmlFor="confirm-password">Konfirmasi Password Baru</Label>
+              <Label htmlFor="confirm-password">Konfirmasi kata sandi baru</Label>
               <Input
                 id="confirm-password"
                 type="password"
@@ -93,14 +93,14 @@ export default function ChangePasswordPage() {
             </div>
 
             {error && (
-              <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+              <Notice tone="danger">
                 {error}
-              </div>
+              </Notice>
             )}
 
             <Button type="submit" isLoading={saving} className="w-full">
               <Save className="h-4 w-4" />
-              Simpan Password Baru
+              Simpan kata sandi baru
             </Button>
           </form>
         </CardContent>

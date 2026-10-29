@@ -15,12 +15,11 @@ export default async function PicHomePage() {
     <div className="space-y-5">
       <div>
         <h1 className="font-display text-xl font-semibold text-ink dark:text-slate-100">Project Anda</h1>
-        <p className="text-sm text-slate-500 mt-1">Pilih project untuk mengirim update progres. Cukup ±2 menit per project.</p>
+        <p className="text-sm text-slate-500 mt-1">Pilih project untuk mengirim pembaruan progres. Cukup ±2 menit per project.</p>
       </div>
 
       {ongoing.length === 0 && (
         <div className="rounded-md border border-dashed border-slate-300 dark:border-slate-700 px-5 py-10 text-center text-slate-500">
-          <FolderOpen className="h-8 w-8 mx-auto text-slate-400" />
           <p className="mt-2 text-sm">
             Belum ada project berjalan dengan email PIC <span className="font-medium">{session?.email}</span>. Hubungi admin bila ini keliru.
           </p>
@@ -40,7 +39,7 @@ export default async function PicHomePage() {
                 <div className="min-w-0">
                   <p className="font-medium text-ink dark:text-slate-100">{project.projectName}</p>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    <span className="font-mono">{project.projectNumber}</span> · target {shortDate(project.targetEndDate.getTime())}
+                    <span className="font-mono">{project.projectNumber}</span>, target {shortDate(project.targetEndDate.getTime())}
                   </p>
                 </div>
                 <span className={`stamp-badge shrink-0 ${HEALTH_BADGE_CLASS[summary.health]}`}>{HEALTH_LABEL[summary.health]}</span>
@@ -52,8 +51,8 @@ export default async function PicHomePage() {
               <ProgressBar value={summary.actualPercent} marker={summary.plannedPercent} />
               <div className="flex items-center justify-between mt-3">
                 <span className={`text-xs ${stale ? "text-signal-soon font-medium" : "text-slate-400"}`}>
-                  {summary.lastProgressUpdate ? `Update terakhir ${shortDate(summary.lastProgressUpdate)}` : "Belum ada update"}
-                  {stale ? " — mohon diperbarui" : ""}
+                  {summary.lastProgressUpdate ? `Diperbarui terakhir ${shortDate(summary.lastProgressUpdate)}` : "Belum ada pembaruan"}
+                  {stale ? ", mohon diperbarui" : ""}
                 </span>
                 <span className="inline-flex items-center gap-1 text-sm font-medium text-accent">
                   Update <ChevronRight className="h-4 w-4" />
@@ -70,7 +69,7 @@ export default async function PicHomePage() {
           <ul className="mt-2 space-y-1 text-slate-600 dark:text-slate-300">
             {others.map(({ project, summary }) => (
               <li key={project.id}>
-                {project.projectName} — {HEALTH_LABEL[summary.health]}
+                {project.projectName}, {HEALTH_LABEL[summary.health]}
               </li>
             ))}
           </ul>

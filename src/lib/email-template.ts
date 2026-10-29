@@ -21,15 +21,15 @@ export type SimpleTemplateFields = {
 };
 
 export const PLACEHOLDER_TOKENS: { token: string; label: string }[] = [
-  { token: "{{certificateName}}", label: "Nama Sertifikat" },
-  { token: "{{certificateNumber}}", label: "Nomor Sertifikat" },
+  { token: "{{certificateName}}", label: "Nama sertifikat" },
+  { token: "{{certificateNumber}}", label: "Nomor sertifikat" },
   { token: "{{categoryName}}", label: "Kategori" },
   { token: "{{clientName}}", label: "Klien" },
   { token: "{{pic}}", label: "PIC" },
-  { token: "{{expiryDate}}", label: "Tanggal Berakhir" },
+  { token: "{{expiryDate}}", label: "Tanggal berakhir" },
   { token: "{{daysRemainingText}}", label: "Sisa Hari (mis. '14 hari lagi')" },
   { token: "{{appUrl}}", label: "URL aplikasi (dari APP_URL di .env)" },
-  { token: "{{statusColor}}", label: "Warna sesuai urgensi (merah/oranye/teal) — pakai di style color:" },
+  { token: "{{statusColor}}", label: "Warna sesuai urgensi (merah/oranye/teal), pakai di style color:" },
 ];
 
 export const DEFAULT_SUBJECT = "[Reminder System] Sertifikat Akan Berakhir";
@@ -43,7 +43,7 @@ export const DEFAULT_SIMPLE_FIELDS: SimpleTemplateFields = {
   closingText: "Mohon segera melakukan proses perpanjangan sertifikat sebelum masa berlaku berakhir.",
   buttonText: "Lihat Detail di Reminder System",
   footerText:
-    "Email ini dikirim otomatis oleh Reminder System — PT Sucofindo (Persero). Mohon tidak membalas email ini. Untuk pertanyaan, hubungi administrator sistem internal Anda.",
+    "Email ini dikirim otomatis oleh Reminder System, PT Sucofindo (Persero). Mohon tidak membalas email ini. Untuk pertanyaan, hubungi administrator sistem internal Anda.",
 };
 
 export const DEFAULT_BODY_HTML = `<!DOCTYPE html>
@@ -128,7 +128,7 @@ export const DEFAULT_BODY_HTML = `<!DOCTYPE html>
             <tr>
               <td style="padding:20px 32px;background-color:#F8FAFC;border-top:1px solid #E2E8F0;">
                 <p style="margin:0;color:#94A3B8;font-size:11px;line-height:1.6;">
-                  Email ini dikirim otomatis oleh Reminder System — PT Sucofindo (Persero).
+                  Email ini dikirim otomatis oleh Reminder System, PT Sucofindo (Persero).
                   Mohon tidak membalas email ini. Untuk pertanyaan, hubungi administrator sistem internal Anda.
                 </p>
               </td>

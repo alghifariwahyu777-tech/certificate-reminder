@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
+import { Notice } from "@/components/ui/Notice";
 
 type RowResult = {
   row: number;
@@ -82,20 +83,19 @@ export function PersonnelImportForm() {
   }
 
   return (
-    <div className="space-y-4 max-w-2xl">
+    <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>1. Unduh Template</CardTitle>
+          <CardTitle>1. Unduh template</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">
-            Gunakan template ini supaya kolom-kolomnya sesuai. Personil (berdasarkan email) dan
-            Kategori yang belum ada di sistem akan otomatis dibuat.
+            Isi data pada template ini. Personil (dikenali dari email) dan kategori yang belum terdaftar akan dibuat otomatis.
           </p>
           <a href="/api/personnel-certifications/import/template">
             <Button variant="outline">
               <Download className="h-4 w-4" />
-              Download Template Excel
+              Unduh template Excel
             </Button>
           </a>
         </CardContent>
@@ -103,17 +103,14 @@ export function PersonnelImportForm() {
 
       <Card>
         <CardHeader>
-          <CardTitle>2. Unggah File</CardTitle>
+          <CardTitle>2. Unggah file</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded border border-accent/20 bg-accent/5 px-3 py-2.5 flex gap-2">
-            <Info className="h-4 w-4 text-accent shrink-0 mt-0.5" />
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-              Kolom wajib: Employee Name, Employee Email, Category, Certification Name, Expiry
-              Date. Baris dengan Certification Number yang sudah ada akan dilewati (tidak
-              menimpa data lama).
+          <Notice tone="info">
+            <p>
+              Kolom wajib: Employee Name, Employee Email, Category, Certification Name, Expiry Date. Nomor sertifikasi yang sudah terdaftar dilewati, data lama tidak ditimpa.
             </p>
-          </div>
+          </Notice>
 
           <label
             htmlFor="personnel-excel-upload"
@@ -133,14 +130,14 @@ export function PersonnelImportForm() {
           </label>
 
           {error && (
-            <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+            <Notice tone="danger">
               {error}
-            </div>
+            </Notice>
           )}
 
           <Button onClick={handleUpload} disabled={!file} isLoading={uploading}>
             <Upload className="h-4 w-4" />
-            Proses Import
+            Proses impor
           </Button>
         </CardContent>
       </Card>
@@ -148,13 +145,13 @@ export function PersonnelImportForm() {
       {summary && (
         <Card>
           <CardHeader>
-            <CardTitle>Hasil Import</CardTitle>
+            <CardTitle>Hasil impor</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex gap-4 text-sm font-mono">
               <span className="text-signal-active">{summary.created} dibuat</span>
               <span className="text-slate-400">{summary.skipped} dilewati</span>
-              <span className="text-signal-expired">{summary.errors} error</span>
+              <span className="text-signal-expired">{summary.errors} gagal</span>
             </div>
             {summary.results.length > 0 && (
               <div className="rounded border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-800 max-h-96 overflow-y-auto">
@@ -166,7 +163,7 @@ export function PersonnelImportForm() {
                       <div className="min-w-0">
                         <span className="text-slate-400 font-mono">Baris {r.row}</span>{" "}
                         <span className="text-ink font-medium">
-                          {r.employeeName} — {r.certificationName}
+                          {r.employeeName}, {r.certificationName}
                         </span>
                         {r.message && <p className="text-slate-500 mt-0.5">{r.message}</p>}
                       </div>

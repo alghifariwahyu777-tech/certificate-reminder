@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { IconBox } from "@/components/ui/IconBox";
+import { ENTITY_ICON } from "@/lib/entity-icons";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { serviceSchema, type ServiceInput } from "@/lib/validations";
+import { Notice } from "@/components/ui/Notice";
 
 type ServiceItem = {
   id: string;
@@ -150,7 +153,7 @@ export function ServiceManager({
         {canManage && (
           <Button onClick={openAdd}>
             <Plus className="h-4 w-4" />
-            Tambah Layanan
+            Tambah layanan
           </Button>
         )}
       </div>
@@ -158,16 +161,14 @@ export function ServiceManager({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {services.length === 0 && (
           <Card className="sm:col-span-2">
-            <p className="px-5 py-10 text-center text-sm text-slate-400">Belum ada layanan terdaftar.</p>
+            <p className="px-5 py-10 text-center text-sm text-slate-500">Belum ada layanan terdaftar.</p>
           </Card>
         )}
         {services.map((service) => (
           <Card key={service.id} className="p-5">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3 min-w-0">
-                <div className="h-9 w-9 rounded bg-ink/5 text-ink flex items-center justify-center border border-ink/10 shrink-0">
-                  <Layers className="h-4.5 w-4.5" />
-                </div>
+                <IconBox icon={ENTITY_ICON.service} />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-semibold text-ink truncate">{service.name}</p>
@@ -183,7 +184,7 @@ export function ServiceManager({
                   <button
                     onClick={() => openEdit(service)}
                     className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
-                    aria-label="Edit layanan"
+                    aria-label="Ubah layanan"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
@@ -214,21 +215,21 @@ export function ServiceManager({
               {service.requiresSurveillance && (
                 <span className="stamp-badge text-signal-soon bg-signal-soonBg border-signal-soonBorder">
                   <CalendarClock className="h-3 w-3" />
-                  Surveillance {service.surveillanceCount}x / {service.surveillanceIntervalMonths}bln
+                  Surveilans {service.surveillanceCount} kali, tiap {service.surveillanceIntervalMonths} bulan
                 </span>
               )}
             </div>
 
             <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
               <p className="text-xs text-slate-400 font-mono">
-                {service.requirementCount} dokumen · {service.stageCount} tahap
+                {service.requirementCount} dokumen, {service.stageCount} tahap
               </p>
               <Link
                 href={`/services/${service.id}`}
                 className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:text-accent-light"
               >
                 <Settings2 className="h-3.5 w-3.5" />
-                Kelola Persyaratan & Workflow
+                Kelola persyaratan dan workflow
               </Link>
             </div>
           </Card>
@@ -238,17 +239,17 @@ export function ServiceManager({
       <Modal
         isOpen={formOpen}
         onClose={() => setFormOpen(false)}
-        title={editTarget ? "Edit Layanan" : "Tambah Layanan"}
+        title={editTarget ? "Ubah layanan" : "Tambah layanan"}
         maxWidth="max-w-lg"
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="svc-name">Nama Layanan</Label>
+              <Label htmlFor="svc-name">Nama layanan</Label>
               <Input id="svc-name" error={errors.name?.message} {...register("name")} />
             </div>
             <div>
-              <Label htmlFor="svc-code">Kode Layanan</Label>
+              <Label htmlFor="svc-code">Kode layanan</Label>
               <Input id="svc-code" placeholder="ISO-9001" error={errors.code?.message} {...register("code")} />
             </div>
           </div>
@@ -257,7 +258,7 @@ export function ServiceManager({
             <Textarea id="svc-desc" rows={3} {...register("description")} />
           </div>
           <div>
-            <Label htmlFor="svc-days">Estimasi Waktu Proses (hari)</Label>
+            <Label htmlFor="svc-days">Estimasi waktu proses (hari)</Label>
             <Input
               id="svc-days"
               type="number"
@@ -278,14 +279,14 @@ export function ServiceManager({
             </label>
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <input type="checkbox" className="rounded border-slate-300" {...register("requiresSurveillance")} />
-              Membutuhkan surveillance
+              Membutuhkan surveilans
             </label>
           </div>
 
           {requiresSurveillance && (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="svc-sv-count">Jumlah Surveillance</Label>
+                <Label htmlFor="svc-sv-count">Jumlah surveilans</Label>
                 <Input
                   id="svc-sv-count"
                   type="number"
@@ -308,9 +309,9 @@ export function ServiceManager({
           )}
 
           {serverError && (
-            <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+            <Notice tone="danger">
               {serverError}
-            </div>
+            </Notice>
           )}
 
           <div className="flex justify-end gap-2 pt-1">
@@ -324,15 +325,15 @@ export function ServiceManager({
         </form>
       </Modal>
 
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus Layanan">
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus layanan">
         <p className="text-sm text-slate-600">
           Apakah Anda yakin ingin menghapus layanan <strong className="text-ink">{deleteTarget?.name}</strong>?
           Seluruh persyaratan dokumen dan tahap workflow layanan ini akan ikut terhapus.
         </p>
         {deleteError && (
-          <div className="mt-3 rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+          <Notice tone="danger" className="mt-3">
             {deleteError}
-          </div>
+          </Notice>
         )}
         <div className="flex justify-end gap-2 mt-5">
           <Button variant="outline" onClick={() => setDeleteTarget(null)}>

@@ -66,7 +66,7 @@ async function safely(label: string, fn: () => Promise<unknown>) {
   try {
     await fn();
   } catch (err) {
-    console.error(`Reminder job — ${label} gagal:`, err);
+    console.error(`Reminder job, ${label} gagal:`, err);
   }
 }
 

@@ -1,6 +1,7 @@
 import { MobileNav } from "./MobileNav";
 import { NotificationBell } from "./NotificationBell";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { PageIcon } from "./PageIcon";
 
 export function Navbar({
   title,
@@ -24,7 +25,8 @@ export function Navbar({
     <header className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 bg-paper/95 dark:bg-slate-950/95 backdrop-blur px-5 py-4 md:px-8">
       <div className="flex items-center gap-3">
         <MobileNav role={role} />
-        <div>
+        <PageIcon />
+        <div className="min-w-0">
           <h1 className="font-bold text-lg text-ink dark:text-slate-100 leading-tight">{title}</h1>
           {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>}
         </div>

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { ProjectForm } from "@/components/project/ProjectForm";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function NewProjectPage() {
   const session = await getSession();
@@ -16,16 +17,16 @@ export default async function NewProjectPage() {
   return (
     <>
       <Navbar
-        title="Project baru"
-        subtitle="Daftarkan project/kontrak baru untuk dimonitor"
+        title="Project Baru"
+        subtitle="Daftarkan project untuk dipantau"
         adminName={session.name}
         role={session.role}
       />
-      <div className="p-5 md:p-8">
+      <PageBody width="form">
         <ProjectForm
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

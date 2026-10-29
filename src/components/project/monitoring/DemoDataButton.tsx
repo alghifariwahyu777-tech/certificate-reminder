@@ -41,8 +41,7 @@ export function DemoDataButton({ hasDemo }: { hasDemo: boolean }) {
             <p>Semua project bernomor DEMO-…, personil contoh, dan riwayatnya akan dihapus. Data project asli tidak tersentuh.</p>
           ) : (
             <p>
-              Sistem akan menambahkan 8 project contoh (nomor DEMO-01 s.d. DEMO-08) lengkap dengan RAB, progres, termin, biaya, kendala, tim, dan riwayat 6 minggu, agar
-              seluruh fitur dapat dicoba. Data contoh dapat dihapus kapan saja dengan satu klik dan tidak mengubah data asli.
+              Sistem menambahkan project contoh bernomor DEMO lengkap dengan RAB, progres, termin, biaya, kendala, dan tim agar semua fitur dapat dicoba. Data contoh dapat dihapus kapan saja tanpa mengubah data asli.
             </p>
           )}
           {error && <p className="text-signal-expired">{error}</p>}

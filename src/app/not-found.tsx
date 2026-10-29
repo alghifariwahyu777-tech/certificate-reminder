@@ -10,7 +10,7 @@ export default function NotFound() {
         Data yang Anda cari mungkin sudah dihapus atau alamat halaman tidak valid.
       </p>
       <Link href="/dashboard" className="text-sm font-medium text-accent hover:text-accent-light">
-        Kembali ke Dashboard
+        Kembali ke dasbor
       </Link>
     </div>
   );

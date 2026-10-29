@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
 import { useToast } from "@/components/ui/Toast";
+import { Notice } from "@/components/ui/Notice";
 
 function toDateInputValue(value?: string | null) {
   if (!value) return "";
@@ -121,14 +122,14 @@ export function PersonnelCertificationForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <Card>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="pc-employee">Personil</Label>
               <Select id="pc-employee" {...register("employeeId")} error={errors.employeeId?.message}>
-                <option value="">— Pilih personil —</option>
+                <option value="">Pilih personil</option>
                 {employees.map((e) => (
                   <option key={e.id} value={e.id}>
                     {e.name}
@@ -140,7 +141,7 @@ export function PersonnelCertificationForm({
             <div>
               <Label htmlFor="pc-category">Kategori</Label>
               <Select id="pc-category" {...register("categoryId")} error={errors.categoryId?.message}>
-                <option value="">— Pilih kategori —</option>
+                <option value="">Pilih kategori</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -151,7 +152,7 @@ export function PersonnelCertificationForm({
           </div>
 
           <div>
-            <Label htmlFor="pc-name">Nama Sertifikasi</Label>
+            <Label htmlFor="pc-name">Nama sertifikasi</Label>
             <Input
               id="pc-name"
               {...register("certificationName")}
@@ -162,26 +163,26 @@ export function PersonnelCertificationForm({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="pc-number">Nomor Sertifikasi</Label>
+              <Label htmlFor="pc-number">Nomor sertifikasi</Label>
               <Input id="pc-number" {...register("certificationNumber")} error={errors.certificationNumber?.message} />
             </div>
             <div>
-              <Label htmlFor="pc-issuer">Instansi Penerbit</Label>
+              <Label htmlFor="pc-issuer">Instansi penerbit</Label>
               <Input id="pc-issuer" {...register("issuingBody")} error={errors.issuingBody?.message} />
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <Label htmlFor="pc-issue">Tanggal Terbit</Label>
+              <Label htmlFor="pc-issue">Tanggal terbit</Label>
               <Input id="pc-issue" type="date" {...register("issueDate")} error={errors.issueDate?.message} />
             </div>
             <div>
-              <Label htmlFor="pc-valid">Berlaku Sejak</Label>
+              <Label htmlFor="pc-valid">Berlaku sejak</Label>
               <Input id="pc-valid" type="date" {...register("validFrom")} error={errors.validFrom?.message} />
             </div>
             <div>
-              <Label htmlFor="pc-expiry">Tanggal Berakhir</Label>
+              <Label htmlFor="pc-expiry">Tanggal berakhir</Label>
               <Input id="pc-expiry" type="date" {...register("expiryDate")} error={errors.expiryDate?.message} />
             </div>
           </div>
@@ -192,9 +193,9 @@ export function PersonnelCertificationForm({
           </div>
 
           <div>
-            <Label>Dokumen Sertifikasi</Label>
+            <Label>Dokumen sertifikasi</Label>
             <label className="cursor-pointer block">
-              <div className="flex items-center gap-2 rounded border border-dashed border-slate-300 px-3 py-2.5 text-sm text-slate-500 hover:border-accent hover:bg-accent/5">
+              <div className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 px-4 py-5 text-sm text-slate-500 transition-colors hover:border-accent hover:bg-accent/5 dark:border-slate-600">
                 {fileUrl && !uploading ? <FileText className="h-4 w-4 text-accent" /> : <UploadCloud className="h-4 w-4" />}
                 {uploading ? "Mengunggah..." : fileName || "Klik untuk unggah PDF, JPG, atau PNG (maks. 20 MB)"}
               </div>
@@ -211,19 +212,18 @@ export function PersonnelCertificationForm({
       </Card>
 
       {serverError && (
-        <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2.5 text-sm text-signal-expired">
+        <Notice tone="danger">
           {serverError}
-        </div>
+        </Notice>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={() => router.back()}>
+          Batal
+        </Button>
         <Button type="submit" isLoading={isSubmitting} disabled={uploading}>
           <Save className="h-4 w-4" />
-          Simpan
-        </Button>
-        <Button type="button" variant="outline" onClick={() => router.back()}>
-          <X className="h-4 w-4" />
-          Batal
+          {isEdit ? "Simpan perubahan" : "Simpan sertifikasi"}
         </Button>
       </div>
     </form>

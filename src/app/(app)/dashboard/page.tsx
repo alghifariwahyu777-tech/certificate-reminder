@@ -7,6 +7,9 @@ import { Navbar } from "@/components/layout/Navbar";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { ReminderCenter } from "@/components/dashboard/ReminderCenter";
+import { ENTITY_ICON } from "@/lib/entity-icons";
+import { PageBody } from "@/components/layout/PageBody";
+import { Notice } from "@/components/ui/Notice";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -283,7 +286,7 @@ export default async function DashboardPage() {
       active,
       expiringSoon: within30,
       expired,
-      extraLabel: "Renewal Berjalan",
+      extraLabel: "Sedang diperpanjang",
       extraValue: renewalInProgress,
     },
     upcoming: upcoming.map((c) => ({
@@ -304,7 +307,7 @@ export default async function DashboardPage() {
       id: c.id,
       title: c.certificationName,
       subtitle: c.certificationNumber || "-",
-      secondary: `${c.employee.name} · ${c.category.name}`,
+      secondary: `${c.employee.name}, ${c.category.name}`,
       date: c.expiryDate.toISOString(),
       daysRemaining: getDaysRemaining(c.expiryDate),
       detailHref: `/personnel-certifications/${c.id}`,
@@ -325,7 +328,7 @@ export default async function DashboardPage() {
       id: p.id,
       title: p.projectName,
       subtitle: p.projectNumber,
-      secondary: `${p.clientName} · ${p.category.name}`,
+      secondary: `${p.clientName}, ${p.category.name}`,
       date: p.targetEndDate.toISOString(),
       daysRemaining: getDaysRemaining(p.targetEndDate),
       detailHref: `/projects/${p.id}`,
@@ -339,7 +342,7 @@ export default async function DashboardPage() {
       id: e.id,
       title: e.name,
       subtitle: e.assetNumber || "-",
-      secondary: `${e.pic.name} · ${e.category.name}`,
+      secondary: `${e.pic.name}, ${e.category.name}`,
       date: e.nextCalibrationDate.toISOString(),
       daysRemaining: getDaysRemaining(e.nextCalibrationDate),
       detailHref: `/equipment/${e.id}`,
@@ -349,32 +352,34 @@ export default async function DashboardPage() {
   // Per-domain breakdown for the cross-domain "Perlu Perhatian" banner —
   // each domain's own Expiring Soon + Expired count.
   const attentionBreakdown = [
-    { label: "Sertifikat", count: within30 + expired, href: "/certificate" },
-    { label: "Sertifikasi Personil", count: personnelWithin30 + personnelExpired, href: "/personnel-certifications" },
-    { label: "Project", count: projectWithin30 + projectExpired, href: "/projects" },
-    { label: "Equipment", count: equipmentWithin30 + equipmentExpired, href: "/equipment" },
+    { label: "Sertifikat klien", count: within30 + expired, href: "/certificate", icon: ENTITY_ICON.certificate },
+    { label: "Sertifikasi personil", count: personnelWithin30 + personnelExpired, href: "/personnel-certifications", icon: ENTITY_ICON.personnelCert },
+    { label: "Project", count: projectWithin30 + projectExpired, href: "/projects/dashboard", icon: ENTITY_ICON.project },
+    { label: "Kalibrasi alat", count: equipmentWithin30 + equipmentExpired, href: "/equipment", icon: ENTITY_ICON.equipment },
   ].filter((d) => d.count > 0);
 
   return (
     <>
-      <Navbar title="Dasbor" subtitle="Ringkasan seluruh pengingat: sertifikat klien, sertifikasi personil, project, dan kalibrasi alat" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
+      <Navbar title="Dasbor" subtitle="Ringkasan hal yang perlu ditindaklanjuti" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
 
-      <div className="p-5 md:p-8 space-y-6">
+      <PageBody>
         {attentionBreakdown.length > 0 && (
-          <div className="rounded-md border border-signal-soonBorder bg-signal-soonBg px-4 py-3">
-            <p className="text-sm text-signal-soon font-medium mb-2">⚠️ Perlu Perhatian — total {attentionBreakdown.reduce((s, d) => s + d.count, 0)} item</p>
-            <div className="flex flex-wrap gap-2">
-              {attentionBreakdown.map((d) => (
-                <Link
-                  key={d.label}
-                  href={d.href}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-slate-900 border border-signal-soonBorder px-3 py-1 text-xs font-medium text-ink dark:text-slate-100 hover:bg-signal-soonBg/50"
-                >
-                  <strong className="font-mono">{d.count}</strong> {d.label}
-                </Link>
-              ))}
-            </div>
-          </div>
+          <Notice
+            tone="warning"
+            title={`${attentionBreakdown.reduce((s, d) => s + d.count, 0)} data perlu ditindaklanjuti`}
+            action={attentionBreakdown.map((d) => (
+              <Link
+                key={d.label}
+                href={d.href}
+                className="inline-flex items-center gap-1.5 rounded-full border border-signal-soonBorder bg-white px-3 py-1 text-xs font-semibold text-ink hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-100"
+              >
+                <d.icon className="h-3.5 w-3.5 text-slate-500" aria-hidden />
+                {d.count} {d.label.toLowerCase()}
+              </Link>
+            ))}
+          >
+            Sudah berakhir atau berakhir dalam 30 hari ke depan.
+          </Notice>
         )}
 
         <DashboardTabs
@@ -387,19 +392,16 @@ export default async function DashboardPage() {
         />
 
         {session?.role === "ADMIN" && (
-          <div className="max-w-2xl">
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_1.4fr]">
             <RecentActivity items={recentActivity} />
+            <ReminderCenter
+              pendingCount={pendingReminderCount}
+              emailConfigured={!!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD)}
+              recentLogs={recentEmailLogs}
+            />
           </div>
         )}
-
-        {session?.role === "ADMIN" && (
-          <ReminderCenter
-            pendingCount={pendingReminderCount}
-            emailConfigured={!!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD)}
-            recentLogs={recentEmailLogs}
-          />
-        )}
-      </div>
+      </PageBody>
     </>
   );
 }

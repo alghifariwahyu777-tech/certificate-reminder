@@ -1,5 +1,7 @@
 "use client";
 
+import { SearchPopoverButton } from "@/components/ui/SearchPopoverButton";
+import { filterGroupClass, toolbarClass } from "@/components/ui/Toolbar";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
@@ -37,31 +39,27 @@ export function ApplicationListClient({ initialApplications }: { initialApplicat
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input
-            placeholder="Cari nomor, klien, atau layanan..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+      <div className={toolbarClass}>
+        <div className={filterGroupClass}>
+          <div>
+            <SearchPopoverButton value={search} onChange={setSearch} label="Cari permohonan" placeholder="Nomor, klien, atau layanan..." />
+          </div>
+          <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <option value="">Semua status</option>
+            {Object.entries(APPLICATION_STATUS_LABELS).map(([key, label]) => (
+              <option key={key} value={key}>
+                {label}
+              </option>
+            ))}
+          </Select>
         </div>
-        <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="sm:w-56">
-          <option value="">Semua Status</option>
-          {Object.entries(APPLICATION_STATUS_LABELS).map(([key, label]) => (
-            <option key={key} value={key}>
-              {label}
-            </option>
-          ))}
-        </Select>
       </div>
 
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-slate-500 border-b border-slate-100 bg-slate-50/60">
+              <tr className="th-row">
                 <th className="px-4 py-3 font-medium">Nomor</th>
                 <th className="px-4 py-3 font-medium">Klien</th>
                 <th className="px-4 py-3 font-medium">Layanan</th>
@@ -72,7 +70,7 @@ export function ApplicationListClient({ initialApplications }: { initialApplicat
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={5} className="px-4 py-10 text-center text-slate-500">
                     Tidak ada permohonan yang cocok.
                   </td>
                 </tr>

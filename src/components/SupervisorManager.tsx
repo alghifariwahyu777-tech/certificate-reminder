@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
+import { Notice } from "@/components/ui/Notice";
 
 type SupervisorItem = {
   id: string;
@@ -117,21 +118,19 @@ export function SupervisorManager({
 
   return (
     <div className="space-y-4">
-      <div className="rounded border border-accent/20 bg-accent/5 px-3 py-2.5 flex gap-2">
-        <Users2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />
-        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-          Setiap atasan berstatus <strong>Aktif</strong> di sini otomatis di-CC ke <strong>seluruh</strong>{" "}
-          reminder — Sertifikat Klien, Sertifikasi Personil, Project, maupun Equipment — tanpa perlu
-          dipilih satu-satu di setiap data. Kalau ada restrukturisasi, cukup nonaktifkan atau ganti
-          data di sini; semua reminder otomatis ikut menyesuaikan mulai pengiriman berikutnya.
+      <Notice tone="info">
+        <p>
+          Setiap atasan berstatus <strong>Aktif</strong> otomatis menerima salinan (CC) <strong>seluruh</strong> email pengingat:
+          sertifikat klien, sertifikasi personil, project, dan kalibrasi alat. Bila terjadi perubahan struktur, cukup nonaktifkan
+          atau ganti data di sini. Perubahan berlaku mulai pengiriman berikutnya.
         </p>
-      </div>
+      </Notice>
 
       {canManage && (
         <div className="flex justify-end">
           <Button onClick={openAdd}>
             <Plus className="h-4 w-4" />
-            Tambah Atasan
+            Tambah atasan
           </Button>
         </div>
       )}
@@ -140,7 +139,7 @@ export function SupervisorManager({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-slate-500 border-b border-slate-100 bg-slate-50/60">
+              <tr className="th-row">
                 <th className="px-4 py-3 font-medium">Nama</th>
                 <th className="px-4 py-3 font-medium">Email</th>
                 <th className="px-4 py-3 font-medium">Jabatan</th>
@@ -151,7 +150,7 @@ export function SupervisorManager({
             <tbody>
               {items.length === 0 ? (
                 <tr>
-                  <td colSpan={canManage ? 5 : 4} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={canManage ? 5 : 4} className="px-4 py-10 text-center text-slate-500">
                     Belum ada atasan yang terdaftar.
                   </td>
                 </tr>
@@ -179,7 +178,7 @@ export function SupervisorManager({
                           <button
                             onClick={() => openEdit(s)}
                             className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
-                            aria-label="Edit"
+                            aria-label="Ubah"
                           >
                             <Pencil className="h-4 w-4" />
                           </button>
@@ -201,7 +200,7 @@ export function SupervisorManager({
         </div>
       </Card>
 
-      <Modal isOpen={formOpen} onClose={() => setFormOpen(false)} title={editTarget ? "Edit Atasan" : "Tambah Atasan"}>
+      <Modal isOpen={formOpen} onClose={() => setFormOpen(false)} title={editTarget ? "Ubah atasan" : "Tambah atasan"}>
         <div className="space-y-4">
           <div>
             <Label htmlFor="sup-name">Nama</Label>
@@ -226,9 +225,9 @@ export function SupervisorManager({
           </label>
 
           {formError && (
-            <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+            <Notice tone="danger">
               {formError}
-            </div>
+            </Notice>
           )}
 
           <div className="flex justify-end gap-2">
@@ -243,7 +242,7 @@ export function SupervisorManager({
         </div>
       </Modal>
 
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus Atasan">
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus atasan">
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Apakah Anda yakin ingin menghapus atasan{" "}
           <strong className="text-ink dark:text-slate-100">{deleteTarget?.name}</strong>? Atasan ini akan

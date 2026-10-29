@@ -20,19 +20,19 @@ export type ReportType =
   | "equipment_calibration";
 
 export const REPORT_LABELS: Record<ReportType, string> = {
-  active: "Sertifikat Aktif",
-  expired: "Sertifikat Kedaluwarsa",
-  expiring_soon: "Sertifikat Akan Berakhir",
-  renewal_history: "Histori Renewal",
-  recap_department: "Rekap per Divisi",
-  recap_category: "Rekap per Kategori",
-  application_status: "Status Permohonan",
-  surveillance: "Jadwal Surveillance",
-  sla: "Kepatuhan SLA Tahap Workflow",
-  monitoring: "Monitoring Manajemen",
-  personnel_certifications: "Sertifikasi Personil",
-  project_status: "Status & Nilai Kontrak Project",
-  equipment_calibration: "Jadwal Kalibrasi Alat",
+  active: "Sertifikat aktif",
+  expired: "Sertifikat sudah berakhir",
+  expiring_soon: "Sertifikat segera berakhir",
+  renewal_history: "Riwayat perpanjangan",
+  recap_department: "Rekap per divisi",
+  recap_category: "Rekap per kategori",
+  application_status: "Status permohonan",
+  surveillance: "Jadwal surveilans",
+  sla: "Kepatuhan SLA tiap tahap",
+  monitoring: "Monitoring permohonan",
+  personnel_certifications: "Sertifikasi personil",
+  project_status: "Status dan nilai kontrak project",
+  equipment_calibration: "Jadwal kalibrasi alat",
 };
 
 export type ReportTable = {

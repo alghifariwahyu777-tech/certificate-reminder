@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { formatDate } from "@/lib/utils";
 import { getDaysRemaining } from "@/lib/status";
 import { Pencil, Download, ArrowLeft, FileWarning } from "lucide-react";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function EquipmentDetailPage(context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -28,23 +29,23 @@ export default async function EquipmentDetailPage(context: { params: Promise<{ i
     { label: "Merk", value: equipment.brand || "-" },
     { label: "Tipe", value: equipment.model || "-" },
     { label: "Warna", value: equipment.color || "-" },
-    { label: "Nomor Aset/CODE", value: equipment.assetNumber || "-" },
-    { label: "Serial Number", value: equipment.serialNumber || "-" },
-    { label: "Kondisi Barang", value: equipment.condition || "-" },
-    { label: "Status Barang", value: equipment.usageStatus || "-" },
-    { label: "Unit Kerja Pemilik", value: equipment.ownerUnit || "-" },
+    { label: "Kode aset", value: equipment.assetNumber || "-" },
+    { label: "Nomor seri", value: equipment.serialNumber || "-" },
+    { label: "Kondisi barang", value: equipment.condition || "-" },
+    { label: "Status barang", value: equipment.usageStatus || "-" },
+    { label: "Unit kerja pemilik", value: equipment.ownerUnit || "-" },
     { label: "PIC", value: equipment.pic.name },
     { label: "NIP PIC", value: equipment.pic.employeeId || "-" },
     { label: "Divisi PIC", value: equipment.pic.department?.name || "-" },
     { label: "Email PIC", value: equipment.pic.email },
-    { label: "Nomor Sertifikat Kalibrasi", value: equipment.calibrationNumber || "-" },
-    { label: "Lembaga Kalibrasi", value: equipment.calibratedBy || "-" },
-    { label: "Jenis Kalibrasi", value: equipment.calibrationType || "-" },
-    { label: "Interval Kalibrasi", value: equipment.calibrationInterval || "-" },
-    { label: "Range / Kapasitas", value: equipment.measurementRange || "-" },
-    { label: "Kalibrasi Terakhir", value: equipment.lastCalibrationDate ? formatDate(equipment.lastCalibrationDate) : "-" },
-    { label: "Kalibrasi Berikutnya", value: formatDate(equipment.nextCalibrationDate) },
-    { label: "Sisa Hari", value: days < 0 ? `Terlambat ${Math.abs(days)} hari` : `${days} hari lagi` },
+    { label: "Nomor sertifikat kalibrasi", value: equipment.calibrationNumber || "-" },
+    { label: "Lembaga kalibrasi", value: equipment.calibratedBy || "-" },
+    { label: "Jenis kalibrasi", value: equipment.calibrationType || "-" },
+    { label: "Interval kalibrasi", value: equipment.calibrationInterval || "-" },
+    { label: "Range / kapasitas", value: equipment.measurementRange || "-" },
+    { label: "Kalibrasi terakhir", value: equipment.lastCalibrationDate ? formatDate(equipment.lastCalibrationDate) : "-" },
+    { label: "Kalibrasi berikutnya", value: formatDate(equipment.nextCalibrationDate) },
+    { label: "Sisa hari", value: days < 0 ? `Terlambat ${Math.abs(days)} hari` : `${days} hari lagi` },
   ];
 
   return (
@@ -55,17 +56,17 @@ export default async function EquipmentDetailPage(context: { params: Promise<{ i
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}
       />
-      <div className="p-5 md:p-8 max-w-4xl space-y-5">
+      <PageBody width="form">
         <div className="flex items-center justify-between">
           <Link href="/equipment" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-ink">
             <ArrowLeft className="h-4 w-4" />
-            Kembali ke Equipment Calibration
+            Kembali ke kalibrasi alat
           </Link>
           {session?.role === "ADMIN" && (
             <Link href={`/equipment/${equipment.id}/edit`}>
               <Button variant="outline" size="sm">
                 <Pencil className="h-4 w-4" />
-                Edit
+                Ubah
               </Button>
             </Link>
           )}
@@ -100,20 +101,19 @@ export default async function EquipmentDetailPage(context: { params: Promise<{ i
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Sertifikat Kalibrasi</CardTitle>
+            <CardTitle>Sertifikat kalibrasi</CardTitle>
             {equipment.fileUrl && (
               <a href={`${equipment.fileUrl}?download=1`}>
                 <Button variant="outline" size="sm">
                   <Download className="h-4 w-4" />
-                  Download
+                  Unduh
                 </Button>
               </a>
             )}
           </CardHeader>
           <CardContent>
             {!equipment.fileUrl ? (
-              <div className="flex flex-col items-center justify-center gap-2 py-10 text-slate-400">
-                <FileWarning className="h-8 w-8" />
+              <div className="py-10 text-center text-slate-500">
                 <p className="text-sm">Belum ada dokumen yang diunggah.</p>
               </div>
             ) : isImage ? (
@@ -128,7 +128,7 @@ export default async function EquipmentDetailPage(context: { params: Promise<{ i
             )}
           </CardContent>
         </Card>
-      </div>
+      </PageBody>
     </>
   );
 }

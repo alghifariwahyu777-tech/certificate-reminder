@@ -13,6 +13,7 @@ import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
 import { useToast } from "@/components/ui/Toast";
 import { formatFileSize } from "@/lib/utils";
 import type { CategoryLite, ClientLite, DepartmentLite, CertificateWithCategory } from "@/types/certificate";
+import { Notice } from "@/components/ui/Notice";
 
 function toDateInputValue(value?: string) {
   if (!value) return "";
@@ -157,7 +158,7 @@ export function CertificateForm({
       <Card>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
-            <Label htmlFor="certificateNumber">Nomor Sertifikat</Label>
+            <Label htmlFor="certificateNumber">Nomor sertifikat</Label>
             <Input
               id="certificateNumber"
               placeholder="CERT-2026-001"
@@ -167,7 +168,7 @@ export function CertificateForm({
           </div>
 
           <div>
-            <Label htmlFor="certificateName">Nama Sertifikat</Label>
+            <Label htmlFor="certificateName">Nama sertifikat</Label>
             <Input
               id="certificateName"
               placeholder="ISO 9001:2015 Quality Management"
@@ -177,7 +178,7 @@ export function CertificateForm({
           </div>
 
           <div>
-            <Label htmlFor="clientId">Klien / Perusahaan</Label>
+            <Label htmlFor="clientId">Klien / perusahaan</Label>
             <Select id="clientId" error={errors.clientId?.message} {...register("clientId")}>
               <option value="">Pilih klien</option>
               {clients.map((c) => (
@@ -213,7 +214,7 @@ export function CertificateForm({
           </div>
 
           <div>
-            <Label htmlFor="issuingBody">Instansi Penerbit</Label>
+            <Label htmlFor="issuingBody">Instansi penerbit</Label>
             <Input
               id="issuingBody"
               placeholder="Contoh: Kemnaker RI, BSN, TÜV Rheinland"
@@ -236,26 +237,26 @@ export function CertificateForm({
               error={errors.picEmail?.message}
               {...register("picEmail")}
             />
-            <p className="text-xs text-slate-400 mt-1">Reminder sertifikasi akan dikirim ke email ini.</p>
+            <p className="text-xs text-slate-400 mt-1">Pengingat sertifikasi dikirim ke email ini.</p>
           </div>
 
           <div>
-            <Label htmlFor="issueDate">Tanggal Terbit</Label>
+            <Label htmlFor="issueDate">Tanggal terbit</Label>
             <Input id="issueDate" type="date" error={errors.issueDate?.message} {...register("issueDate")} />
           </div>
 
           <div>
-            <Label htmlFor="validFrom">Berlaku Sejak</Label>
+            <Label htmlFor="validFrom">Berlaku sejak</Label>
             <Input id="validFrom" type="date" error={errors.validFrom?.message} {...register("validFrom")} />
           </div>
 
           <div>
-            <Label htmlFor="expiryDate">Tanggal Berakhir</Label>
+            <Label htmlFor="expiryDate">Tanggal berakhir</Label>
             <Input id="expiryDate" type="date" error={errors.expiryDate?.message} {...register("expiryDate")} />
           </div>
 
           <div>
-            <Label htmlFor="storageLocation">Lokasi Penyimpanan</Label>
+            <Label htmlFor="storageLocation">Lokasi penyimpanan</Label>
             <Input
               id="storageLocation"
               placeholder="Contoh: Lemari Arsip Lt.2 - Rak B3"
@@ -275,7 +276,7 @@ export function CertificateForm({
           </div>
 
           <div className="md:col-span-2">
-            <Label>Dokumen Sertifikat</Label>
+            <Label>Dokumen sertifikat</Label>
             {!fileUrl ? (
               <label
                 htmlFor="doc-upload"
@@ -316,9 +317,9 @@ export function CertificateForm({
       </Card>
 
       {serverError && (
-        <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-4 py-3 text-sm text-signal-expired">
+        <Notice tone="danger">
           {serverError}
-        </div>
+        </Notice>
       )}
 
       <div className="flex justify-end gap-2">
@@ -327,7 +328,7 @@ export function CertificateForm({
         </Button>
         <Button type="submit" isLoading={isSubmitting} disabled={uploading}>
           <Save className="h-4 w-4" />
-          {isEdit ? "Simpan Perubahan" : "Simpan Sertifikat"}
+          {isEdit ? "Simpan perubahan" : "Simpan sertifikat"}
         </Button>
       </div>
     </form>

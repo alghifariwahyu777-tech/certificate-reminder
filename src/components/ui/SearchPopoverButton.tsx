@@ -51,7 +51,7 @@ export function SearchPopoverButton({
         className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm w-full h-[38px] transition-colors ${
           value
             ? "border-accent/40 bg-accent/5 text-ink dark:text-slate-100"
-            : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-400 hover:border-slate-300"
+            : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-500 hover:border-slate-400"
         } ${className}`}
       >
         <Search className="h-4 w-4 shrink-0" />
@@ -84,7 +84,7 @@ export function SearchPopoverButton({
           <div className="flex justify-end gap-2">
             {value && (
               <Button type="button" variant="outline" onClick={clear}>
-                Hapus Pencarian
+                Hapus pencarian
               </Button>
             )}
             <Button type="submit">Terapkan</Button>

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ChangePasswordForm } from "@/components/ChangePasswordForm";
 import { formatDate } from "@/lib/utils";
 import { UserCircle, Mail, CalendarDays } from "lucide-react";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function ProfilePage() {
   const session = await getSession();
@@ -13,10 +14,10 @@ export default async function ProfilePage() {
   return (
     <>
       <Navbar title="Profil" subtitle="Informasi akun Anda" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
-      <div className="p-5 md:p-8 max-w-xl space-y-5">
+      <PageBody width="form">
         <Card>
           <CardHeader className="flex flex-row items-center gap-4">
-            <div className="h-14 w-14 rounded-full bg-ink text-white flex items-center justify-center font-mono font-semibold text-lg">
+            <div className="h-14 w-14 rounded-full bg-brand-blueDark text-white flex items-center justify-center font-mono font-semibold text-lg">
               {user?.name
                 ?.split(" ")
                 .map((w) => w[0])
@@ -42,14 +43,14 @@ export default async function ProfilePage() {
             <div className="flex items-center gap-3 text-sm">
               <UserCircle className="h-4 w-4 text-slate-400" />
               <div>
-                <p className="text-xs text-slate-500">Role</p>
+                <p className="text-xs text-slate-500">Peran</p>
                 <p className="text-ink font-medium">{user?.role === "ADMIN" ? "Administrator" : "Viewer"}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 text-sm">
               <CalendarDays className="h-4 w-4 text-slate-400" />
               <div>
-                <p className="text-xs text-slate-500">Bergabung Sejak</p>
+                <p className="text-xs text-slate-500">Bergabung sejak</p>
                 <p className="text-ink font-medium">{user ? formatDate(user.createdAt) : "-"}</p>
               </div>
             </div>
@@ -58,13 +59,13 @@ export default async function ProfilePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Ubah Password</CardTitle>
+            <CardTitle>Ubah kata sandi</CardTitle>
           </CardHeader>
           <CardContent>
             <ChangePasswordForm />
           </CardContent>
         </Card>
-      </div>
+      </PageBody>
     </>
   );
 }

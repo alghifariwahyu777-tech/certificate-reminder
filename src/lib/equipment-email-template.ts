@@ -20,14 +20,14 @@ function daysRemainingText(daysRemaining: number): string {
 
 export const EQUIPMENT_PLACEHOLDER_TOKENS: { token: string; label: string }[] = [
   { token: "{{picName}}", label: "Nama PIC" },
-  { token: "{{name}}", label: "Nama Alat" },
+  { token: "{{name}}", label: "Nama alat" },
   { token: "{{assetNumber}}", label: "Nomor Aset/Seri" },
   { token: "{{brandModel}}", label: "Merk / Tipe" },
   { token: "{{categoryName}}", label: "Kategori" },
-  { token: "{{nextCalibrationDate}}", label: "Tanggal Kalibrasi Berikutnya" },
+  { token: "{{nextCalibrationDate}}", label: "Tanggal kalibrasi berikutnya" },
   { token: "{{daysRemainingText}}", label: "Sisa Hari (mis. '14 hari lagi')" },
   { token: "{{appUrl}}", label: "URL aplikasi (dari APP_URL di .env)" },
-  { token: "{{statusColor}}", label: "Warna sesuai urgensi (merah/oranye/teal) — pakai di style color:" },
+  { token: "{{statusColor}}", label: "Warna sesuai urgensi (merah/oranye/teal), pakai di style color:" },
 ];
 
 export const DEFAULT_EQUIPMENT_SUBJECT = "[Equipment Calibration] Jadwal Kalibrasi Alat Akan Jatuh Tempo";

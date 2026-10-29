@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
 import { formatDate } from "@/lib/utils";
+import { Notice } from "@/components/ui/Notice";
 
 type ClientUserItem = {
   id: string;
@@ -139,11 +140,11 @@ export function ClientPortalUsersModal({
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} title={`Akun Portal — ${clientName}`} maxWidth="max-w-lg">
+      <Modal isOpen={isOpen} onClose={onClose} title={`Akun portal ${clientName}`} maxWidth="max-w-lg">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-xs text-slate-500">
-              Akun ini dipakai klien untuk login ke Client Portal dan melihat sertifikatnya sendiri.
+              Akun ini dipakai klien untuk masuk ke Portal Klien dan melihat sertifikatnya sendiri.
             </p>
             <Button size="sm" onClick={openAdd}>
               <Plus className="h-3.5 w-3.5" />
@@ -174,7 +175,7 @@ export function ClientPortalUsersModal({
                     <button
                       onClick={() => openEdit(u)}
                       className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-accent"
-                      aria-label="Edit akun"
+                      aria-label="Ubah akun"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
@@ -196,7 +197,7 @@ export function ClientPortalUsersModal({
       <Modal
         isOpen={formOpen}
         onClose={() => setFormOpen(false)}
-        title={editTarget ? "Edit Akun Portal" : "Tambah Akun Portal"}
+        title={editTarget ? "Ubah akun portal" : "Tambah akun portal"}
       >
         <div className="space-y-4">
           <div>
@@ -215,7 +216,7 @@ export function ClientPortalUsersModal({
             />
           </div>
           <div>
-            <Label htmlFor="pu-password">{editTarget ? "Password Baru (opsional)" : "Password"}</Label>
+            <Label htmlFor="pu-password">{editTarget ? "Kata sandi baru (opsional)" : "Password"}</Label>
             <Input
               id="pu-password"
               type="password"
@@ -240,9 +241,9 @@ export function ClientPortalUsersModal({
           )}
 
           {formError && (
-            <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+            <Notice tone="danger">
               {formError}
-            </div>
+            </Notice>
           )}
 
           <div className="flex justify-end gap-2 pt-1">
@@ -257,7 +258,7 @@ export function ClientPortalUsersModal({
         </div>
       </Modal>
 
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus Akun Portal">
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus akun portal">
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Apakah Anda yakin ingin menghapus akun portal <strong>{deleteTarget?.name}</strong>? Klien ini tidak
           akan bisa login lagi.

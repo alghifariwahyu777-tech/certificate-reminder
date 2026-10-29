@@ -47,7 +47,7 @@ export async function sendReminderEmail(params: {
   if (!transporter) {
     return {
       status: "SKIPPED",
-      errorMessage: "GMAIL_USER dan GMAIL_APP_PASSWORD belum dikonfigurasi — email tidak dikirim (mode simulasi).",
+      errorMessage: "GMAIL_USER dan GMAIL_APP_PASSWORD belum dikonfigurasi, email tidak dikirim (mode simulasi).",
     };
   }
 

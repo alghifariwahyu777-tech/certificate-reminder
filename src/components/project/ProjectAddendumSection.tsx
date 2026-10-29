@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { formatDate } from "@/lib/utils";
+import { Notice } from "@/components/ui/Notice";
 
 type Addendum = {
   id: string;
@@ -65,7 +66,7 @@ export function ProjectAddendumSection({
         return;
       }
       setAddenda((prev) => [body.addendum, ...prev]);
-      showToast("Addendum berhasil ditambahkan — target selesai project diperbarui.");
+      showToast("Addendum ditambahkan dan target selesai project diperbarui.");
       setOpen(false);
       setAddendumNumber("");
       setDescription("");
@@ -103,7 +104,7 @@ export function ProjectAddendumSection({
                   <p className="text-xs text-slate-400">{formatDate(a.createdAt)}</p>
                 </div>
                 <p className="text-xs text-slate-500 font-mono mt-0.5">
-                  Target selesai: {formatDate(a.previousEndDate)} → {formatDate(a.newTargetEndDate)}
+                  Target selesai: {formatDate(a.previousEndDate)} menjadi {formatDate(a.newTargetEndDate)}
                 </p>
                 {a.description && <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{a.description}</p>}
                 {a.createdBy && <p className="text-xs text-slate-400 mt-1">oleh {a.createdBy}</p>}
@@ -116,7 +117,7 @@ export function ProjectAddendumSection({
       <Modal isOpen={open} onClose={() => setOpen(false)} title="Tambah addendum">
         <div className="space-y-4">
           <div>
-            <Label htmlFor="add-number">Nomor/Nama Addendum</Label>
+            <Label htmlFor="add-number">Nomor/Nama addendum</Label>
             <Input
               id="add-number"
               value={addendumNumber}
@@ -130,7 +131,7 @@ export function ProjectAddendumSection({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="add-date">Target Selesai Baru</Label>
+              <Label htmlFor="add-date">Target selesai baru</Label>
               <Input
                 id="add-date"
                 type="date"
@@ -139,7 +140,7 @@ export function ProjectAddendumSection({
               />
             </div>
             <div>
-              <Label htmlFor="add-value">Nilai Kontrak Baru (opsional)</Label>
+              <Label htmlFor="add-value">Nilai kontrak baru (opsional)</Label>
               <Input
                 id="add-value"
                 type="number"
@@ -150,9 +151,9 @@ export function ProjectAddendumSection({
             </div>
           </div>
           {error && (
-            <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+            <Notice tone="danger">
               {error}
-            </div>
+            </Notice>
           )}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setOpen(false)}>

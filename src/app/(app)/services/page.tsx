@@ -2,6 +2,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/layout/Navbar";
 import { ServiceManager } from "@/components/service/ServiceManager";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function ServicesPage() {
   const session = await getSession();
@@ -14,11 +15,11 @@ export default async function ServicesPage() {
     <>
       <Navbar
         title="Layanan"
-        subtitle="Katalog layanan sertifikasi & konfigurasinya"
+        subtitle="Layanan sertifikasi beserta persyaratan dan alur prosesnya"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}
       />
-      <div className="p-5 md:p-8">
+      <PageBody>
         <ServiceManager
           canManage={session?.role === "ADMIN"}
           initialServices={services.map((s) => ({
@@ -36,7 +37,7 @@ export default async function ServicesPage() {
             stageCount: s._count.stages,
           }))}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

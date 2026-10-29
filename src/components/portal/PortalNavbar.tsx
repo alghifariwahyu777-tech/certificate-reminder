@@ -9,7 +9,7 @@ import { PortalNotificationBell } from "@/components/portal/PortalNotificationBe
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { href: "/portal", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/portal", label: "Dasbor", icon: LayoutDashboard },
   { href: "/portal/certificates", label: "Sertifikat Saya", icon: FileBadge2 },
   { href: "/portal/applications", label: "Pengajuan Saya", icon: ClipboardList },
   { href: "/portal/services", label: "Layanan", icon: Layers },
@@ -26,7 +26,7 @@ export function PortalNavbar({ clientName, userName }: { clientName: string; use
 
   return (
     <header className="sticky top-0 z-30">
-      <div className="bg-ink px-5 md:px-8 py-3.5">
+      <div className="bg-gradient-to-r from-[#123F6B] to-[#1A5A8E] px-5 md:px-8 py-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shrink-0 p-1">
@@ -34,7 +34,7 @@ export function PortalNavbar({ clientName, userName }: { clientName: string; use
             </div>
             <div>
               <p className="font-display font-semibold text-sm text-white leading-tight">
-                Client Portal
+                Portal Klien
               </p>
               <p className="text-[11px] text-brand-teal font-mono leading-tight">
                 {clientName}
@@ -54,8 +54,8 @@ export function PortalNavbar({ clientName, userName }: { clientName: string; use
             <Link
               href="/portal/change-password"
               className="p-2 rounded hover:bg-white/10 text-slate-300 hover:text-white"
-              aria-label="Ubah Password"
-              title="Ubah Password"
+              aria-label="Ubah kata sandi"
+              title="Ubah kata sandi"
             >
               <KeyRound className="h-4 w-4" />
             </Link>
@@ -63,7 +63,7 @@ export function PortalNavbar({ clientName, userName }: { clientName: string; use
               <button
                 type="submit"
                 className="p-2 rounded hover:bg-white/10 text-slate-300 hover:text-white"
-                aria-label="Logout"
+                aria-label="Keluar"
               >
                 <LogOut className="h-4 w-4" />
               </button>

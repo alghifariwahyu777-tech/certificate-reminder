@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { AuditLogViewer } from "@/components/audit/AuditLogViewer";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function AuditLogPage() {
   const session = await getSession();
@@ -10,10 +11,10 @@ export default async function AuditLogPage() {
 
   return (
     <>
-      <Navbar title="Log Audit" subtitle="Riwayat seluruh aktivitas dalam sistem" adminName={session.name} role={session.role} />
-      <div className="p-5 md:p-8">
+      <Navbar title="Log Audit" subtitle="Riwayat perubahan data oleh pengguna" adminName={session.name} role={session.role} />
+      <PageBody>
         <AuditLogViewer />
-      </div>
+      </PageBody>
     </>
   );
 }

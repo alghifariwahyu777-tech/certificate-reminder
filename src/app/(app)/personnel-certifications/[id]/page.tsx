@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { formatDate } from "@/lib/utils";
 import { getDaysRemaining } from "@/lib/status";
 import { Pencil, Download, ArrowLeft, FileWarning } from "lucide-react";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function PersonnelCertificationDetailPage(context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -28,15 +29,15 @@ export default async function PersonnelCertificationDetailPage(context: { params
     { label: "Personil", value: certification.employee.name },
     { label: "Jabatan", value: certification.employee.position || "-" },
     { label: "Divisi", value: certification.employee.department?.name || "-" },
-    { label: "Email Personil", value: certification.employee.email },
+    { label: "Email personil", value: certification.employee.email },
     { label: "Kategori", value: certification.category.name },
-    { label: "Nomor Sertifikasi", value: certification.certificationNumber || "-" },
-    { label: "Instansi Penerbit", value: certification.issuingBody || "-" },
+    { label: "Nomor sertifikasi", value: certification.certificationNumber || "-" },
+    { label: "Instansi penerbit", value: certification.issuingBody || "-" },
     { label: "Email CC (Atasan/HR)", value: certification.ccEmail || "-" },
-    { label: "Tanggal Terbit", value: certification.issueDate ? formatDate(certification.issueDate) : "-" },
-    { label: "Berlaku Sejak", value: certification.validFrom ? formatDate(certification.validFrom) : "-" },
-    { label: "Tanggal Berakhir", value: formatDate(certification.expiryDate) },
-    { label: "Sisa Hari", value: days < 0 ? `Terlambat ${Math.abs(days)} hari` : `${days} hari lagi` },
+    { label: "Tanggal terbit", value: certification.issueDate ? formatDate(certification.issueDate) : "-" },
+    { label: "Berlaku sejak", value: certification.validFrom ? formatDate(certification.validFrom) : "-" },
+    { label: "Tanggal berakhir", value: formatDate(certification.expiryDate) },
+    { label: "Sisa hari", value: days < 0 ? `Terlambat ${Math.abs(days)} hari` : `${days} hari lagi` },
   ];
 
   return (
@@ -47,20 +48,20 @@ export default async function PersonnelCertificationDetailPage(context: { params
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}
       />
-      <div className="p-5 md:p-8 max-w-4xl space-y-5">
+      <PageBody width="form">
         <div className="flex items-center justify-between">
           <Link
             href="/personnel-certifications"
             className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-ink"
           >
             <ArrowLeft className="h-4 w-4" />
-            Kembali ke Sertifikasi Personil
+            Kembali ke sertifikasi personil
           </Link>
           {session?.role === "ADMIN" && (
             <Link href={`/personnel-certifications/${certification.id}/edit`}>
               <Button variant="outline" size="sm">
                 <Pencil className="h-4 w-4" />
-                Edit
+                Ubah
               </Button>
             </Link>
           )}
@@ -97,20 +98,19 @@ export default async function PersonnelCertificationDetailPage(context: { params
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Dokumen Sertifikasi</CardTitle>
+            <CardTitle>Dokumen sertifikasi</CardTitle>
             {certification.fileUrl && (
               <a href={`${certification.fileUrl}?download=1`}>
                 <Button variant="outline" size="sm">
                   <Download className="h-4 w-4" />
-                  Download
+                  Unduh
                 </Button>
               </a>
             )}
           </CardHeader>
           <CardContent>
             {!certification.fileUrl ? (
-              <div className="flex flex-col items-center justify-center gap-2 py-10 text-slate-400">
-                <FileWarning className="h-8 w-8" />
+              <div className="py-10 text-center text-slate-500">
                 <p className="text-sm">Belum ada dokumen yang diunggah.</p>
               </div>
             ) : isImage ? (
@@ -125,7 +125,7 @@ export default async function PersonnelCertificationDetailPage(context: { params
             )}
           </CardContent>
         </Card>
-      </div>
+      </PageBody>
     </>
   );
 }

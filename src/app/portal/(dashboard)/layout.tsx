@@ -16,7 +16,7 @@ export default async function PortalDashboardLayout({ children }: { children: Re
       <PortalNavbar clientName={client.name} userName={session.name} />
       <div className="flex-1">{children}</div>
       <footer className="px-5 md:px-8 py-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-400 dark:text-slate-500 font-mono">
-        PT Sucofindo (Persero) · Client Portal
+        PT Sucofindo (Persero), Portal Klien
       </footer>
       <PortalWhatsAppButton />
     </div>

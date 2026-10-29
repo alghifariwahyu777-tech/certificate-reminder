@@ -14,6 +14,7 @@ import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
 import { useToast } from "@/components/ui/Toast";
 import { formatDate } from "@/lib/utils";
 import type { Renewal } from "@/types/certificate";
+import { Notice } from "@/components/ui/Notice";
 
 export function CertificateRenewalSection({
   certificateId,
@@ -120,7 +121,7 @@ export function CertificateRenewalSection({
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setServerError(body.message || "Gagal menyimpan renewal.");
+      setServerError(body.message || "Gagal menyimpan perpanjangan.");
       return;
     }
 
@@ -135,20 +136,19 @@ export function CertificateRenewalSection({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="flex items-center gap-2">
-          <History className="h-4 w-4 text-slate-400" />
-          <CardTitle>Riwayat Renewal</CardTitle>
+          <CardTitle>Riwayat perpanjangan</CardTitle>
         </div>
         {canManage && (
           <Button size="sm" onClick={() => setOpen(true)}>
             <RefreshCw className="h-4 w-4" />
-            Perpanjang Sertifikat
+            Perpanjang sertifikat
           </Button>
         )}
       </CardHeader>
       <CardContent className="p-0">
         {renewals.length === 0 ? (
-          <p className="px-5 py-8 text-center text-sm text-slate-400">
-            Belum ada riwayat renewal untuk sertifikat ini.
+          <p className="px-5 py-8 text-center text-sm text-slate-500">
+            Belum ada riwayat perpanjangan untuk sertifikat ini.
           </p>
         ) : (
           <div className="divide-y divide-slate-100">
@@ -156,10 +156,10 @@ export function CertificateRenewalSection({
               <div key={r.id} className="px-5 py-3.5 flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-medium text-ink">
-                    {r.previousNumber} <span className="text-slate-400">→</span> {r.newCertificateNumber}
+                    {r.previousNumber} menjadi {r.newCertificateNumber}
                   </p>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Diperpanjang {formatDate(r.renewalDate)} · Berlaku s/d {formatDate(r.newExpiryDate)}
+                    Diperpanjang {formatDate(r.renewalDate)}, Berlaku s/d {formatDate(r.newExpiryDate)}
                   </p>
                   {r.notes && <p className="text-xs text-slate-500 mt-1 italic">&ldquo;{r.notes}&rdquo;</p>}
                 </div>
@@ -179,15 +179,15 @@ export function CertificateRenewalSection({
         )}
       </CardContent>
 
-      <Modal isOpen={open} onClose={closeModal} title="Perpanjang Sertifikat" maxWidth="max-w-lg">
+      <Modal isOpen={open} onClose={closeModal} title="Perpanjang sertifikat" maxWidth="max-w-lg">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div>
-            <Label htmlFor="renewalDate">Tanggal Renewal</Label>
+            <Label htmlFor="renewalDate">Tanggal perpanjangan</Label>
             <Input id="renewalDate" type="date" error={errors.renewalDate?.message} {...register("renewalDate")} />
           </div>
 
           <div>
-            <Label htmlFor="newCertificateNumber">Nomor Sertifikat Baru</Label>
+            <Label htmlFor="newCertificateNumber">Nomor sertifikat baru</Label>
             <Input
               id="newCertificateNumber"
               error={errors.newCertificateNumber?.message}
@@ -197,11 +197,11 @@ export function CertificateRenewalSection({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="newValidFrom">Tanggal Berlaku Baru</Label>
+              <Label htmlFor="newValidFrom">Tanggal berlaku baru</Label>
               <Input id="newValidFrom" type="date" error={errors.newValidFrom?.message} {...register("newValidFrom")} />
             </div>
             <div>
-              <Label htmlFor="newExpiryDate">Tanggal Berakhir Baru</Label>
+              <Label htmlFor="newExpiryDate">Tanggal berakhir baru</Label>
               <Input
                 id="newExpiryDate"
                 type="date"
@@ -213,11 +213,11 @@ export function CertificateRenewalSection({
 
           <div>
             <Label htmlFor="renewal-notes">Catatan</Label>
-            <Textarea id="renewal-notes" rows={2} placeholder="Catatan renewal (opsional)" {...register("notes")} />
+            <Textarea id="renewal-notes" rows={2} placeholder="Catatan perpanjangan (opsional)" {...register("notes")} />
           </div>
 
           <div>
-            <Label>Upload Sertifikat Baru</Label>
+            <Label>Unggah sertifikat baru</Label>
             {!fileUrl ? (
               <label
                 htmlFor="renewal-upload"
@@ -268,9 +268,9 @@ export function CertificateRenewalSection({
           </div>
 
           {serverError && (
-            <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+            <Notice tone="danger">
               {serverError}
-            </div>
+            </Notice>
           )}
 
           <div className="flex justify-end gap-2 pt-1">
@@ -278,7 +278,7 @@ export function CertificateRenewalSection({
               Batal
             </Button>
             <Button type="submit" isLoading={isSubmitting} disabled={uploading}>
-              Simpan Renewal
+              Simpan perpanjangan
             </Button>
           </div>
         </form>

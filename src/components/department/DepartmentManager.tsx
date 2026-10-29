@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { IconBox } from "@/components/ui/IconBox";
+import { ENTITY_ICON } from "@/lib/entity-icons";
 import { Plus, Pencil, Trash2, Building, X, Check } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Input, Label } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
+import { Notice } from "@/components/ui/Notice";
 
 type DepartmentItem = { id: string; name: string; certificateCount: number };
 
@@ -127,7 +130,7 @@ export function DepartmentManager({
         {canManage && (
           <Button onClick={() => setAddOpen(true)}>
             <Plus className="h-4 w-4" />
-            Tambah Divisi
+            Tambah divisi
           </Button>
         )}
       </div>
@@ -135,14 +138,12 @@ export function DepartmentManager({
       <Card>
         <div className="divide-y divide-slate-100">
           {departments.length === 0 && (
-            <p className="px-5 py-10 text-center text-sm text-slate-400">Belum ada divisi.</p>
+            <p className="px-5 py-10 text-center text-sm text-slate-500">Belum ada divisi.</p>
           )}
           {departments.map((dept) => (
             <div key={dept.id} className="flex items-center justify-between px-5 py-3.5">
               <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded bg-ink/5 text-ink flex items-center justify-center border border-ink/10">
-                  <Building className="h-4 w-4" />
-                </div>
+                <IconBox icon={ENTITY_ICON.department} />
                 <div>
                   <p className="text-sm font-medium text-ink">{dept.name}</p>
                   <p className="text-xs text-slate-400 font-mono">{dept.certificateCount} sertifikat</p>
@@ -153,7 +154,7 @@ export function DepartmentManager({
                   <button
                     onClick={() => openEdit(dept)}
                     className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
-                    aria-label="Edit divisi"
+                    aria-label="Ubah divisi"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
@@ -174,8 +175,8 @@ export function DepartmentManager({
         </div>
       </Card>
 
-      <Modal isOpen={addOpen} onClose={() => setAddOpen(false)} title="Tambah Divisi">
-        <Label htmlFor="new-department">Nama Divisi</Label>
+      <Modal isOpen={addOpen} onClose={() => setAddOpen(false)} title="Tambah divisi">
+        <Label htmlFor="new-department">Nama divisi</Label>
         <Input
           id="new-department"
           placeholder="Contoh: HSE, Legal, Fasilitas"
@@ -195,8 +196,8 @@ export function DepartmentManager({
         </div>
       </Modal>
 
-      <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} title="Edit Divisi">
-        <Label htmlFor="edit-department">Nama Divisi</Label>
+      <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} title="Ubah divisi">
+        <Label htmlFor="edit-department">Nama divisi</Label>
         <Input
           id="edit-department"
           value={editName}
@@ -213,14 +214,14 @@ export function DepartmentManager({
         </div>
       </Modal>
 
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus Divisi">
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus divisi">
         <p className="text-sm text-slate-600">
           Apakah Anda yakin ingin menghapus divisi <strong className="text-ink">{deleteTarget?.name}</strong>?
         </p>
         {deleteError && (
-          <div className="mt-3 rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+          <Notice tone="danger" className="mt-3">
             {deleteError}
-          </div>
+          </Notice>
         )}
         <div className="flex justify-end gap-2 mt-5">
           <Button variant="outline" onClick={() => setDeleteTarget(null)}>

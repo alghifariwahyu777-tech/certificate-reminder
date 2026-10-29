@@ -2,7 +2,7 @@
 
 import { InfoTip } from "@/components/ui/InfoTip";
 import { useState } from "react";
-import { Pencil, Plus, Receipt } from "lucide-react";
+import { Pencil, Plus, Receipt, Wallet, FileText, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Select, Textarea } from "@/components/ui/Input";
@@ -121,10 +121,11 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Stat label="Nilai kontrak" value={formatRupiah(contract || null, true)} hint={termTotal ? `Total termin ${formatRupiah(termTotal, true)}` : "termin belum diisi"} />
-        <Stat label="Sudah ditagih" value={formatRupiah(sm.invoiced, true)} hint={contract ? `${Math.round((sm.invoiced / contract) * 100)}% dari kontrak` : undefined} />
-        <Stat label="Sudah dibayar" tone="good" value={formatRupiah(sm.paid, true)} hint={contract ? `${Math.round((sm.paid / contract) * 100)}% dari kontrak` : undefined} />
+        <Stat icon={Wallet} label="Nilai kontrak" value={formatRupiah(contract || null, true)} hint={termTotal ? `Total termin ${formatRupiah(termTotal, true)}` : "termin belum diisi"} />
+        <Stat icon={FileText} label="Sudah ditagih" value={formatRupiah(sm.invoiced, true)} hint={contract ? `${Math.round((sm.invoiced / contract) * 100)}% dari kontrak` : undefined} />
+        <Stat icon={CheckCircle2} label="Sudah dibayar" tone="good" value={formatRupiah(sm.paid, true)} hint={contract ? `${Math.round((sm.paid / contract) * 100)}% dari kontrak` : undefined} />
         <Stat
+          icon={Receipt}
           label="Piutang"
           tone={sm.overdueInvoiceCount ? "bad" : sm.outstanding ? "warn" : "default"}
           value={formatRupiah(sm.outstanding, true)}
@@ -132,9 +133,9 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
         />
       </div>
 
-      {contract > 0 && termTotal > 0 && Math.abs(termTotal - contract) >= 1 && (
+      {contract > 0 && termTotal > 0 && Math.abs(termTotal - contract) >= 1000 && (
         <p className="text-xs text-signal-soon">
-          Total termin ({formatRupiah(termTotal)}) berbeda dengan nilai kontrak ({formatRupiah(contract)}).
+          Total termin ({formatRupiah(termTotal)}) belum sama dengan nilai kontrak ({formatRupiah(contract)}). Periksa kembali persentase atau nominal termin.
         </p>
       )}
 
@@ -142,8 +143,8 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div>
             <CardTitle className="flex items-center gap-1.5">
-            Termin & penagihan
-            <InfoTip label="Keterangan termin & penagihan">Alur: belum ditagih, lalu sudah ditagih (invoice terbit), lalu dibayar.</InfoTip>
+            Termin dan penagihan
+            <InfoTip label="Keterangan termin dan penagihan">Alur: belum ditagih, lalu sudah ditagih (invoice terbit), lalu dibayar.</InfoTip>
           </CardTitle>
           </div>
           {data.canManage && (
@@ -160,7 +161,7 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs text-slate-500 border-b border-slate-100 dark:border-slate-800">
+                  <tr className="th-row">
                     <th className="px-5 py-2.5 font-medium">Termin</th>
                     <th className="px-3 py-2.5 font-medium text-right">Nominal</th>
                     <th className="px-3 py-2.5 font-medium">Rencana tagih</th>
@@ -198,7 +199,7 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
                           {t.invoiceDate && <span className="block text-xs text-slate-500">{fmtDate(t.invoiceDate)}</span>}
                           {t.dueDate && (
                             <span className={cn("block text-xs", overdue ? "text-signal-expired font-medium" : "text-slate-500")}>
-                              JT {fmtDate(t.dueDate)}
+                              Jatuh tempo {fmtDate(t.dueDate)}
                             </span>
                           )}
                         </td>
@@ -214,7 +215,7 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
                         </td>
                         <td className="px-3 py-3">
                           <span className={cn("stamp-badge", overdue ? "bg-signal-expiredBg text-signal-expired border-signal-expiredBorder" : STATUS_CLASS[t.status])}>
-                            {overdue ? "Lewat Jatuh Tempo" : TERM_STATUS_LABEL[t.status]}
+                            {overdue ? "Lewat jatuh tempo" : TERM_STATUS_LABEL[t.status]}
                           </span>
                         </td>
                         {data.canManage && (
@@ -222,7 +223,7 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
                             <div className="flex items-center justify-end gap-1">
                               <button
                                 type="button"
-                                aria-label="Edit termin"
+                                aria-label="Ubah termin"
                                 onClick={() => openForm(t)}
                                 className="p-1.5 rounded text-slate-400 hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800"
                               >
@@ -242,7 +243,7 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
         </CardContent>
       </Card>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit termin" : "Tambah termin"} maxWidth="max-w-xl">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Ubah termin" : "Tambah termin"} maxWidth="max-w-xl">
         <div className="space-y-4">
           <div className="grid grid-cols-[1fr_5rem] gap-3">
             <div>

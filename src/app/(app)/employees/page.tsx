@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { EmployeeManager } from "@/components/personnel/EmployeeManager";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function EmployeesPage() {
   const session = await getSession();
@@ -17,11 +18,11 @@ export default async function EmployeesPage() {
     <>
       <Navbar
         title="Karyawan"
-        subtitle="Kelola daftar personil internal untuk pengingat sertifikasi/kompetensi"
+        subtitle="Daftar personil penerima pengingat sertifikasi"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}
       />
-      <div className="p-5 md:p-8">
+      <PageBody>
         <EmployeeManager
           canManage={session?.role === "ADMIN"}
           departments={departments.map((d) => ({ id: d.id, name: d.name }))}
@@ -37,7 +38,7 @@ export default async function EmployeesPage() {
             certificationCount: e._count.certifications,
           }))}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

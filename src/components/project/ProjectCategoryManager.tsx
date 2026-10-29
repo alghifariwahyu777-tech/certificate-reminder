@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { IconBox } from "@/components/ui/IconBox";
+import { ENTITY_ICON } from "@/lib/entity-icons";
 import { Plus, Pencil, Trash2, Tags, X, Check } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Input, Label } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
+import { Notice } from "@/components/ui/Notice";
 
 type ProjectCategoryItem = { id: string; name: string; projectCount: number };
 
@@ -135,14 +138,12 @@ export function ProjectCategoryManager({
       <Card>
         <div className="divide-y divide-slate-100">
           {categories.length === 0 && (
-            <p className="px-5 py-10 text-center text-sm text-slate-400">Belum ada kategori.</p>
+            <p className="px-5 py-10 text-center text-sm text-slate-500">Belum ada kategori.</p>
           )}
           {categories.map((cat) => (
             <div key={cat.id} className="flex items-center justify-between px-5 py-3.5">
               <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded bg-ink/5 text-ink flex items-center justify-center border border-ink/10">
-                  <Tags className="h-4 w-4" />
-                </div>
+                <IconBox icon={ENTITY_ICON.category} />
                 <div>
                   <p className="text-sm font-medium text-ink">{cat.name}</p>
                   <p className="text-xs text-slate-400 font-mono">{cat.projectCount} project</p>
@@ -153,7 +154,7 @@ export function ProjectCategoryManager({
                   <button
                     onClick={() => openEdit(cat)}
                     className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
-                    aria-label="Edit kategori"
+                    aria-label="Ubah kategori"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
@@ -175,7 +176,7 @@ export function ProjectCategoryManager({
       </Card>
 
       <Modal isOpen={addOpen} onClose={() => setAddOpen(false)} title="Tambah kategori">
-        <Label htmlFor="new-category">Nama Kategori</Label>
+        <Label htmlFor="new-category">Nama kategori</Label>
         <Input
           id="new-category"
           placeholder="Contoh: PIK, Serco, Konstruksi"
@@ -195,8 +196,8 @@ export function ProjectCategoryManager({
         </div>
       </Modal>
 
-      <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} title="Edit Kategori">
-        <Label htmlFor="edit-category">Nama Kategori</Label>
+      <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} title="Ubah kategori">
+        <Label htmlFor="edit-category">Nama kategori</Label>
         <Input
           id="edit-category"
           value={editName}
@@ -213,14 +214,14 @@ export function ProjectCategoryManager({
         </div>
       </Modal>
 
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus Kategori">
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus kategori">
         <p className="text-sm text-slate-600">
           Apakah Anda yakin ingin menghapus kategori <strong className="text-ink">{deleteTarget?.name}</strong>?
         </p>
         {deleteError && (
-          <div className="mt-3 rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+          <Notice tone="danger" className="mt-3">
             {deleteError}
-          </div>
+          </Notice>
         )}
         <div className="flex justify-end gap-2 mt-5">
           <Button variant="outline" onClick={() => setDeleteTarget(null)}>

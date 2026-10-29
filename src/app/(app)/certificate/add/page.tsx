@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { CertificateForm } from "@/components/certificate/CertificateForm";
+import { Notice } from "@/components/ui/Notice";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function AddCertificatePage() {
   const session = await getSession();
@@ -13,23 +15,23 @@ export default async function AddCertificatePage() {
 
   return (
     <>
-      <Navbar title="Tambah Sertifikat" subtitle="Daftarkan sertifikat baru" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
-      <div className="p-5 md:p-8 max-w-3xl">
+      <Navbar title="Tambah Sertifikat" subtitle="Catat sertifikat klien baru" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
+      <PageBody width="form">
         {clients.length === 0 && (
-          <div className="mb-5 rounded border border-signal-soonBorder bg-signal-soonBg px-4 py-3 text-sm text-signal-soon">
+          <Notice tone="warning" className="mb-5">
             Belum ada data klien. Tambahkan klien terlebih dahulu di halaman{" "}
             <a href="/clients" className="underline font-medium">
-              Clients
+              Klien
             </a>{" "}
             sebelum membuat sertifikat.
-          </div>
+          </Notice>
         )}
         <CertificateForm
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
           clients={clients.map((c) => ({ id: c.id, name: c.name }))}
           departments={departments.map((d) => ({ id: d.id, name: d.name }))}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { Segmented } from "@/components/ui/Segmented";
 import { useMemo, useState } from "react";
 import { Save, RotateCcw, Copy, Code2, Sparkles, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -14,14 +15,15 @@ import {
   buildEquipmentSimpleTemplateHtml,
   type EquipmentSimpleTemplateFields,
 } from "@/lib/equipment-email-template";
+import { Notice } from "@/components/ui/Notice";
 
 const SAMPLE_DATA = {
-  picName: "Budi Santoso",
+  picName: "Budi santoso",
   name: "Multimeter Digital",
   assetNumber: "ALT-2026-001",
   brand: "Fluke",
   model: "87V",
-  categoryName: "Alat Ukur Listrik",
+  categoryName: "Alat ukur listrik",
   nextCalibrationDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
   daysRemaining: 14,
 };
@@ -60,7 +62,7 @@ export function EquipmentEmailTemplateEditor({
         ? buildEquipmentSimpleTemplateHtml(fields, SAMPLE_DATA, browserOrigin)
         : substituteEquipmentPlaceholders(bodyHtml, SAMPLE_DATA, browserOrigin);
     } catch {
-      return "<p style='padding:20px;font-family:sans-serif;color:#b91c1c;'>Terjadi kesalahan saat menampilkan preview.</p>";
+      return "<p style='padding:20px;font-family:sans-serif;color:#b91c1c;'>Terjadi kesalahan saat menampilkan pratinjau.</p>";
     }
   }, [mode, fields, bodyHtml]);
 
@@ -83,7 +85,7 @@ export function EquipmentEmailTemplateEditor({
         setServerError(body.message || "Gagal menyimpan template.");
         return;
       }
-      showToast("Template email reminder alat berhasil disimpan.");
+      showToast("Template email pengingat alat berhasil disimpan.");
     } finally {
       setSaving(false);
     }
@@ -129,57 +131,36 @@ export function EquipmentEmailTemplateEditor({
   return (
     <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
       <div className="xl:col-span-3 space-y-4">
-        <div className="flex items-center gap-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-1 w-fit">
-          <button
-            onClick={() => setMode("SIMPLE")}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors",
-              mode === "SIMPLE"
-                ? "bg-ink text-white dark:bg-slate-100 dark:text-ink"
-                : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800"
-            )}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            Sederhana
-          </button>
-          <button
-            onClick={() => setMode("ADVANCED")}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors",
-              mode === "ADVANCED"
-                ? "bg-ink text-white dark:bg-slate-100 dark:text-ink"
-                : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800"
-            )}
-          >
-            <Code2 className="h-3.5 w-3.5" />
-            Lanjutan (HTML)
-          </button>
-        </div>
+        <Segmented
+          value={mode}
+          onChange={setMode}
+          options={[
+            ["SIMPLE", "Sederhana"],
+            ["ADVANCED", "Lanjutan (HTML)"],
+          ]}
+        />
 
         <Card>
           <CardHeader>
-            <CardTitle>{mode === "SIMPLE" ? "Isi Email" : "Edit HTML"}</CardTitle>
+            <CardTitle>{mode === "SIMPLE" ? "Isi email" : "Ubah HTML"}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="p-subject">Subjek Email</Label>
+              <Label htmlFor="p-subject">Subjek email</Label>
               <Input id="p-subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
             </div>
 
             {mode === "SIMPLE" ? (
               <>
-                <div className="rounded border border-accent/20 bg-accent/5 px-3 py-2.5 flex gap-2">
-                  <Info className="h-4 w-4 text-accent shrink-0 mt-0.5" />
-                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                    Detail alat (nama, merk/tipe, nomor aset, kategori, tanggal kalibrasi berikutnya) otomatis
-                    ditampilkan sebagai tabel rapi di tengah email — tidak perlu diatur di sini. Anda hanya
-                    mengisi teks di sekitarnya. Email ini dikirim ke PIC alat + CC atasan.
+                <Notice tone="info">
+                  <p>
+                    Tabel data alat ditambahkan otomatis di tengah email. Anda cukup mengisi teks pembuka dan penutup. Email dikirim ke PIC alat dengan salinan ke atasan.
                   </p>
-                </div>
+                </Notice>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="p-companyName">Nama Perusahaan</Label>
+                    <Label htmlFor="p-companyName">Nama perusahaan</Label>
                     <Input
                       id="p-companyName"
                       value={fields.companyName}
@@ -187,7 +168,7 @@ export function EquipmentEmailTemplateEditor({
                     />
                   </div>
                   <div>
-                    <Label htmlFor="p-systemName">Nama Sistem</Label>
+                    <Label htmlFor="p-systemName">Nama sistem</Label>
                     <Input
                       id="p-systemName"
                       value={fields.systemName}
@@ -197,7 +178,7 @@ export function EquipmentEmailTemplateEditor({
                 </div>
 
                 <div>
-                  <Label htmlFor="p-greeting">Salam Pembuka</Label>
+                  <Label htmlFor="p-greeting">Salam pembuka</Label>
                   <Input
                     id="p-greeting"
                     value={fields.greeting}
@@ -206,7 +187,7 @@ export function EquipmentEmailTemplateEditor({
                 </div>
 
                 <div>
-                  <Label htmlFor="p-introText">Paragraf Pembuka</Label>
+                  <Label htmlFor="p-introText">Paragraf pembuka</Label>
                   <Textarea
                     id="p-introText"
                     rows={3}
@@ -216,7 +197,7 @@ export function EquipmentEmailTemplateEditor({
                 </div>
 
                 <div>
-                  <Label htmlFor="p-closingText">Paragraf Penutup</Label>
+                  <Label htmlFor="p-closingText">Paragraf penutup</Label>
                   <Textarea
                     id="p-closingText"
                     rows={2}
@@ -226,7 +207,7 @@ export function EquipmentEmailTemplateEditor({
                 </div>
 
                 <div>
-                  <Label htmlFor="p-footerText">Teks Footer</Label>
+                  <Label htmlFor="p-footerText">Teks penutup email</Label>
                   <Textarea
                     id="p-footerText"
                     rows={2}
@@ -237,7 +218,7 @@ export function EquipmentEmailTemplateEditor({
               </>
             ) : (
               <div>
-                <Label htmlFor="p-bodyHtml">Isi Email (HTML)</Label>
+                <Label htmlFor="p-bodyHtml">Isi email (HTML)</Label>
                 <Textarea
                   id="p-bodyHtml"
                   value={bodyHtml}
@@ -250,19 +231,19 @@ export function EquipmentEmailTemplateEditor({
             )}
 
             {serverError && (
-              <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+              <Notice tone="danger">
                 {serverError}
-              </div>
+              </Notice>
             )}
 
             <div className="flex justify-between items-center pt-1">
               <Button variant="outline" onClick={() => setResetOpen(true)}>
                 <RotateCcw className="h-4 w-4" />
-                Reset ke Default
+                Reset ke default
               </Button>
               <Button onClick={handleSave} isLoading={saving}>
                 <Save className="h-4 w-4" />
-                Simpan Template
+                Simpan template
               </Button>
             </div>
           </CardContent>
@@ -270,12 +251,12 @@ export function EquipmentEmailTemplateEditor({
 
         <Card>
           <CardHeader>
-            <CardTitle>Placeholder yang Tersedia</CardTitle>
+            <CardTitle>Placeholder yang tersedia</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-xs text-slate-500 mb-3">
               {mode === "SIMPLE"
-                ? 'Opsional — bisa disisipkan di teks pembuka/penutup/footer di atas, mis. "Halo {{employeeName}},".'
+                ? 'Opsional, bisa disisipkan di teks pembuka/penutup/footer di atas, mis. "Halo {{employeeName}},".'
                 : "Klik untuk menyalin, lalu tempel ke posisi yang diinginkan di dalam HTML."}
             </p>
             <div className="flex flex-wrap gap-2">
@@ -298,19 +279,19 @@ export function EquipmentEmailTemplateEditor({
       <div className="xl:col-span-2">
         <Card className="sticky top-20">
           <CardHeader>
-            <CardTitle>Preview (Data Contoh)</CardTitle>
+            <CardTitle>Pratinjau (data contoh)</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800">
               <p className="text-xs text-slate-500 mb-1">Subjek</p>
               <p className="text-sm text-ink font-medium">{previewSubject || "(kosong)"}</p>
             </div>
-            <iframe title="Email preview" srcDoc={previewHtml} className="w-full h-[600px] border-0" sandbox="" />
+            <iframe title="Pratinjau email" srcDoc={previewHtml} className="w-full h-[600px] border-0" sandbox="" />
           </CardContent>
         </Card>
       </div>
 
-      <Modal isOpen={resetOpen} onClose={() => setResetOpen(false)} title="Reset Template">
+      <Modal isOpen={resetOpen} onClose={() => setResetOpen(false)} title="Reset template">
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Semua perubahan pada mode{" "}
           <strong>{mode === "SIMPLE" ? "Sederhana" : "Lanjutan (HTML)"}</strong> akan hilang dan
@@ -321,7 +302,7 @@ export function EquipmentEmailTemplateEditor({
             Batal
           </Button>
           <Button variant="danger" isLoading={resetting} onClick={handleReset}>
-            Reset ke Default
+            Reset ke default
           </Button>
         </div>
       </Modal>

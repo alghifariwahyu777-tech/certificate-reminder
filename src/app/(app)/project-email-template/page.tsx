@@ -4,6 +4,7 @@ import { getProjectEmailTemplate } from "@/lib/email-template-db";
 import { DEFAULT_PROJECT_SIMPLE_FIELDS, DEFAULT_PROJECT_BODY_HTML } from "@/lib/project-email-template";
 import { Navbar } from "@/components/layout/Navbar";
 import { ProjectEmailTemplateEditor } from "@/components/ProjectEmailTemplateEditor";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function ProjectEmailTemplatePage() {
   const session = await getSession();
@@ -16,11 +17,11 @@ export default async function ProjectEmailTemplatePage() {
     <>
       <Navbar
         title="Template Email Project"
-        subtitle="Sesuaikan isi email reminder untuk Project Monitoring"
+        subtitle="Isi email pengingat project"
         adminName={session.name}
         role={session.role}
       />
-      <div className="p-5 md:p-8">
+      <PageBody>
         <ProjectEmailTemplateEditor
           initialMode={template.mode === "ADVANCED" ? "ADVANCED" : "SIMPLE"}
           initialSubject={template.subject}
@@ -34,7 +35,7 @@ export default async function ProjectEmailTemplatePage() {
           }}
           initialBodyHtml={template.bodyHtml || DEFAULT_PROJECT_BODY_HTML}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

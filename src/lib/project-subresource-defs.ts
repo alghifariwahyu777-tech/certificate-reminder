@@ -46,7 +46,7 @@ export const milestoneDef: SubresourceDef<typeof projectMilestoneSchema> = {
 export const progressReportDef: SubresourceDef<typeof projectProgressReportSchema> = {
   label: "laporan progres",
   schema: projectProgressReportSchema,
-  describe: (v) => `${v.reportDate} — ${v.actualPercent}%`,
+  describe: (v) => `${v.reportDate}, ${v.actualPercent}%`,
   toData: (v, { session, isCreate }) => ({
     reportDate: new Date(v.reportDate),
     actualPercent: v.actualPercent,

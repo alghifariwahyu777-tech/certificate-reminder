@@ -47,9 +47,9 @@ export function PortalCertificateList({ certificates }: { certificates: PortalCe
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-slate-500 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40">
+              <tr className="th-row">
                 <th className="px-4 py-3 font-medium">Nomor</th>
-                <th className="px-4 py-3 font-medium">Nama Sertifikat</th>
+                <th className="px-4 py-3 font-medium">Nama sertifikat</th>
                 <th className="px-4 py-3 font-medium">Kategori</th>
                 <th className="px-4 py-3 font-medium">Terbit</th>
                 <th className="px-4 py-3 font-medium">Berakhir</th>
@@ -60,7 +60,7 @@ export function PortalCertificateList({ certificates }: { certificates: PortalCe
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
                     Tidak ada sertifikat yang cocok.
                   </td>
                 </tr>
@@ -92,7 +92,7 @@ export function PortalCertificateList({ certificates }: { certificates: PortalCe
                           <a
                             href={`${c.fileUrl}?download=1`}
                             className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-accent"
-                            aria-label="Download dokumen"
+                            aria-label="Unduh dokumen"
                           >
                             <Download className="h-4 w-4" />
                           </a>

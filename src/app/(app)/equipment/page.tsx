@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { EquipmentListClient } from "@/components/equipment/EquipmentListClient";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function EquipmentPage() {
   const session = await getSession();
@@ -18,11 +19,11 @@ export default async function EquipmentPage() {
     <>
       <Navbar
         title="Kalibrasi Alat"
-        subtitle="Pengingat kalibrasi alat milik internal Sucofindo"
+        subtitle="Jadwal kalibrasi alat milik Sucofindo"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}
       />
-      <div className="p-5 md:p-8">
+      <PageBody>
         <EquipmentListClient
           canManage={session?.role === "ADMIN"}
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
@@ -37,7 +38,7 @@ export default async function EquipmentPage() {
             nextCalibrationDate: e.nextCalibrationDate.toISOString(),
           }))}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

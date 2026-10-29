@@ -2,6 +2,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/layout/Navbar";
 import { ApplicationListClient } from "@/components/application/ApplicationListClient";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function ApplicationsPage() {
   const session = await getSession();
@@ -19,7 +20,7 @@ export default async function ApplicationsPage() {
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}
       />
-      <div className="p-5 md:p-8">
+      <PageBody>
         <ApplicationListClient
           initialApplications={applications.map((a) => ({
             id: a.id,
@@ -31,7 +32,7 @@ export default async function ApplicationsPage() {
             submittedAt: a.submittedAt?.toISOString() || null,
           }))}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

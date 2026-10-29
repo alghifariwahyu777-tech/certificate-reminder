@@ -10,6 +10,7 @@ import { loginSchema, type LoginInput } from "@/lib/validations";
 import { Input, Label } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { startTopLoading } from "@/components/TopLoadingBar";
+import { Notice } from "@/components/ui/Notice";
 
 export function PortalLoginForm() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export function PortalLoginForm() {
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setServerError(body.message || "Email atau password salah.");
+      setServerError(body.message || "Email atau kata sandi salah.");
       return;
     }
 
@@ -57,9 +58,9 @@ export function PortalLoginForm() {
 
       <div>
         <div className="flex items-center justify-between">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">Kata sandi</Label>
           <Link href="/portal/forgot-password" className="text-xs text-accent hover:text-accent-light">
-            Lupa password?
+            Lupa kata sandi?
           </Link>
         </div>
         <Input
@@ -72,9 +73,9 @@ export function PortalLoginForm() {
       </div>
 
       {serverError && (
-        <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+        <Notice tone="danger">
           {serverError}
-        </div>
+        </Notice>
       )}
 
       <Button type="submit" isLoading={isSubmitting} className="w-full" size="lg">

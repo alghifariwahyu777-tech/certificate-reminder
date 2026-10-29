@@ -11,6 +11,7 @@ import { SurveillanceSection } from "@/components/certificate/SurveillanceSectio
 import { getDaysRemaining } from "@/lib/status";
 import { formatDate } from "@/lib/utils";
 import { Pencil, Download, ArrowLeft, FileWarning } from "lucide-react";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function CertificateDetailPage(context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -30,36 +31,36 @@ export default async function CertificateDetailPage(context: { params: Promise<{
   const isImage = certificate.fileMimeType?.startsWith("image/") ?? false;
 
   const fields: { label: string; value: string }[] = [
-    { label: "Nomor Sertifikat", value: certificate.certificateNumber },
-    { label: "Nama Sertifikat", value: certificate.certificateName },
+    { label: "Nomor sertifikat", value: certificate.certificateNumber },
+    { label: "Nama sertifikat", value: certificate.certificateName },
     { label: "Klien", value: certificate.client.name },
     { label: "Kategori", value: certificate.category.name },
     { label: "Divisi", value: certificate.department?.name || "-" },
-    { label: "Instansi Penerbit", value: certificate.issuingBody || "-" },
+    { label: "Instansi penerbit", value: certificate.issuingBody || "-" },
     { label: "PIC", value: certificate.pic },
     { label: "Email PIC", value: certificate.picEmail || "-" },
-    { label: "CC Email", value: certificate.ccEmail || "-" },
-    { label: "Tanggal Terbit", value: formatDate(certificate.issueDate) },
-    { label: "Tanggal Berlaku", value: certificate.validFrom ? formatDate(certificate.validFrom) : "-" },
-    { label: "Tanggal Expired", value: formatDate(certificate.expiryDate) },
-    { label: "Sisa Hari", value: days < 0 ? `Terlambat ${Math.abs(days)} hari` : `${days} hari lagi` },
-    { label: "Lokasi Penyimpanan", value: certificate.storageLocation || "-" },
+    { label: "CC email", value: certificate.ccEmail || "-" },
+    { label: "Tanggal terbit", value: formatDate(certificate.issueDate) },
+    { label: "Tanggal berlaku", value: certificate.validFrom ? formatDate(certificate.validFrom) : "-" },
+    { label: "Tanggal berakhir", value: formatDate(certificate.expiryDate) },
+    { label: "Sisa hari", value: days < 0 ? `Terlambat ${Math.abs(days)} hari` : `${days} hari lagi` },
+    { label: "Lokasi penyimpanan", value: certificate.storageLocation || "-" },
   ];
 
   return (
     <>
       <Navbar title="Detail Sertifikat" subtitle={certificate.certificateNumber} adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
-      <div className="p-5 md:p-8 max-w-4xl space-y-5">
+      <PageBody width="form">
         <div className="flex items-center justify-between">
           <Link href="/certificate" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-ink">
             <ArrowLeft className="h-4 w-4" />
-            Kembali ke Certificate
+            Kembali ke sertifikat
           </Link>
           {session?.role === "ADMIN" && (
             <Link href={`/certificate/edit/${certificate.id}`}>
               <Button variant="outline" size="sm">
                 <Pencil className="h-4 w-4" />
-                Edit
+                Ubah
               </Button>
             </Link>
           )}
@@ -88,7 +89,7 @@ export default async function CertificateDetailPage(context: { params: Promise<{
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {certificate.description && (
                 <div>
-                  <p className="text-xs text-slate-500 mb-1.5">Description</p>
+                  <p className="text-xs text-slate-500 mb-1.5">Deskripsi</p>
                   <p className="text-sm text-slate-700 whitespace-pre-line">{certificate.description}</p>
                 </div>
               )}
@@ -104,12 +105,12 @@ export default async function CertificateDetailPage(context: { params: Promise<{
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Dokumen Sertifikat</CardTitle>
+            <CardTitle>Dokumen sertifikat</CardTitle>
             {certificate.fileUrl && (
               <a href={`${certificate.fileUrl}?download=1`}>
                 <Button variant="outline" size="sm">
                   <Download className="h-4 w-4" />
-                  Download
+                  Unduh
                 </Button>
               </a>
             )}
@@ -126,13 +127,12 @@ export default async function CertificateDetailPage(context: { params: Promise<{
               ) : (
                 <iframe
                   src={certificate.fileUrl}
-                  title="Preview Dokumen Sertifikat"
+                  title="Pratinjau dokumen sertifikat"
                   className="w-full h-[70vh] rounded border border-slate-200"
                 />
               )
             ) : (
               <div className="flex flex-col items-center justify-center gap-2 py-12 text-slate-400">
-                <FileWarning className="h-6 w-6" />
                 <p className="text-sm">Belum ada dokumen yang diunggah untuk sertifikat ini.</p>
               </div>
             )}
@@ -169,7 +169,7 @@ export default async function CertificateDetailPage(context: { params: Promise<{
             }))}
           />
         )}
-      </div>
+      </PageBody>
     </>
   );
 }

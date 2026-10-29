@@ -68,7 +68,7 @@ function audit(session: SessionPayload, project: Project, action: "CREATE" | "UP
     action,
     entityType: "ProjectMonitoring",
     entityId,
-    description: `${text} — project "${project.projectName}" (${project.projectNumber}).`,
+    description: `${text}, project "${project.projectName}" (${project.projectNumber}).`,
   });
 }
 

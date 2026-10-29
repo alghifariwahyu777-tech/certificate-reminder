@@ -1,13 +1,14 @@
 "use client";
 
 import { InfoTip } from "@/components/ui/InfoTip";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Receipt, Wallet } from "lucide-react";
 import { Card, CardContent, CardTitle } from "@/components/ui/Card";
 import { HEALTH_BADGE_CLASS, HEALTH_LABEL, formatPercent, formatRupiah, projectStart, shortDate } from "@/lib/project-monitoring-shared";
 import { cn } from "@/lib/utils";
 import { SCurveChart } from "./SCurveChart";
 import { ConstraintTile, Stat, type Tone } from "./shared";
 import type { ProjectMonitoringDTO } from "./types";
+import { Notice } from "@/components/ui/Notice";
 
 const PLAN_SOURCE_LABEL = { MANUAL: "jadwal rencana project", MILESTONE: "tanggal dan bobot milestone", STANDARD: "kurva S standar" };
 
@@ -19,8 +20,8 @@ function verdict(data: ProjectMonitoringDTO): string {
   if (m.hasBudget && m.hasCost && m.forecastMarginPct !== null && m.targetMarginPct !== null) {
     parts.push(
       m.belowTarget
-        ? `prakiraan margin akhir ${formatPercent(m.forecastMarginPct)}, di bawah target project ${formatPercent(m.targetMarginPct)}`
-        : `prakiraan margin akhir ${formatPercent(m.forecastMarginPct)}, sesuai target project ${formatPercent(m.targetMarginPct)}`
+        ? `proyeksi margin akhir ${formatPercent(m.forecastMarginPct)}, di bawah target project ${formatPercent(m.targetMarginPct)}`
+        : `proyeksi margin akhir ${formatPercent(m.forecastMarginPct)}, sesuai target project ${formatPercent(m.targetMarginPct)}`
     );
   } else if (!m.hasBudget) parts.push("RAB belum diunggah sehingga margin belum dapat dipantau");
   else if (!m.hasCost) parts.push("realisasi biaya belum dicatat");
@@ -48,14 +49,14 @@ export function SummaryPanel({ data }: { data: ProjectMonitoringDTO }) {
   }
   if (data.team.some((x) => x.warnings.some((w) => w.expired))) alerts.push({ tone: "bad", text: "Ada personil tim dengan sertifikasi yang sudah berakhir.", href: "#tim/personil", action: "Lihat tim" });
   else if (data.team.some((x) => x.warnings.length)) alerts.push({ tone: "warn", text: "Ada sertifikasi personil tim yang berakhir sebelum penugasan selesai.", href: "#tim/personil", action: "Lihat tim" });
-  if (m.belowTarget) alerts.push({ tone: m.signals.margin === "bad" ? "bad" : "warn", text: `Prakiraan margin kurang ${formatRupiah(m.targetGap, true)} dari target project.`, href: "#keuangan/margin", action: "Lihat margin" });
+  if (m.belowTarget) alerts.push({ tone: m.signals.margin === "bad" ? "bad" : "warn", text: `Proyeksi margin kurang ${formatRupiah(m.targetGap, true)} dari target project.`, href: "#keuangan/margin", action: "Lihat margin" });
   if (s.budgetUsedPercent !== null && s.budgetUsedPercent > 100) alerts.push({ tone: "bad", text: `Realisasi biaya melebihi RAB (${formatPercent(s.budgetUsedPercent)}).`, href: "#keuangan/biaya", action: "Lihat biaya" });
   if (ongoing && s.isStale)
     alerts.push({
       tone: "warn",
       text: s.lastProgressUpdate ? `Data progres belum diperbarui selama ${s.daysSinceUpdate} hari.` : `Belum ada laporan progres sejak project dimulai (${s.daysSinceUpdate} hari).`,
       href: data.canManage ? "#jadwal/progres/baru" : "#jadwal/progres",
-      action: data.canManage ? "Update progres" : "Lihat progres",
+      action: data.canManage ? "Perbarui progres" : "Lihat progres",
     });
   if (s.dueUnbilledCount > 0) alerts.push({ tone: "warn", text: `${s.dueUnbilledCount} termin melewati rencana tagih tetapi belum ditagih.`, href: "#keuangan/termin", action: "Lihat termin" });
   if (data.status === "COMPLETED") {
@@ -98,7 +99,7 @@ export function SummaryPanel({ data }: { data: ProjectMonitoringDTO }) {
             <>
               Progres realisasi / rencana.{" "}
               {ongoing ? (s.daysRemaining >= 0 ? `Sisa ${s.daysRemaining} hari` : `Terlambat ${Math.abs(s.daysRemaining)} hari`) : `Target ${shortDate(new Date(data.targetEndDate).getTime())}`}
-              {data.trend ? ` · ${data.trend > 0 ? "membaik" : "memburuk"} ${Math.abs(data.trend).toLocaleString("id-ID")} poin dari minggu lalu` : ""}
+              {data.trend ? `, ${data.trend > 0 ? "membaik" : "memburuk"} ${Math.abs(data.trend).toLocaleString("id-ID")} poin dari minggu lalu` : ""}
             </>
           }
         />
@@ -139,7 +140,7 @@ export function SummaryPanel({ data }: { data: ProjectMonitoringDTO }) {
               "-"
             )
           }
-          sub={m.hasBudget ? (m.hasCost ? "Prakiraan margin akhir / target project." : "Catat realisasi biaya untuk melihat prakiraan.") : "Unggah RAB untuk memantau margin."}
+          sub={m.hasBudget ? (m.hasCost ? "Proyeksi margin akhir / target project." : "Catat realisasi biaya untuk melihat proyeksi.") : "Unggah RAB untuk memantau margin."}
         />
       </div>
 
@@ -156,10 +157,10 @@ export function SummaryPanel({ data }: { data: ProjectMonitoringDTO }) {
                 </InfoTip>
               </CardTitle>
               <p className="mt-0.5 text-[12.5px] text-slate-500">
-                {shortDate(projectStart(data.input))} sampai {shortDate(new Date(data.targetEndDate).getTime())} · rencana dari {PLAN_SOURCE_LABEL[s.planSource]}
+                {shortDate(projectStart(data.input))} sampai {shortDate(new Date(data.targetEndDate).getTime())}, rencana dari {PLAN_SOURCE_LABEL[s.planSource]}.
                 {data.canManage && (
                   <>
-                    {" · "}
+                    {" "}
                     <a href="#jadwal/progres/rencana" className="font-semibold text-accent hover:underline">
                       Atur rencana
                     </a>
@@ -238,14 +239,15 @@ export function SummaryPanel({ data }: { data: ProjectMonitoringDTO }) {
         </a>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Stat label="Sudah dibayar" value={formatRupiah(s.paid, true)} hint={s.contractValue ? `dari nilai kontrak ${formatRupiah(s.contractValue, true)}` : undefined} />
+        <Stat icon={CheckCircle2} label="Sudah dibayar" value={formatRupiah(s.paid, true)} hint={s.contractValue ? `dari nilai kontrak ${formatRupiah(s.contractValue, true)}` : undefined} />
         <Stat
+          icon={Receipt}
           label="Piutang"
           tone={s.overdueInvoiceCount > 0 ? "bad" : "default"}
           value={formatRupiah(s.outstanding, true)}
           hint={s.overdueInvoiceCount > 0 ? `${s.overdueInvoiceCount} invoice lewat jatuh tempo` : "Sudah ditagih, belum dibayar"}
         />
-        <Stat label="PAD" value={formatRupiah(s.pad, true)} hint={`Pendapatan yang akan diterima; belum ditagih ${formatRupiah(s.padUnbilled, true)}`} />
+        <Stat icon={Wallet} label="PAD" value={formatRupiah(s.pad, true)} hint={`Pendapatan yang akan diterima; belum ditagih ${formatRupiah(s.padUnbilled, true)}`} />
       </div>
     </div>
   );
@@ -257,13 +259,13 @@ function SetupChecklist({ data }: { data: ProjectMonitoringDTO }) {
     { done: data.rab.revisions.length > 0 || data.budgetItems.length > 0, label: "RAB", hint: "Dasar perhitungan biaya dan target margin.", href: "#keuangan/biaya/baru", action: "Unggah RAB" },
     { done: data.summary.planSource !== "STANDARD", label: "Jadwal rencana (kurva S)", hint: "Saat ini dipakai kurva S standar. Isi jadwal rencana atau milestone bertanggal agar lebih akurat.", href: "#jadwal/progres/rencana", action: "Atur rencana" },
     { done: data.terms.length > 0, label: "Termin pembayaran", hint: "Dasar penagihan dan PAD.", href: "#keuangan/termin/baru", action: "Isi termin" },
-    { done: data.team.length > 0, label: "Tim project", hint: "Dasar mapping personil dan pemantauan sertifikasi.", href: "#tim/personil/baru", action: "Tugaskan tim" },
-    { done: data.reports.length > 0, label: "Laporan progres", hint: "Progres realisasi terbaru dari PIC.", href: "#jadwal/progres/baru", action: "Update progres" },
+    { done: data.team.length > 0, label: "Tim project", hint: "Dasar penugasan personil dan pemantauan sertifikasi.", href: "#tim/personil/baru", action: "Tugaskan tim" },
+    { done: data.reports.length > 0, label: "Laporan progres", hint: "Progres realisasi terbaru dari PIC.", href: "#jadwal/progres/baru", action: "Perbarui progres" },
   ];
   const left = steps.filter((x) => !x.done);
   if (!left.length) return null;
   return (
-    <div className="rounded-lg border border-accent/30 bg-sky-50/60 px-5 py-4 dark:border-sky-800 dark:bg-sky-950/20">
+    <Notice tone="info">
       <p className="text-[14px] font-bold text-ink dark:text-slate-100">
         Lengkapi data project ({steps.length - left.length} dari {steps.length} sudah terisi)
       </p>
@@ -283,6 +285,6 @@ function SetupChecklist({ data }: { data: ProjectMonitoringDTO }) {
           </li>
         ))}
       </ul>
-    </div>
+    </Notice>
   );
 }

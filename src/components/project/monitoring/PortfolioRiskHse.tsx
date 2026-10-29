@@ -61,22 +61,21 @@ export function RiskHeatmapCard({ risks, today }: { risks: PortfolioRisk[]; toda
         <CardTitle className="flex items-center gap-1.5">
           Peta risiko dan kendala
           <InfoTip label="Keterangan peta risiko">
-            Semua risiko dan kendala yang masih terbuka di project berjalan, dipetakan menurut kemungkinan terjadi dan dampaknya. Kendala (sudah terjadi) ada di baris paling atas.
-            Warna menunjukkan tingkat: hijau rendah, kuning sedang, merah muda tinggi, merah ekstrem. Klik kotak untuk melihat daftarnya.
+            Risiko dan kendala terbuka, dipetakan menurut kemungkinan dan dampak. Kendala yang sudah terjadi ada di baris teratas. Hijau rendah, kuning sedang, merah muda tinggi, merah ekstrem. Klik kotak untuk melihat daftarnya.
           </InfoTip>
         </CardTitle>
         <p className="mt-0.5 text-[12.5px] text-slate-500">
-          {risks.length} terbuka · {extreme} tingkat ekstrem · {late} lewat target penyelesaian
+          {risks.length} terbuka, {extreme} tingkat ekstrem, {late} lewat target penyelesaian
         </p>
       </div>
       <CardContent>
         {byCategory.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-1.5">
-            <button type="button" onClick={() => setCategory("")} className={cn("rounded-full border px-2.5 py-0.5 text-[12px] font-semibold", !category ? "border-ink bg-ink text-white dark:bg-slate-100 dark:text-ink" : "border-line text-slate-600 dark:border-slate-700 dark:text-slate-300")}>
+            <button type="button" onClick={() => setCategory("")} className={cn("rounded-full border px-2.5 py-0.5 text-[12px] font-semibold", !category ? "border-accent bg-accent/10 text-accent dark:border-sky-400 dark:bg-sky-400/10 dark:text-sky-300" : "border-line text-slate-600 dark:border-slate-700 dark:text-slate-300")}>
               Semua {risks.length}
             </button>
             {byCategory.map((c) => (
-              <button key={c.k} type="button" onClick={() => { setCategory(c.k === category ? "" : c.k); setCell(null); }} className={cn("rounded-full border px-2.5 py-0.5 text-[12px] font-semibold", category === c.k ? "border-ink bg-ink text-white dark:bg-slate-100 dark:text-ink" : "border-line text-slate-600 dark:border-slate-700 dark:text-slate-300")}>
+              <button key={c.k} type="button" onClick={() => { setCategory(c.k === category ? "" : c.k); setCell(null); }} className={cn("rounded-full border px-2.5 py-0.5 text-[12px] font-semibold", category === c.k ? "border-accent bg-accent/10 text-accent dark:border-sky-400 dark:bg-sky-400/10 dark:text-sky-300" : "border-line text-slate-600 dark:border-slate-700 dark:text-slate-300")}>
                 {c.l} {c.n}
               </button>
             ))}
@@ -117,7 +116,7 @@ export function RiskHeatmapCard({ risks, today }: { risks: PortfolioRisk[]; toda
                 </div>
               ))}
               <span />
-              <span className="col-span-3 pt-1 text-center text-[11.5px] text-slate-500">Dampak →</span>
+              <span className="col-span-3 pt-1 text-center text-[11.5px] text-slate-500">Dampak</span>
             </div>
           </div>
           <div className="min-w-0">
@@ -132,7 +131,7 @@ export function RiskHeatmapCard({ risks, today }: { risks: PortfolioRisk[]; toda
               )}
             </div>
             {list.length === 0 ? (
-              <p className="py-6 text-center text-sm text-slate-400">Tidak ada risiko atau kendala.</p>
+              <p className="py-6 text-center text-sm text-slate-500">Tidak ada risiko atau kendala.</p>
             ) : (
               <ul className="max-h-72 divide-y divide-line overflow-y-auto pr-1 dark:divide-slate-800">
                 {list.slice(0, 30).map((r) => (
@@ -147,8 +146,8 @@ export function RiskHeatmapCard({ risks, today }: { risks: PortfolioRisk[]; toda
                           <p className="truncate text-[11.5px] text-slate-500">
                             <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle" style={{ background: HEALTH_DOT[r.projectHealth] }} />
                             {r.projectName}
-                            {r.category ? ` · ${ISSUE_CATEGORY_LABEL[r.category]}` : ""}
-                            {r.owner ? ` · ${r.owner}` : ""}
+                            {r.category ? `, ${ISSUE_CATEGORY_LABEL[r.category]}` : ""}
+                            {r.owner ? `, ${r.owner}` : ""}
                           </p>
                           {r.targetDate !== null && (
                             <p className={cn("text-[11.5px]", r.late ? "font-semibold text-signal-expired" : "text-slate-500")}>
@@ -340,11 +339,11 @@ export function PersonnelRiskCard({ people, rows, today, overload = 3 }: { peopl
             </InfoTip>
           </CardTitle>
           <p className="mt-0.5 text-[12.5px] text-slate-500">
-            {people.length} personil bertugas · {overloaded} beban berlebih · {certIssues} masalah sertifikat
+            {people.length} personil bertugas, {overloaded} beban berlebih, {certIssues} masalah sertifikat
           </p>
         </div>
         <Link href="/projects/personnel" className="shrink-0 text-[12.5px] font-semibold text-accent hover:underline">
-          Mapping personil
+          Penugasan personil
         </Link>
       </div>
       <CardContent>
@@ -366,7 +365,7 @@ export function PersonnelRiskCard({ people, rows, today, overload = 3 }: { peopl
           <div className="min-w-0">
             <p className="mb-1 text-[12.5px] font-semibold text-ink dark:text-slate-100">Perlu perhatian</p>
             {atRisk.length === 0 ? (
-              <p className="py-6 text-center text-sm text-slate-400">Tidak ada personil yang perlu perhatian.</p>
+              <p className="py-6 text-center text-sm text-slate-500">Tidak ada personil yang perlu perhatian.</p>
             ) : (
               <ul className="max-h-60 divide-y divide-line overflow-y-auto pr-1 dark:divide-slate-800">
                 {atRisk.slice(0, 20).map(({ p, concurrent, flags }) => (
@@ -374,7 +373,7 @@ export function PersonnelRiskCard({ people, rows, today, overload = 3 }: { peopl
                     <div className="min-w-0">
                       <p className="text-[13px] font-semibold text-ink dark:text-slate-100">{p.name}</p>
                       <p className="truncate text-[11.5px] text-slate-500" title={p.assignments.map((a) => a.projectName).join(", ")}>
-                        {p.position ? `${p.position} · ` : ""}
+                        {p.position ? `${p.position}, ` : ""}
                         {concurrent} project: {p.assignments.map((a) => a.projectNumber).join(", ")}
                       </p>
                     </div>
@@ -442,7 +441,7 @@ export function PortfolioPerformanceCard({ rows }: { rows: PortfolioRow[] }) {
           Kinerja per portofolio
           <InfoTip label="Keterangan kinerja per portofolio">
             Project berjalan dikelompokkan menurut portofolio (kategori project). Kinerja waktu dan biaya adalah rata-rata tertimbang nilai kontrak; 1 berarti sesuai rencana.
-            Margin = total prakiraan margin dibanding total nilai kontrak project yang sudah memiliki RAB.
+            Margin = total proyeksi margin dibanding total nilai kontrak project yang sudah memiliki RAB.
           </InfoTip>
         </CardTitle>
         <p className="mt-0.5 text-[12.5px] text-slate-500">{groups.length} portofolio dengan project berjalan</p>
@@ -451,12 +450,12 @@ export function PortfolioPerformanceCard({ rows }: { rows: PortfolioRow[] }) {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-[13px]">
             <thead>
-              <tr className="border-b border-line text-left text-[12px] text-slate-500 dark:border-slate-800">
+              <tr className="th-row">
                 <th className="px-5 py-2 font-medium">Portofolio</th>
                 <th className="px-3 py-2 font-medium">Nilai kontrak</th>
-                <th className="px-3 py-2 text-right font-medium">Waktu</th>
-                <th className="px-3 py-2 text-right font-medium">Biaya</th>
-                <th className="px-3 py-2 text-right font-medium">Margin / target</th>
+                <th className="px-3 py-2 text-right font-medium">Kinerja waktu</th>
+                <th className="px-3 py-2 text-right font-medium">Kinerja biaya</th>
+                <th className="px-3 py-2 text-right font-medium">Proyeksi margin</th>
                 <th className="px-3 py-2 text-right font-medium">Piutang</th>
                 <th className="px-5 py-2 text-right font-medium">Kritis</th>
               </tr>
@@ -474,8 +473,8 @@ export function PortfolioPerformanceCard({ rows }: { rows: PortfolioRow[] }) {
                       <div className="h-full rounded-full bg-brand-blueDark dark:bg-slate-300" style={{ width: `${(g.value / maxValue) * 100}%` }} />
                     </div>
                   </td>
-                  <td className={cn("px-3 py-2.5 text-right tabular-nums", tone(g.spi))}>{num(g.spi, 2)}</td>
-                  <td className={cn("px-3 py-2.5 text-right tabular-nums", tone(g.cpi))}>{num(g.cpi, 2)}</td>
+                  <td className={cn("px-3 py-2.5 text-right tabular-nums", tone(g.spi))}>{g.spi === null ? "-" : g.spi.toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  <td className={cn("px-3 py-2.5 text-right tabular-nums", tone(g.cpi))}>{g.cpi === null ? "-" : g.cpi.toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                   <td className="px-3 py-2.5 text-right tabular-nums">
                     <span className={cn(g.margin !== null && g.target !== null && g.margin < g.target - 1 ? "font-semibold text-signal-expired" : "text-ink dark:text-slate-100")}>{formatPercent(g.margin)}</span>
                     <span className="text-slate-500"> / {formatPercent(g.target)}</span>

@@ -19,16 +19,16 @@ function daysRemainingText(daysRemaining: number): string {
 }
 
 export const PERSONNEL_PLACEHOLDER_TOKENS: { token: string; label: string }[] = [
-  { token: "{{employeeName}}", label: "Nama Personil" },
+  { token: "{{employeeName}}", label: "Nama personil" },
   { token: "{{position}}", label: "Jabatan" },
   { token: "{{departmentName}}", label: "Divisi" },
-  { token: "{{certificationName}}", label: "Nama Sertifikasi" },
-  { token: "{{certificationNumber}}", label: "Nomor Sertifikasi" },
+  { token: "{{certificationName}}", label: "Nama sertifikasi" },
+  { token: "{{certificationNumber}}", label: "Nomor sertifikasi" },
   { token: "{{categoryName}}", label: "Kategori" },
-  { token: "{{expiryDate}}", label: "Tanggal Berakhir" },
+  { token: "{{expiryDate}}", label: "Tanggal berakhir" },
   { token: "{{daysRemainingText}}", label: "Sisa Hari (mis. '14 hari lagi')" },
   { token: "{{appUrl}}", label: "URL aplikasi (dari APP_URL di .env)" },
-  { token: "{{statusColor}}", label: "Warna sesuai urgensi (merah/oranye/teal) — pakai di style color:" },
+  { token: "{{statusColor}}", label: "Warna sesuai urgensi (merah/oranye/teal), pakai di style color:" },
 ];
 
 export const DEFAULT_PERSONNEL_SUBJECT = "[Reminder System] Sertifikasi Personil Akan Berakhir";
@@ -42,7 +42,7 @@ export const DEFAULT_PERSONNEL_SIMPLE_FIELDS: PersonnelSimpleTemplateFields = {
   closingText:
     "Mohon segera koordinasikan proses perpanjangan dengan atasan/HR Anda supaya kompetensi ini tetap berlaku tanpa jeda.",
   footerText:
-    "Email ini dikirim otomatis oleh sistem internal PT Sucofindo (Persero). Mohon tidak membalas email ini — hubungi HR/atasan Anda langsung untuk tindak lanjut.",
+    "Email ini dikirim otomatis oleh sistem internal PT Sucofindo (Persero). Mohon tidak membalas email ini, hubungi HR/atasan Anda langsung untuk tindak lanjut.",
 };
 
 function escapeHtml(text: string): string {
@@ -150,7 +150,7 @@ export function buildPersonnelSimpleTemplateHtml(
                   </tr>
                   <tr>
                     <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;">Jabatan / Divisi</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;">${values.position} · ${values.departmentName}</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;">${values.position}, ${values.departmentName}</td>
                   </tr>
                   <tr>
                     <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;">Tanggal Berakhir</td>
@@ -237,7 +237,7 @@ export const DEFAULT_PERSONNEL_BODY_HTML = `<!DOCTYPE html>
                   </tr>
                   <tr>
                     <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;">Jabatan / Divisi</td>
-                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;">{{position}} · {{departmentName}}</td>
+                    <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;">{{position}}, {{departmentName}}</td>
                   </tr>
                   <tr>
                     <td style="padding:10px 16px;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;">Tanggal Berakhir</td>
@@ -255,7 +255,7 @@ export const DEFAULT_PERSONNEL_BODY_HTML = `<!DOCTYPE html>
             </tr>
             <tr>
               <td style="padding:20px 32px;background-color:#F8FAFC;border-top:1px solid #E2E8F0;">
-                <p style="margin:0;color:#94A3B8;font-size:11px;line-height:1.6;">Email ini dikirim otomatis oleh sistem internal PT Sucofindo (Persero). Mohon tidak membalas email ini — hubungi HR/atasan Anda langsung untuk tindak lanjut.</p>
+                <p style="margin:0;color:#94A3B8;font-size:11px;line-height:1.6;">Email ini dikirim otomatis oleh sistem internal PT Sucofindo (Persero). Mohon tidak membalas email ini, hubungi HR/atasan Anda langsung untuk tindak lanjut.</p>
               </td>
             </tr>
           </table>

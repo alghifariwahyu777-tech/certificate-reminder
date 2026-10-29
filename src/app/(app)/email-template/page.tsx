@@ -4,6 +4,7 @@ import { getEmailTemplate } from "@/lib/email-template-db";
 import { DEFAULT_SIMPLE_FIELDS, DEFAULT_BODY_HTML } from "@/lib/email-template";
 import { Navbar } from "@/components/layout/Navbar";
 import { EmailTemplateEditor } from "@/components/EmailTemplateEditor";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function EmailTemplatePage() {
   const session = await getSession();
@@ -16,11 +17,11 @@ export default async function EmailTemplatePage() {
     <>
       <Navbar
         title="Template Email Sertifikat"
-        subtitle="Sesuaikan isi email reminder"
+        subtitle="Isi email pengingat sertifikat klien"
         adminName={session.name}
         role={session.role}
       />
-      <div className="p-5 md:p-8">
+      <PageBody>
         <EmailTemplateEditor
           initialMode={template.mode === "ADVANCED" ? "ADVANCED" : "SIMPLE"}
           initialSubject={template.subject}
@@ -35,7 +36,7 @@ export default async function EmailTemplatePage() {
           }}
           initialBodyHtml={template.bodyHtml || DEFAULT_BODY_HTML}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

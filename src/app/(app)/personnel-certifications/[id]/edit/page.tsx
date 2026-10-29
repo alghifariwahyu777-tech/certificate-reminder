@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { PersonnelCertificationForm } from "@/components/personnel/PersonnelCertificationForm";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function EditPersonnelCertificationPage(context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -24,7 +25,7 @@ export default async function EditPersonnelCertificationPage(context: { params: 
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}
       />
-      <div className="p-5 md:p-8">
+      <PageBody width="form">
         <PersonnelCertificationForm
           employees={employees.map((e) => ({ id: e.id, name: e.name, position: e.position }))}
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
@@ -45,7 +46,7 @@ export default async function EditPersonnelCertificationPage(context: { params: 
             fileMimeType: certification.fileMimeType || undefined,
           }}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

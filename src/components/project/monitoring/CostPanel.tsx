@@ -86,7 +86,7 @@ function BudgetCard({ data }: { data: ProjectMonitoringDTO }) {
                   {data.canManage && (
                     <td className="px-3 py-2.5 w-20">
                       <div className="flex justify-end gap-1">
-                        <button type="button" aria-label="Edit anggaran" onClick={() => openForm(b)} className="p-1.5 rounded text-slate-400 hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <button type="button" aria-label="Ubah anggaran" onClick={() => openForm(b)} className="p-1.5 rounded text-slate-400 hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800">
                           <Pencil className="h-4 w-4" />
                         </button>
                         <DeleteButton what="anggaran" onConfirm={() => send("DELETE", `${base}/${b.id}`, undefined, "Anggaran dihapus.")} />
@@ -100,7 +100,7 @@ function BudgetCard({ data }: { data: ProjectMonitoringDTO }) {
         )}
       </CardContent>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit anggaran" : "Tambah anggaran"}>
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Ubah anggaran" : "Tambah anggaran"}>
         <div className="space-y-4">
           <div>
             <Label htmlFor="bg-cat">Kategori biaya</Label>
@@ -212,7 +212,7 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs text-slate-500 border-b border-slate-100 dark:border-slate-800">
+                <tr className="th-row">
                   <th className="px-5 py-2.5 font-medium">Tanggal</th>
                   <th className="px-3 py-2.5 font-medium">Keterangan</th>
                   <th className="px-3 py-2.5 font-medium">Kategori</th>
@@ -242,7 +242,7 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
                     {data.canManage && (
                       <td className="px-5 py-2.5">
                         <div className="flex justify-end gap-1">
-                          <button type="button" aria-label="Edit biaya" onClick={() => openForm(e)} className="p-1.5 rounded text-slate-400 hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800">
+                          <button type="button" aria-label="Ubah biaya" onClick={() => openForm(e)} className="p-1.5 rounded text-slate-400 hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800">
                             <Pencil className="h-4 w-4" />
                           </button>
                           <DeleteButton what="realisasi biaya" onConfirm={() => send("DELETE", `${base}/${e.id}`, undefined, "Realisasi biaya dihapus.")} />
@@ -265,7 +265,7 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
         )}
       </CardContent>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit realisasi biaya" : "Catat realisasi biaya"}>
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Ubah realisasi biaya" : "Catat realisasi biaya"}>
         {form && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">

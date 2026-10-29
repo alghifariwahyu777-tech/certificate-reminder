@@ -35,7 +35,7 @@ export async function generateProjectReportPdf(projectId: string): Promise<{ pdf
     headerLeft: "Laporan Detail Project",
     headerRight: p.projectNumber,
     headerRightSub: `Data per ${formatLongDate(jakartaDay(now))}`,
-    footer: "PT Sucofindo (Persero)  ·  Dokumen internal, tidak untuk disebarluaskan",
+    footer: "PT Sucofindo (Persero)  |  Dokumen internal, tidak untuk disebarluaskan",
   });
   const { doc, left, width } = r;
 
@@ -49,7 +49,7 @@ export async function generateProjectReportPdf(projectId: string): Promise<{ pdf
     ["Kategori", p.category.name],
     ["PIC", p.pic],
     ["Nilai kontrak", formatRupiah(s.contractValue || null)],
-    ["Status", `${STATUS_LABEL[p.status] ?? p.status} — ${HEALTH_LABEL[s.health]}`],
+    ["Status", `${STATUS_LABEL[p.status] ?? p.status}, ${HEALTH_LABEL[s.health]}`],
     ["Tanggal mulai", d(p.startDate)],
     ["Target selesai", `${d(p.targetEndDate)}${ongoing ? (s.daysRemaining >= 0 ? ` (sisa ${s.daysRemaining} hari)` : ` (terlambat ${Math.abs(s.daysRemaining)} hari)`) : ""}`],
   ]);
@@ -58,7 +58,7 @@ export async function generateProjectReportPdf(projectId: string): Promise<{ pdf
   r.section("Ringkasan kondisi");
   const parts = [s.healthReason.replace(/\.$/, "")];
   if (m.hasBudget && m.hasCost && m.forecastMarginPct !== null && m.targetMarginPct !== null)
-    parts.push(`prakiraan margin akhir ${formatPercent(m.forecastMarginPct)} ${m.belowTarget ? "di bawah" : "sesuai"} target project ${formatPercent(m.targetMarginPct)}`);
+    parts.push(`proyeksi margin akhir ${formatPercent(m.forecastMarginPct)} ${m.belowTarget ? "di bawah" : "sesuai"} target project ${formatPercent(m.targetMarginPct)}`);
   else if (!m.hasBudget) parts.push("RAB belum diunggah sehingga margin belum dapat dipantau");
   r.paragraph(parts.join("; ") + "." + (m.belowTarget && m.cause ? ` ${m.cause}` : ""), { bold: true, size: 9.5 });
   doc.moveDown(0.5);
@@ -79,7 +79,7 @@ export async function generateProjectReportPdf(projectId: string): Promise<{ pdf
           "Waktu",
           [{ text: SIG_WORD[m.signals.time], bold: true, color: SIG_COLOR[m.signals.time] }],
           cell(`${formatPercent(s.actualPercent)} / ${formatPercent(s.plannedPercent)}`, "realisasi / rencana", PDF_COLOR.INK),
-          `Deviasi ${s.deviation > 0 ? "+" : ""}${s.deviation.toLocaleString("id-ID")} poin. ${s.forecastEndDate ? `Prakiraan selesai ${shortDate(s.forecastEndDate)}.` : ""} ${s.lastProgressUpdate ? `Update progres terakhir ${shortDate(s.lastProgressUpdate)}.` : "Belum ada laporan progres."}`,
+          `Deviasi ${s.deviation > 0 ? "+" : ""}${s.deviation.toLocaleString("id-ID")} poin. ${s.forecastEndDate ? `Proyeksi selesai ${shortDate(s.forecastEndDate)}.` : ""} ${s.lastProgressUpdate ? `Laporan progres terakhir ${shortDate(s.lastProgressUpdate)}.` : "Belum ada laporan progres."}`,
         ],
       },
       {
@@ -102,8 +102,8 @@ export async function generateProjectReportPdf(projectId: string): Promise<{ pdf
         cells: [
           "Margin",
           [{ text: SIG_WORD[m.signals.margin], bold: true, color: SIG_COLOR[m.signals.margin] }],
-          cell(m.hasBudget ? `${formatPercent(m.forecastMarginPct)} / ${formatPercent(m.targetMarginPct)}` : "-", "prakiraan akhir / target", PDF_COLOR.INK),
-          m.belowTarget ? `Kurang ${formatRupiah(m.targetGap, true)} dari target margin.` : m.hasBudget && m.hasCost ? "Diprakirakan memenuhi target margin." : "Data biaya belum lengkap.",
+          cell(m.hasBudget ? `${formatPercent(m.forecastMarginPct)} / ${formatPercent(m.targetMarginPct)}` : "-", "proyeksi akhir / target", PDF_COLOR.INK),
+          m.belowTarget ? `Kurang ${formatRupiah(m.targetGap, true)} dari target margin.` : m.hasBudget && m.hasCost ? "Diproyeksikan memenuhi target margin." : "Data biaya belum lengkap.",
         ],
       },
     ],
@@ -115,7 +115,7 @@ export async function generateProjectReportPdf(projectId: string): Promise<{ pdf
   if (ongoing && s.isOverdue) actions.push({ tone: "bad", text: `Project melewati target selesai ${Math.abs(s.daysRemaining)} hari.` });
   if (s.overdueInvoiceCount) actions.push({ tone: "bad", text: `${s.overdueInvoiceCount} invoice lewat jatuh tempo senilai ${formatRupiah(s.overdueInvoiceAmount, true)}; penagihan perlu dieskalasi.` });
   if (s.openHighIssues) actions.push({ tone: "bad", text: `${s.openHighIssues} kendala berdampak tinggi belum terselesaikan.` });
-  if (m.signals.margin === "bad") actions.push({ tone: "bad", text: `Prakiraan margin jauh di bawah target. ${m.cause}` });
+  if (m.signals.margin === "bad") actions.push({ tone: "bad", text: `Proyeksi margin jauh di bawah target. ${m.cause}` });
   if (ongoing && s.isStale) actions.push({ tone: "warn", text: `Data progres belum diperbarui selama ${s.daysSinceUpdate} hari.` });
   if (s.dueUnbilledCount) actions.push({ tone: "warn", text: `${s.dueUnbilledCount} termin sudah melewati rencana tagih tetapi belum ditagih.` });
   const teamWarn = p.assignments.flatMap((a) => certWarnings(certs.filter((c) => c.employeeId === a.employeeId), a.endDate ?? p.targetEndDate, jakartaDay(now)).map((w) => ({ person: a.employee.name, cert: w.name, expiryDate: w.expiryDate, expired: w.expired })));
@@ -226,7 +226,7 @@ export async function generateProjectReportPdf(projectId: string): Promise<{ pdf
         { header: "", width: 110 },
         { header: "RAB", width: 110, align: "right" },
         { header: "Realisasi s.d. saat ini", width: 140, align: "right" },
-        { header: "Prakiraan akhir", width: 110, align: "right" },
+        { header: "Proyeksi akhir", width: 110, align: "right" },
       ],
       [
         { cells: ["Pendapatan", rp(pl.revenue.plan), [{ text: rp(pl.revenue.actual), bold: true }, { text: `ditagih ${rp(pl.revenue.invoiced)}, diterima ${rp(pl.revenue.paid)}`, color: MUTED, size: 7 }], rp(pl.revenue.forecast)] },
@@ -292,8 +292,8 @@ export async function generateProjectReportPdf(projectId: string): Promise<{ pdf
   else {
     r.figures([
       { label: "Target margin", value: formatPercent(m.targetMarginPct), sub: m.targetSource === "project" ? "Dari RAB project" : "Dari baseline" },
-      { label: "Prakiraan margin akhir", value: formatPercent(m.forecastMarginPct), sub: formatRupiah(m.forecastMargin, true), color: SIG_COLOR[m.signals.margin] },
-      { label: "Margin pekerjaan selesai", value: formatPercent(m.actualMarginPct), sub: m.actualMargin !== null ? formatRupiah(m.actualMargin, true) : undefined },
+      { label: "Proyeksi margin akhir", value: formatPercent(m.forecastMarginPct), sub: formatRupiah(m.forecastMargin, true), color: SIG_COLOR[m.signals.margin] },
+      { label: "Margin realisasi", value: formatPercent(m.actualMarginPct), sub: m.actualMargin !== null ? formatRupiah(m.actualMargin, true) : undefined },
     ]);
     r.paragraph(
       `Cara menghitung: nilai kontrak ${formatRupiah(m.contract, true)} dikurangi (biaya yang sudah keluar ${formatRupiah(m.actualCost, true)} + sisa RAB untuk pekerjaan yang belum selesai ${formatRupiah(Math.max(0, m.eac - m.actualCost), true)}) = ${formatRupiah(m.forecastMargin, true)}.`,
@@ -302,7 +302,7 @@ export async function generateProjectReportPdf(projectId: string): Promise<{ pdf
     doc.moveDown(0.4);
     r.table(
       [
-        { header: "Jembatan margin (dari rencana awal ke prakiraan)", width: 330 },
+        { header: "Jembatan margin (dari rencana awal ke proyeksi)", width: 330 },
         { header: "Nilai", width: 120, align: "right" },
       ],
       m.bridge.map((b) => ({
@@ -315,7 +315,7 @@ export async function generateProjectReportPdf(projectId: string): Promise<{ pdf
     const tl = marginTimeline(input, today);
     if (tl.length >= 2) {
       doc.moveDown(0.4);
-      r.note("Perjalanan prakiraan margin akhir sejak project dimulai (dihitung ulang dengan biaya dan progres pada setiap tanggal).");
+      r.note("Perjalanan proyeksi margin akhir sejak project dimulai (dihitung ulang dengan biaya dan progres pada setiap tanggal).");
       const vals = tl.flatMap((x) => [x.forecastMarginPct, x.actualMarginPct]).filter((v): v is number => v !== null).concat(m.targetMarginPct ?? 0, 0);
       const stepY = 10;
       const lo = Math.floor(Math.min(...vals) / stepY) * stepY;
@@ -325,8 +325,8 @@ export async function generateProjectReportPdf(projectId: string): Promise<{ pdf
       if (yTicks[yTicks.length - 1] < hi) yTicks.push(hi);
       r.lineChart(
         [
-          { points: tl.map((x) => ({ x: x.t, y: x.forecastMarginPct })), color: BLUE, label: "Prakiraan margin akhir" },
-          { points: tl.map((x) => ({ x: x.t, y: x.actualMarginPct })), color: "#94A3B8", label: "Margin pekerjaan selesai" },
+          { points: tl.map((x) => ({ x: x.t, y: x.forecastMarginPct })), color: BLUE, label: "Proyeksi margin akhir" },
+          { points: tl.map((x) => ({ x: x.t, y: x.actualMarginPct })), color: "#94A3B8", label: "Margin realisasi" },
         ],
         {
           height: 110,

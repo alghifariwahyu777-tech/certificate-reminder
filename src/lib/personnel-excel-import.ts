@@ -225,7 +225,7 @@ export async function importPersonnelCertificationsFromExcel(buffer: Buffer): Pr
             employeeName,
             certificationName,
             status: "SKIPPED",
-            message: "Nomor sertifikasi sudah ada — dilewati.",
+            message: "Nomor sertifikasi sudah ada, dilewati.",
           });
           continue;
         }

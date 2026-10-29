@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { PersonnelCertificationForm } from "@/components/personnel/PersonnelCertificationForm";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function NewPersonnelCertificationPage() {
   const session = await getSession();
@@ -14,16 +15,16 @@ export default async function NewPersonnelCertificationPage() {
     <>
       <Navbar
         title="Tambah Sertifikasi Personil"
-        subtitle="Catat sertifikasi/kompetensi baru untuk personil internal"
+        subtitle="Catat sertifikasi baru milik personil"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}
       />
-      <div className="p-5 md:p-8">
+      <PageBody width="form">
         <PersonnelCertificationForm
           employees={employees.map((e) => ({ id: e.id, name: e.name, position: e.position }))}
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

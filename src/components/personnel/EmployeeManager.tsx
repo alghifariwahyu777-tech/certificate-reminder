@@ -1,5 +1,9 @@
 "use client";
 
+import { SearchPopoverButton } from "@/components/ui/SearchPopoverButton";
+import { IconBox } from "@/components/ui/IconBox";
+import { ENTITY_ICON } from "@/lib/entity-icons";
+import { filterGroupClass, toolbarActionsClass, toolbarClass } from "@/components/ui/Toolbar";
 import { useMemo, useState } from "react";
 import { Plus, Pencil, Trash2, UserSquare2, Search, X, Check } from "lucide-react";
 import { Card } from "@/components/ui/Card";
@@ -7,6 +11,7 @@ import { Input, Label, Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
+import { Notice } from "@/components/ui/Notice";
 
 type EmployeeItem = {
   id: string;
@@ -160,35 +165,31 @@ export function EmployeeManager({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-        <div className="relative max-w-sm flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input
-            placeholder="Cari nama, NIP, jabatan, atau email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+      <div className={toolbarClass}>
+        <div className={filterGroupClass}>
+          <div>
+            <SearchPopoverButton value={search} onChange={setSearch} label="Cari personil" placeholder="Nama, NIP, jabatan, atau email..." />
+          </div>
         </div>
         {canManage && (
-          <Button onClick={openAdd}>
-            <Plus className="h-4 w-4" />
-            Tambah Personil
-          </Button>
+          <div className={toolbarActionsClass}>
+            <Button onClick={openAdd}>
+              <Plus className="h-4 w-4" />
+              Tambah personil
+            </Button>
+          </div>
         )}
       </div>
 
       <Card>
         <div className="divide-y divide-slate-100">
           {filtered.length === 0 && (
-            <p className="px-5 py-10 text-center text-sm text-slate-400">Belum ada personil yang cocok.</p>
+            <p className="px-5 py-10 text-center text-sm text-slate-500">Belum ada personil yang cocok.</p>
           )}
           {filtered.map((emp) => (
             <div key={emp.id} className="flex items-center justify-between px-5 py-3.5 gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="h-9 w-9 rounded bg-ink/5 text-ink flex items-center justify-center border border-ink/10 shrink-0">
-                  <UserSquare2 className="h-4.5 w-4.5" />
-                </div>
+                <IconBox icon={ENTITY_ICON.employee} />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-ink truncate">{emp.name}</p>
@@ -200,7 +201,7 @@ export function EmployeeManager({
                   </div>
                   <p className="text-xs text-slate-400 truncate">
                     {emp.position || "-"}
-                    {emp.departmentName ? ` · ${emp.departmentName}` : ""} · {emp.email}
+                    {emp.departmentName ? `, ${emp.departmentName}` : ""}, {emp.email}
                   </p>
                 </div>
               </div>
@@ -213,7 +214,7 @@ export function EmployeeManager({
                     <button
                       onClick={() => openEdit(emp)}
                       className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
-                      aria-label="Edit personil"
+                      aria-label="Ubah personil"
                     >
                       <Pencil className="h-4 w-4" />
                     </button>
@@ -235,15 +236,15 @@ export function EmployeeManager({
         </div>
       </Card>
 
-      <Modal isOpen={formOpen} onClose={() => setFormOpen(false)} title={editTarget ? "Edit Personil" : "Tambah Personil"}>
+      <Modal isOpen={formOpen} onClose={() => setFormOpen(false)} title={editTarget ? "Ubah personil" : "Tambah personil"}>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="emp-name">Nama Lengkap</Label>
+            <Label htmlFor="emp-name">Nama lengkap</Label>
             <Input id="emp-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="emp-id">NIP / ID Pegawai</Label>
+              <Label htmlFor="emp-id">NIP / ID pegawai</Label>
               <Input
                 id="emp-id"
                 value={form.employeeId}
@@ -266,7 +267,7 @@ export function EmployeeManager({
               value={form.departmentId}
               onChange={(e) => setForm({ ...form, departmentId: e.target.value })}
             >
-              <option value="">— Tidak ditentukan —</option>
+              <option value="">Tidak ditentukan</option>
               {departments.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.name}
@@ -283,7 +284,7 @@ export function EmployeeManager({
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               placeholder="nama@sucofindo.co.id"
             />
-            <p className="text-xs text-slate-400 mt-1">Reminder sertifikasi akan dikirim ke email ini.</p>
+            <p className="text-xs text-slate-400 mt-1">Pengingat sertifikasi dikirim ke email ini.</p>
           </div>
           <label className="flex items-center gap-2 text-sm text-slate-600">
             <input
@@ -296,9 +297,9 @@ export function EmployeeManager({
           </label>
 
           {formError && (
-            <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+            <Notice tone="danger">
               {formError}
-            </div>
+            </Notice>
           )}
 
           <div className="flex justify-end gap-2 pt-1">
@@ -314,14 +315,14 @@ export function EmployeeManager({
         </div>
       </Modal>
 
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus Personil">
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus personil">
         <p className="text-sm text-slate-600">
           Apakah Anda yakin ingin menghapus personil <strong className="text-ink">{deleteTarget?.name}</strong>?
         </p>
         {deleteError && (
-          <div className="mt-3 rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+          <Notice tone="danger" className="mt-3">
             {deleteError}
-          </div>
+          </Notice>
         )}
         <div className="flex justify-end gap-2 mt-5">
           <Button variant="outline" onClick={() => setDeleteTarget(null)}>

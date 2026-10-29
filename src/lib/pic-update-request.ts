@@ -48,8 +48,8 @@ export async function runPicUpdateRequests(summary: ReminderRunSummary, opts: { 
       const link = updateLink(await createUpdateToken(project.id, project.picEmail));
       rows.push(`<tr><td style="padding:12px 0;border-bottom:1px solid #E2E8F0;">
 <strong style="color:#0F172A;">${esc(project.projectName)}</strong><br/>
-<span style="color:#64748B;font-size:12px;">${esc(project.projectNumber)} · target selesai ${shortDate(project.targetEndDate.getTime())} · progres tercatat ${formatPercent(s.actualPercent)} (rencana ${formatPercent(s.plannedPercent)})${
-        s.lastProgressUpdate ? ` · pembaruan terakhir ${shortDate(s.lastProgressUpdate)}` : " · belum pernah diperbarui"
+<span style="color:#64748B;font-size:12px;">${esc(project.projectNumber)}, target selesai ${shortDate(project.targetEndDate.getTime())}, progres tercatat ${formatPercent(s.actualPercent)} (rencana ${formatPercent(s.plannedPercent)})${
+        s.lastProgressUpdate ? `, pembaruan terakhir ${shortDate(s.lastProgressUpdate)}` : ", belum pernah diperbarui"
       }</span><br/><div style="margin-top:8px;">${button(link, "Perbarui Progres")}</div></td></tr>`);
     }
     if (rows.length === 0) continue;
@@ -74,7 +74,7 @@ ${picUsers.has(email) ? `<p style="margin-top:16px;font-size:13px;">Pembaruan ju
     else summary.skipped += 1;
     summary.details.push({
       certificateNumber: email,
-      certificateName: `Permohonan pembaruan progres — ${pic}`,
+      certificateName: `Permohonan pembaruan progres, ${pic}`,
       milestoneDays: 0,
       label: `${rows.length} project`,
       status: result.status,

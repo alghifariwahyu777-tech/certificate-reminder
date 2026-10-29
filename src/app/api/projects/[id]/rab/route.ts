@@ -67,7 +67,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       g.project.id,
       result.version === 0
         ? `Mengunggah RAB awal "${file.name}" (total RAB Rp ${Math.round(data.operatingCost).toLocaleString("id-ID")}, margin ${data.marginPct ?? "-"}%)`
-        : `Mengunggah revisi RAB ke-${result.version} "${file.name}" — ${form.get("reason")}`
+        : `Mengunggah revisi RAB ke-${result.version} "${file.name}", ${form.get("reason")}`
     );
     return NextResponse.json({ result });
   } catch (e) {

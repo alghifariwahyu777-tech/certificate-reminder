@@ -3,7 +3,7 @@ import { MessageCircle } from "lucide-react";
 
 const MESSAGES = {
   login:
-    "Halo, saya klien PT Sucofindo (Persero) dan belum memiliki akun Client Portal. Mohon bantuannya untuk didaftarkan.",
+    "Halo, saya klien PT Sucofindo (Persero) dan belum memiliki akun Portal Klien. Mohon bantuannya untuk didaftarkan.",
   authenticated:
     "Halo, saya ingin bertanya terkait pengajuan/sertifikasi saya di Reminder System PT Sucofindo (Persero).",
 };
@@ -22,10 +22,10 @@ export async function PortalWhatsAppButton({ context = "authenticated" }: { cont
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-[#25D366] text-white pl-3 pr-4 py-3 shadow-lg hover:brightness-95 transition"
-      aria-label="Hubungi Admin via WhatsApp"
+      aria-label="Hubungi admin melalui WhatsApp"
     >
       <MessageCircle className="h-5 w-5" />
-      <span className="text-sm font-medium hidden sm:inline">Hubungi Admin</span>
+      <span className="text-sm font-medium hidden sm:inline">Hubungi admin</span>
     </a>
   );
 }

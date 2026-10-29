@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, CheckCheck, AlertTriangle, TimerReset, ClipboardList } from "lucide-react";
+import { Bell, CheckCheck } from "lucide-react";
+import { ENTITY_ICON } from "@/lib/entity-icons";
 import { cn } from "@/lib/utils";
 
 type NotificationItem = {
@@ -29,12 +30,23 @@ type NotificationItem = {
   application: { id: string; applicationNumber: string } | null;
 };
 
+function entityIcon(n: NotificationItem) {
+  if (n.certificate) return ENTITY_ICON.certificate;
+  if (n.personnelCertification) return ENTITY_ICON.personnelCert;
+  if (n.project) return ENTITY_ICON.project;
+  if (n.equipment) return ENTITY_ICON.equipment;
+  if (n.application) return ENTITY_ICON.application;
+  return ENTITY_ICON.notification;
+}
+
+const STATUS_TEXT = { NEW: "Baru", READ: "Sudah dibaca", DONE: "Selesai" } as const;
+
 function iconFor(type: NotificationItem["type"]) {
-  if (type === "EXPIRED") return { Icon: AlertTriangle, color: "text-signal-expired" };
-  if (type === "EXPIRING_SOON") return { Icon: TimerReset, color: "text-signal-soon" };
-  if (type === "PROJECT_DEVIATION_CRITICAL" || type === "PROJECT_INVOICE_OVERDUE") return { Icon: AlertTriangle, color: "text-signal-expired" };
-  if (type === "PROJECT_PROGRESS_STALE" || type === "PROJECT_TERM_DUE") return { Icon: TimerReset, color: "text-signal-soon" };
-  return { Icon: ClipboardList, color: "text-accent" };
+  if (type === "EXPIRED") return { color: "text-signal-expired" };
+  if (type === "EXPIRING_SOON") return { color: "text-signal-soon" };
+  if (type === "PROJECT_DEVIATION_CRITICAL" || type === "PROJECT_INVOICE_OVERDUE") return { color: "text-signal-expired" };
+  if (type === "PROJECT_PROGRESS_STALE" || type === "PROJECT_TERM_DUE") return { color: "text-signal-soon" };
+  return { color: "text-accent" };
 }
 
 function linkFor(n: NotificationItem) {
@@ -127,13 +139,14 @@ export function NotificationBell() {
           </div>
 
           {loading ? (
-            <p className="px-4 py-8 text-center text-xs text-slate-400">Memuat...</p>
+            <p className="px-4 py-8 text-center text-xs text-slate-500">Memuat...</p>
           ) : notifications.length === 0 ? (
-            <p className="px-4 py-8 text-center text-xs text-slate-400">Tidak ada notifikasi.</p>
+            <p className="px-4 py-8 text-center text-xs text-slate-500">Tidak ada notifikasi.</p>
           ) : (
             <div className="divide-y divide-slate-100">
               {notifications.map((n) => {
-                const { Icon, color } = iconFor(n.type);
+                const { color } = iconFor(n.type);
+                const Icon = entityIcon(n);
                 return (
                   <Link
                     key={n.id}
@@ -147,7 +160,7 @@ export function NotificationBell() {
                     <Icon className={cn("h-4 w-4 mt-0.5 shrink-0", color)} />
                     <div className="min-w-0">
                       <p className="text-xs text-ink leading-snug">{n.message}</p>
-                      <p className="text-[10px] text-slate-400 mt-1 font-mono">{n.status}</p>
+                      <p className="mt-1 text-[11px] text-slate-500">{STATUS_TEXT[n.status]}</p>
                     </div>
                   </Link>
                 );
@@ -160,7 +173,7 @@ export function NotificationBell() {
             onClick={() => setOpen(false)}
             className="block text-center text-xs font-medium text-accent hover:text-accent-light px-4 py-3 border-t border-slate-100"
           >
-            Lihat Semua Notifikasi
+            Lihat semua notifikasi
           </Link>
         </div>
       )}

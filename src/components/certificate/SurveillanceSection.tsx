@@ -9,6 +9,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { formatDate } from "@/lib/utils";
 import { SURVEILLANCE_STATUS_LABELS, SURVEILLANCE_STATUS_COLORS, isSurveillanceOverdue } from "@/lib/surveillance";
+import { Notice } from "@/components/ui/Notice";
 
 type SurveillanceItem = {
   id: string;
@@ -64,11 +65,11 @@ export function SurveillanceSection({
       });
       const body = await res.json();
       if (!res.ok) {
-        setError(body.message || "Gagal memperbarui surveillance.");
+        setError(body.message || "Gagal memperbarui surveilans.");
         return;
       }
       setItems((prev) => prev.map((i) => (i.id === editTarget.id ? body.surveillance : i)));
-      showToast("Surveillance berhasil diperbarui.");
+      showToast("Surveilans berhasil diperbarui.");
       setEditTarget(null);
     } finally {
       setSaving(false);
@@ -79,8 +80,7 @@ export function SurveillanceSection({
     <>
       <Card>
         <CardHeader className="flex flex-row items-center gap-2">
-          <CalendarClock className="h-4 w-4 text-slate-400" />
-          <CardTitle>Jadwal Surveillance</CardTitle>
+          <CardTitle>Jadwal surveilans</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-slate-100">
@@ -90,7 +90,7 @@ export function SurveillanceSection({
                 <div key={s.id} className="flex items-center justify-between gap-3 px-5 py-3.5">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-ink">Surveillance ke-{s.sequenceNumber}</p>
+                      <p className="text-sm font-medium text-ink">Surveilans ke-{s.sequenceNumber}</p>
                       <span className={`stamp-badge ${SURVEILLANCE_STATUS_COLORS[s.status]}`}>
                         {SURVEILLANCE_STATUS_LABELS[s.status]}
                       </span>
@@ -102,8 +102,8 @@ export function SurveillanceSection({
                     </div>
                     <p className="text-xs text-slate-400 mt-0.5">
                       Jadwal {formatDate(s.scheduledDate)}
-                      {s.picName ? ` · PIC: ${s.picName}` : ""}
-                      {s.completedDate ? ` · Selesai ${formatDate(s.completedDate)}` : ""}
+                      {s.picName ? `, PIC: ${s.picName}` : ""}
+                      {s.completedDate ? `, Selesai ${formatDate(s.completedDate)}` : ""}
                     </p>
                     {s.result && <p className="text-xs text-slate-500 mt-1">{s.result}</p>}
                   </div>
@@ -111,7 +111,7 @@ export function SurveillanceSection({
                     <button
                       onClick={() => openEdit(s)}
                       className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent shrink-0"
-                      aria-label="Edit surveillance"
+                      aria-label="Ubah surveilans"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
@@ -126,7 +126,7 @@ export function SurveillanceSection({
       <Modal
         isOpen={!!editTarget}
         onClose={() => setEditTarget(null)}
-        title={`Edit Surveillance ke-${editTarget?.sequenceNumber || ""}`}
+        title={`Ubah surveilans ke-${editTarget?.sequenceNumber || ""}`}
       >
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -141,7 +141,7 @@ export function SurveillanceSection({
               </Select>
             </div>
             <div>
-              <Label htmlFor="sv-date">Tanggal Jadwal</Label>
+              <Label htmlFor="sv-date">Tanggal jadwal</Label>
               <Input id="sv-date" type="date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
             </div>
           </div>
@@ -150,7 +150,7 @@ export function SurveillanceSection({
             <Input id="sv-pic" value={picName} onChange={(e) => setPicName(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="sv-notes">Catatan Internal (opsional)</Label>
+            <Label htmlFor="sv-notes">Catatan internal (opsional)</Label>
             <Textarea id="sv-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
           <div>
@@ -158,9 +158,9 @@ export function SurveillanceSection({
             <Textarea id="sv-result" rows={2} value={result} onChange={(e) => setResult(e.target.value)} />
           </div>
           {error && (
-            <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+            <Notice tone="danger">
               {error}
-            </div>
+            </Notice>
           )}
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="outline" onClick={() => setEditTarget(null)}>

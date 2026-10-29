@@ -1,5 +1,6 @@
 "use client";
 
+import { Segmented } from "@/components/ui/Segmented";
 import { useState } from "react";
 import { AlertOctagon, Pencil, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -71,22 +72,16 @@ export function IssuePanel({ data }: { data: ProjectMonitoringDTO }) {
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
-          <CardTitle>Kendala & risiko</CardTitle>
-          <div className="mt-2 flex gap-1">
-            {(["OPEN", "ALL"] as const).map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setFilter(f)}
-                className={cn(
-                  "px-2.5 py-1 rounded text-xs font-medium",
-                  filter === f ? "bg-ink text-white dark:bg-slate-100 dark:text-ink" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
-                )}
-              >
-                {f === "OPEN" ? `Terbuka (${data.issues.filter((i) => i.status === "OPEN").length})` : `Semua (${data.issues.length})`}
-              </button>
-            ))}
-          </div>
+          <CardTitle>Kendala dan risiko</CardTitle>
+          <Segmented
+            className="mt-2"
+            value={filter}
+            onChange={setFilter}
+            options={[
+              ["OPEN", `Terbuka (${data.issues.filter((i) => i.status === "OPEN").length})`],
+              ["ALL", `Semua (${data.issues.length})`],
+            ]}
+          />
         </div>
         {data.canManage && (
           <Button size="sm" onClick={() => openForm(null)}>
@@ -121,8 +116,8 @@ export function IssuePanel({ data }: { data: ProjectMonitoringDTO }) {
                     </div>
                     {i.description && <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 whitespace-pre-line">{i.description}</p>}
                     <p className={cn("text-xs mt-1", late ? "text-signal-expired font-medium" : "text-slate-500")}>
-                      {i.owner ? `PIC: ${i.owner} · ` : ""}
-                      {i.targetDate ? `Target: ${fmtDate(i.targetDate)}${late ? " (lewat)" : ""} · ` : ""}
+                      {i.owner ? `PIC ${i.owner}, ` : ""}
+                      {i.targetDate ? `Target ${fmtDate(i.targetDate)}${late ? " (lewat)" : ""}, ` : ""}
                       Dicatat {fmtDate(i.createdAt)}
                       {i.createdBy ? ` oleh ${i.createdBy}` : ""}
                     </p>
@@ -134,7 +129,7 @@ export function IssuePanel({ data }: { data: ProjectMonitoringDTO }) {
                   </div>
                   {data.canManage && (
                     <div className="flex gap-1 shrink-0">
-                      <button type="button" aria-label="Edit" onClick={() => openForm(i)} className="p-1.5 rounded text-slate-400 hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800">
+                      <button type="button" aria-label="Ubah" onClick={() => openForm(i)} className="p-1.5 rounded text-slate-400 hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800">
                         <Pencil className="h-4 w-4" />
                       </button>
                       <DeleteButton what="kendala/risiko" onConfirm={() => send("DELETE", `${base}/${i.id}`, undefined, "Data dihapus.")} />
@@ -147,7 +142,7 @@ export function IssuePanel({ data }: { data: ProjectMonitoringDTO }) {
         )}
       </CardContent>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit kendala/risiko" : "Catat kendala/risiko"} maxWidth="max-w-lg">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Ubah kendala/risiko" : "Catat kendala/risiko"} maxWidth="max-w-lg">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>

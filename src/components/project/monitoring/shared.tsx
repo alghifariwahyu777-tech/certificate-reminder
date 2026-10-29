@@ -1,5 +1,8 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
+import { StatCard } from "@/components/ui/Stat";
+
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, Trash2, UploadCloud, X } from "lucide-react";
@@ -8,6 +11,7 @@ import { Modal } from "@/components/ui/Modal";
 import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
 import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
+import { Notice } from "@/components/ui/Notice";
 
 const ACCEPTED_FILE_TYPES = ["application/pdf", "image/jpeg", "image/png"];
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
@@ -47,9 +51,9 @@ export function useMonitoringApi() {
 export function FormError({ message }: { message: string | null }) {
   if (!message) return null;
   return (
-    <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+    <Notice tone="danger">
       {message}
-    </div>
+    </Notice>
   );
 }
 
@@ -306,24 +310,21 @@ export function EmptyState({ icon: Icon, text, action }: { icon: React.Component
   );
 }
 
+/** Key figure inside the project pages: the shared StatCard, so it looks the same as everywhere else. */
 export function Stat({
   label,
   value,
   hint,
   tone = "default",
+  icon,
 }: {
   label: string;
   value: React.ReactNode;
   hint?: React.ReactNode;
   tone?: "default" | "good" | "warn" | "bad";
+  icon?: LucideIcon;
 }) {
-  return (
-    <div className="rounded-lg border border-line dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3.5">
-      <p className="text-[12.5px] font-medium text-slate-500 dark:text-slate-400">{label}</p>
-      <p className={cn("mt-1 text-[21px] font-bold leading-tight", TONE_TEXT[tone])}>{value}</p>
-      {hint && <p className="mt-1 text-[12.5px] text-slate-500 dark:text-slate-400">{hint}</p>}
-    </div>
-  );
+  return <StatCard label={label} value={value} sub={hint} tone={tone} icon={icon} />;
 }
 
 /** "2026-10-22" → "22 Okt 2026" without timezone drift. */
@@ -341,7 +342,7 @@ export function todayInput(): string {
 
 /**
  * Opens a form when the page is reached with "#<tab>/<section>/baru" (used by
- * the shortcut buttons: "Update progres", "Unggah RAB", …). The "/baru" part is
+ * the shortcut buttons: "Perbarui progres", "Unggah RAB", …). The "/baru" part is
  * removed again so a refresh doesn't reopen the form.
  */
 export function useOpenFromHash(section: string, open: () => void, action = "baru") {
@@ -359,4 +360,37 @@ export function useOpenFromHash(section: string, open: () => void, action = "bar
     window.addEventListener("hashchange", check);
     return () => window.removeEventListener("hashchange", check);
   }, [section, action]);
+}
+
+/** Small two-to-four option switch used inside a card (e.g. "Per project / Gabungan"). */
+export { Segmented } from "@/components/ui/Segmented";
+
+const STATUS_DOT: Record<string, string> = { KRITIS: "#C2362F", WASPADA: "#D69E2E", ON_TRACK: "#2F855A" };
+
+/** Filter chips by project condition, each with its count. */
+export function StatusChips({ value, onChange, counts }: { value: string; onChange: (v: string) => void; counts: (h: string) => number }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {[
+        ["", "Semua"],
+        ["KRITIS", "Kritis"],
+        ["WASPADA", "Waspada"],
+        ["ON_TRACK", "Sesuai rencana"],
+      ].map(([k, l]) => (
+        <button
+          key={k}
+          type="button"
+          onClick={() => onChange(k)}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12.5px] font-semibold transition-colors",
+            value === k ? "border-accent bg-accent/10 text-accent dark:border-sky-400 dark:bg-sky-400/10 dark:text-sky-300" : "border-line bg-white text-slate-600 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+          )}
+        >
+          {k && <span className="h-2 w-2 rounded-full" style={{ background: STATUS_DOT[k] }} />}
+          {l}
+          <span className={cn("tabular-nums", value === k ? "text-white/80 dark:text-ink/70" : "text-slate-400")}>{counts(k)}</span>
+        </button>
+      ))}
+    </div>
+  );
 }

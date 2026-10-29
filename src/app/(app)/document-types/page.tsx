@@ -2,6 +2,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/layout/Navbar";
 import { DocumentTypeManager } from "@/components/documenttype/DocumentTypeManager";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function DocumentTypesPage() {
   const session = await getSession();
@@ -14,11 +15,11 @@ export default async function DocumentTypesPage() {
     <>
       <Navbar
         title="Jenis Dokumen"
-        subtitle="Master jenis dokumen persyaratan permohonan"
+        subtitle="Jenis dokumen yang diminta dalam permohonan"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}
       />
-      <div className="p-5 md:p-8 max-w-3xl">
+      <PageBody>
         <DocumentTypeManager
           canManage={session?.role === "ADMIN"}
           initialDocumentTypes={documentTypes.map((d) => ({
@@ -28,7 +29,7 @@ export default async function DocumentTypesPage() {
             usageCount: d._count.requirements,
           }))}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

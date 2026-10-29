@@ -105,7 +105,7 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs text-slate-500 border-b border-slate-100 dark:border-slate-800">
+                <tr className="th-row">
                   <th className="px-5 py-2.5 font-medium w-10">#</th>
                   <th className="px-3 py-2.5 font-medium">Milestone</th>
                   <th className="px-3 py-2.5 font-medium text-right">Bobot</th>
@@ -152,8 +152,8 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
                             )}
                             <button
                               type="button"
-                              title="Edit"
-                              aria-label="Edit milestone"
+                              title="Ubah"
+                              aria-label="Ubah milestone"
                               onClick={() => openForm(m)}
                               className="p-1.5 rounded text-slate-400 hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800"
                             >
@@ -172,7 +172,7 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
         )}
       </CardContent>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit milestone" : "Tambah milestone"} maxWidth="max-w-lg">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Ubah milestone" : "Tambah milestone"} maxWidth="max-w-lg">
         <div className="space-y-4">
           <div className="grid grid-cols-[1fr_5rem] gap-3">
             <div>

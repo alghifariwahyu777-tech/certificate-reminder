@@ -4,6 +4,7 @@ import { getEquipmentEmailTemplate } from "@/lib/email-template-db";
 import { DEFAULT_EQUIPMENT_SIMPLE_FIELDS, DEFAULT_EQUIPMENT_BODY_HTML } from "@/lib/equipment-email-template";
 import { Navbar } from "@/components/layout/Navbar";
 import { EquipmentEmailTemplateEditor } from "@/components/EquipmentEmailTemplateEditor";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function EquipmentEmailTemplatePage() {
   const session = await getSession();
@@ -16,11 +17,11 @@ export default async function EquipmentEmailTemplatePage() {
     <>
       <Navbar
         title="Template Email Kalibrasi Alat"
-        subtitle="Sesuaikan isi email reminder untuk Equipment Calibration"
+        subtitle="Isi email pengingat kalibrasi alat"
         adminName={session.name}
         role={session.role}
       />
-      <div className="p-5 md:p-8">
+      <PageBody>
         <EquipmentEmailTemplateEditor
           initialMode={template.mode === "ADVANCED" ? "ADVANCED" : "SIMPLE"}
           initialSubject={template.subject}
@@ -34,7 +35,7 @@ export default async function EquipmentEmailTemplatePage() {
           }}
           initialBodyHtml={template.bodyHtml || DEFAULT_EQUIPMENT_BODY_HTML}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

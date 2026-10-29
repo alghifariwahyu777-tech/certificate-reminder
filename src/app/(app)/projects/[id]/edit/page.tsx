@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { ProjectForm } from "@/components/project/ProjectForm";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function EditProjectPage(context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -19,7 +20,7 @@ export default async function EditProjectPage(context: { params: Promise<{ id: s
   return (
     <>
       <Navbar title="Ubah Project" subtitle={project.projectName} adminName={session.name} role={session.role} />
-      <div className="p-5 md:p-8">
+      <PageBody width="form">
         <ProjectForm
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
           initialData={{
@@ -46,7 +47,7 @@ export default async function EditProjectPage(context: { params: Promise<{ id: s
             fileMimeType: project.fileMimeType,
           }}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

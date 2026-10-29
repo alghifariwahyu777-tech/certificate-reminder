@@ -1,19 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { AlertTriangle, CheckCircle2, Clock, RefreshCw } from "lucide-react";
+import { useEffect, useState } from "react";
+import type { LucideIcon } from "lucide-react";
+import { ENTITY_ICON } from "@/lib/entity-icons";
 import Link from "next/link";
-import {
-  FileBadge2,
-  ShieldCheck,
-  TimerReset,
-  AlertTriangle,
-  RefreshCw,
-  ArrowRight,
-  UserSquare2,
-  FolderClock,
-  Wrench,
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/Card";
+import { Card, CardContent, CardHead, EmptyState } from "@/components/ui/Card";
+import { StatCard, StatGrid } from "@/components/ui/Stat";
+import { TabNav } from "@/components/ui/TabNav";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { MonthlyTrendChart } from "@/components/dashboard/MonthlyTrendChart";
 
@@ -32,117 +26,98 @@ type DomainStats = {
   active: number;
   expiringSoon: number;
   expired: number;
-  extraLabel?: string; // e.g. "Renewal Berjalan" (Certificate) or "Selesai" (Project)
+  extraLabel?: string; // e.g. "Perpanjangan berjalan" (Certificate) or "Selesai" (Project)
   extraValue?: number;
 };
 
-function statusBadgeFor(days: number) {
-  if (days < 0) return <span className="stamp-badge bg-signal-expiredBg text-signal-expired border-signal-expiredBorder">Berakhir</span>;
-  if (days <= 30) return <span className="stamp-badge bg-signal-soonBg text-signal-soon border-signal-soonBorder">Segera berakhir</span>;
-  return <span className="stamp-badge bg-signal-activeBg text-signal-active border-signal-activeBorder">Aktif</span>;
+type Labels = { total: string; active: string; expiringSoon: string; expired: string; dateColumn: string; item: string };
+
+function statusBadgeFor(days: number, soonLabel: string, lateLabel: string) {
+  if (days < 0) return <span className="stamp-badge border-signal-expiredBorder bg-signal-expiredBg text-signal-expired">{lateLabel}</span>;
+  if (days <= 30) return <span className="stamp-badge border-signal-soonBorder bg-signal-soonBg text-signal-soon">{soonLabel}</span>;
+  return <span className="stamp-badge border-signal-activeBorder bg-signal-activeBg text-signal-active">Aktif</span>;
 }
 
-function UpcomingTable({ items, emptyText, viewAllHref }: { items: UpcomingItem[]; emptyText: string; viewAllHref: string }) {
+function UpcomingTable({
+  items,
+  emptyText,
+  viewAllHref,
+  labels,
+  soonLabel,
+  lateLabel,
+}: {
+  items: UpcomingItem[];
+  emptyText: string;
+  viewAllHref: string;
+  labels: Labels;
+  soonLabel: string;
+  lateLabel: string;
+}) {
   return (
     <Card>
-      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
-        <div>
-          <h3 className="font-display font-semibold text-ink dark:text-slate-100 text-base">Segera Berakhir</h3>
-          <p className="text-xs text-slate-500 mt-0.5">Diurutkan berdasarkan tanggal terdekat, 30 hari ke depan</p>
+      <CardHead
+        title="Perlu ditindaklanjuti"
+        description="Sudah lewat atau jatuh tempo dalam 30 hari, diurutkan dari yang paling dekat"
+        action={
+          <Link href={viewAllHref} className="text-[13px] font-semibold text-accent hover:text-accent-light">
+            Lihat semua
+          </Link>
+        }
+      />
+      {items.length === 0 ? (
+        <EmptyState>{emptyText}</EmptyState>
+      ) : (
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="th-row">
+                <th className="px-5 py-2.5">{labels.item}</th>
+                <th className="px-5 py-2.5">Keterangan</th>
+                <th className="px-5 py-2.5">{labels.dateColumn}</th>
+                <th className="px-5 py-2.5">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/60 dark:border-slate-800/60 dark:hover:bg-slate-800/40">
+                  <td className="px-5 py-3">
+                    <Link href={item.detailHref} className="font-semibold text-ink hover:text-accent dark:text-slate-100">
+                      {item.title}
+                    </Link>
+                    <p className="text-xs text-slate-500">{item.subtitle}</p>
+                  </td>
+                  <td className="px-5 py-3 text-slate-600 dark:text-slate-300">{item.secondary}</td>
+                  <td className="whitespace-nowrap px-5 py-3 text-slate-700 dark:text-slate-300">
+                    {new Date(item.date).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                    <p className={item.daysRemaining < 0 ? "text-xs text-signal-expired" : "text-xs text-slate-500"}>
+                      {item.daysRemaining < 0 ? `Lewat ${Math.abs(item.daysRemaining)} hari` : item.daysRemaining === 0 ? "Hari ini" : `${item.daysRemaining} hari lagi`}
+                    </p>
+                  </td>
+                  <td className="px-5 py-3">{statusBadgeFor(item.daysRemaining, soonLabel, lateLabel)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        <Link href={viewAllHref} className="text-xs font-medium text-accent hover:text-accent-light flex items-center gap-1">
-          Lihat semua <ArrowRight className="h-3 w-3" />
-        </Link>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-slate-500 border-b border-slate-100 dark:border-slate-800">
-              <th className="px-5 py-2.5 font-medium">Item</th>
-              <th className="px-5 py-2.5 font-medium">Keterangan</th>
-              <th className="px-5 py-2.5 font-medium">Tanggal</th>
-              <th className="px-5 py-2.5 font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.length === 0 && (
-              <tr>
-                <td colSpan={4} className="px-5 py-8 text-center text-slate-400">
-                  {emptyText}
-                </td>
-              </tr>
-            )}
-            {items.map((item) => (
-              <tr key={item.id} className="border-b border-slate-50 dark:border-slate-800/60 last:border-0 hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                <td className="px-5 py-3">
-                  <Link href={item.detailHref} className="font-medium text-ink dark:text-slate-100 hover:text-accent">
-                    {item.title}
-                  </Link>
-                  <p className="text-xs text-slate-400 font-mono">{item.subtitle}</p>
-                </td>
-                <td className="px-5 py-3 text-slate-600 dark:text-slate-300">{item.secondary}</td>
-                <td className="px-5 py-3 text-slate-600 dark:text-slate-300">
-                  {new Date(item.date).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}
-                  <p className="text-xs text-slate-400">
-                    {item.daysRemaining < 0 ? `${Math.abs(item.daysRemaining)} hari lalu` : `${item.daysRemaining} hari lagi`}
-                  </p>
-                </td>
-                <td className="px-5 py-3">{statusBadgeFor(item.daysRemaining)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      )}
     </Card>
   );
 }
 
-function StatCards({ stats, labels }: { stats: DomainStats; labels: { total: string; active: string; expiringSoon: string; expired: string } }) {
-  const cards = [
-    { label: labels.total, value: stats.total, icon: ShieldCheck, accent: "text-ink bg-ink/5 border-ink/10" },
-    {
-      label: labels.active,
-      value: stats.active,
-      icon: ShieldCheck,
-      accent: "text-signal-active bg-signal-activeBg border-signal-activeBorder",
-    },
-    {
-      label: labels.expiringSoon,
-      value: stats.expiringSoon,
-      icon: TimerReset,
-      accent: "text-signal-soon bg-signal-soonBg border-signal-soonBorder",
-    },
-    {
-      label: labels.expired,
-      value: stats.expired,
-      icon: AlertTriangle,
-      accent: "text-signal-expired bg-signal-expiredBg border-signal-expiredBorder",
-    },
-    ...(stats.extraLabel
-      ? [{ label: stats.extraLabel, value: stats.extraValue || 0, icon: RefreshCw, accent: "text-accent bg-accent/5 border-accent/20" }]
-      : []),
-  ];
-
+function Stats({ stats, labels, icon }: { stats: DomainStats; labels: Labels; icon: LucideIcon }) {
+  const pct = (n: number) => (stats.total ? `${Math.round((n / stats.total) * 100)}% dari total` : "Belum ada data");
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-      {cards.map((c) => (
-        <Card key={c.label} className="h-full">
-          <CardContent className="flex items-start justify-between h-full">
-            <div>
-              <p className="text-xs text-slate-500 font-medium mb-1.5 leading-snug min-h-[2rem]">
-                {c.label}
-              </p>
-              <p className="font-display text-2xl font-semibold text-ink dark:text-slate-100 font-mono">{c.value}</p>
-            </div>
-            <div className={`h-9 w-9 rounded flex items-center justify-center border shrink-0 ${c.accent}`}>
-              <c.icon className="h-4.5 w-4.5" />
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+    <StatGrid cols={stats.extraLabel ? 5 : 4}>
+      <StatCard icon={icon} label={labels.total} value={stats.total.toLocaleString("id-ID")} sub="Seluruh data tercatat" />
+      <StatCard icon={CheckCircle2} label={labels.active} value={stats.active.toLocaleString("id-ID")} tone={stats.active ? "good" : "default"} sub={pct(stats.active)} />
+      <StatCard icon={Clock} label={labels.expiringSoon} value={stats.expiringSoon.toLocaleString("id-ID")} tone={stats.expiringSoon ? "warn" : "default"} sub="Dalam 30 hari ke depan" />
+      <StatCard icon={AlertTriangle} label={labels.expired} value={stats.expired.toLocaleString("id-ID")} tone={stats.expired ? "bad" : "default"} sub="Perlu tindakan segera" />
+      {stats.extraLabel && <StatCard icon={RefreshCw} label={stats.extraLabel} value={(stats.extraValue || 0).toLocaleString("id-ID")} sub={stats.extraLabel === "Selesai" ? "Project yang sudah selesai" : "Sertifikat dalam proses perpanjangan"} />}
+    </StatGrid>
   );
 }
+
+type TabKey = "sertifikat" | "personil" | "project" | "alat";
 
 export function DashboardTabs({
   certificate,
@@ -159,113 +134,114 @@ export function DashboardTabs({
   chartData: { name: string; total: number }[];
   trendData: { month: string; total: number }[];
 }) {
-  const [tab, setTab] = useState<"certificate" | "personnel" | "project" | "equipment">("certificate");
+  const [tab, setTab] = useState<TabKey>("sertifikat");
+  const need = (s: DomainStats) => s.expired + s.expiringSoon;
 
   const TABS = [
-    { value: "certificate" as const, label: "Certificate", icon: FileBadge2 },
-    { value: "personnel" as const, label: "Personnel", icon: UserSquare2 },
-    { value: "project" as const, label: "Project", icon: FolderClock },
-    { value: "equipment" as const, label: "Equipment", icon: Wrench },
+    { key: "sertifikat" as const, icon: ENTITY_ICON.certificate, label: "Sertifikat klien", badge: need(certificate.stats) },
+    { key: "personil" as const, icon: ENTITY_ICON.personnelCert, label: "Sertifikasi personil", badge: need(personnel.stats) },
+    { key: "project" as const, icon: ENTITY_ICON.project, label: "Project", badge: need(project.stats) },
+    { key: "alat" as const, icon: ENTITY_ICON.equipment, label: "Kalibrasi alat", badge: need(equipment.stats) },
   ];
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-1 w-fit overflow-x-auto">
-        {TABS.map((t) => (
-          <button
-            key={t.value}
-            onClick={() => setTab(t.value)}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded text-sm font-medium whitespace-nowrap transition-colors ${
-              tab === t.value
-                ? "bg-ink text-white dark:bg-slate-100 dark:text-ink"
-                : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800"
-            }`}
-          >
-            <t.icon className="h-3.5 w-3.5" />
-            {t.label}
-          </button>
-        ))}
-      </div>
+  useEffect(() => {
+    const h = window.location.hash.slice(1) as TabKey;
+    if (TABS.some((t) => t.key === h)) setTab(h);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-      {tab === "certificate" && (
-        <div className="space-y-6">
-          <StatCards
+  function go(k: TabKey) {
+    setTab(k);
+    history.replaceState(null, "", `#${k}`);
+  }
+
+  return (
+    <div className="space-y-5">
+      <TabNav label="Jenis pengingat" tabs={TABS} value={tab} onChange={go} />
+
+      {tab === "sertifikat" && (
+        <div className="space-y-5">
+          <Stats
             stats={certificate.stats}
-            labels={{
-              total: "Total Sertifikat",
-              active: "Sertifikat Aktif",
-              expiringSoon: "Berakhir < 30 Hari",
-              expired: "Expired",
-            }}
+            icon={ENTITY_ICON.certificate}
+            labels={{ total: "Total sertifikat", active: "Masih berlaku", expiringSoon: "Segera berakhir", expired: "Sudah berakhir", dateColumn: "Berakhir", item: "Sertifikat" }}
           />
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            <div className="lg:col-span-3">
-              <UpcomingTable items={certificate.upcoming} emptyText="Tidak ada sertifikat yang perlu diperhatikan saat ini." viewAllHref="/certificate" />
-            </div>
-            <Card className="lg:col-span-2">
-              <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
-                <h3 className="font-display font-semibold text-ink dark:text-slate-100 text-base">Sertifikat per Kategori</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Distribusi jumlah sertifikat</p>
-              </div>
+          <UpcomingTable
+            items={certificate.upcoming}
+            emptyText="Tidak ada sertifikat yang perlu ditindaklanjuti saat ini."
+            viewAllHref="/certificate"
+            labels={{ total: "", active: "", expiringSoon: "", expired: "", dateColumn: "Berakhir", item: "Sertifikat" }}
+            soonLabel="Segera berakhir"
+            lateLabel="Berakhir"
+          />
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <Card>
+              <CardHead title="Sertifikat per kategori" description="Jumlah sertifikat pada setiap kategori" />
               <CardContent>
                 <CategoryChart data={chartData} />
               </CardContent>
             </Card>
+            <Card>
+              <CardHead title="Sertifikat yang akan berakhir" description="Jumlah per bulan untuk 12 bulan ke depan" />
+              <CardContent>
+                <MonthlyTrendChart data={trendData} />
+              </CardContent>
+            </Card>
           </div>
-          <Card>
-            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="font-display font-semibold text-ink dark:text-slate-100 text-base">Tren Sertifikat Akan Berakhir</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Jumlah sertifikat yang berakhir per bulan, 12 bulan ke depan</p>
-            </div>
-            <CardContent>
-              <MonthlyTrendChart data={trendData} />
-            </CardContent>
-          </Card>
         </div>
       )}
 
-      {tab === "personnel" && (
-        <div className="space-y-6">
-          <StatCards
+      {tab === "personil" && (
+        <div className="space-y-5">
+          <Stats
             stats={personnel.stats}
-            labels={{
-              total: "Total Sertifikasi",
-              active: "Sertifikasi Aktif",
-              expiringSoon: "Berakhir < 30 Hari",
-              expired: "Expired",
-            }}
+            icon={ENTITY_ICON.personnelCert}
+            labels={{ total: "Total sertifikasi", active: "Masih berlaku", expiringSoon: "Segera berakhir", expired: "Sudah berakhir", dateColumn: "Berakhir", item: "Sertifikasi" }}
           />
-          <UpcomingTable items={personnel.upcoming} emptyText="Tidak ada sertifikasi personil yang perlu diperhatikan saat ini." viewAllHref="/personnel-certifications" />
+          <UpcomingTable
+            items={personnel.upcoming}
+            emptyText="Tidak ada sertifikasi personil yang perlu ditindaklanjuti saat ini."
+            viewAllHref="/personnel-certifications"
+            labels={{ total: "", active: "", expiringSoon: "", expired: "", dateColumn: "Berakhir", item: "Sertifikasi" }}
+            soonLabel="Segera berakhir"
+            lateLabel="Berakhir"
+          />
         </div>
       )}
 
       {tab === "project" && (
-        <div className="space-y-6">
-          <StatCards
+        <div className="space-y-5">
+          <Stats
             stats={project.stats}
-            labels={{
-              total: "Project Berjalan",
-              active: "Aman (>30 Hari)",
-              expiringSoon: "Target < 30 Hari",
-              expired: "Terlambat",
-            }}
+            icon={ENTITY_ICON.project}
+            labels={{ total: "Project berjalan", active: "Sesuai jadwal", expiringSoon: "Mendekati target", expired: "Lewat target", dateColumn: "Target selesai", item: "Project" }}
           />
-          <UpcomingTable items={project.upcoming} emptyText="Tidak ada project yang perlu diperhatikan saat ini." viewAllHref="/projects" />
+          <UpcomingTable
+            items={project.upcoming}
+            emptyText="Tidak ada project yang perlu ditindaklanjuti saat ini."
+            viewAllHref="/projects/dashboard"
+            labels={{ total: "", active: "", expiringSoon: "", expired: "", dateColumn: "Target selesai", item: "Project" }}
+            soonLabel="Mendekati target"
+            lateLabel="Lewat target"
+          />
         </div>
       )}
 
-      {tab === "equipment" && (
-        <div className="space-y-6">
-          <StatCards
+      {tab === "alat" && (
+        <div className="space-y-5">
+          <Stats
             stats={equipment.stats}
-            labels={{
-              total: "Total Alat",
-              active: "Kalibrasi Aktif",
-              expiringSoon: "Jatuh Tempo < 30 Hari",
-              expired: "Terlambat Kalibrasi",
-            }}
+            icon={ENTITY_ICON.equipment}
+            labels={{ total: "Total alat", active: "Kalibrasi berlaku", expiringSoon: "Segera dikalibrasi", expired: "Lewat jadwal", dateColumn: "Kalibrasi berikutnya", item: "Alat" }}
           />
-          <UpcomingTable items={equipment.upcoming} emptyText="Tidak ada alat yang perlu diperhatikan saat ini." viewAllHref="/equipment" />
+          <UpcomingTable
+            items={equipment.upcoming}
+            emptyText="Tidak ada alat yang perlu ditindaklanjuti saat ini."
+            viewAllHref="/equipment"
+            labels={{ total: "", active: "", expiringSoon: "", expired: "", dateColumn: "Kalibrasi berikutnya", item: "Alat" }}
+            soonLabel="Segera kalibrasi"
+            lateLabel="Lewat jadwal"
+          />
         </div>
       )}
     </div>

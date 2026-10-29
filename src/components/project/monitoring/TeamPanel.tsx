@@ -11,8 +11,9 @@ import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
 import { DeleteButton, EmptyState, FormError, fmtDate, useMonitoringApi, useOpenFromHash } from "./shared";
 import type { ProjectMonitoringDTO, TeamMemberDTO } from "./types";
+import { Notice } from "@/components/ui/Notice";
 
-const ROLE_SUGGESTIONS = ["Ketua Tim", "Inspektur", "Auditor", "Surveyor", "Tenaga Ahli", "Analis Laboratorium", "Pengawas Lapangan", "Admin Project"];
+const ROLE_SUGGESTIONS = ["Ketua tim", "Inspektur", "Auditor", "Surveyor", "Tenaga ahli", "Analis laboratorium", "Pengawas lapangan", "Admin project"];
 
 /** SDB load badge: how many running projects this person is on. */
 export function LoadBadge({ count }: { count: number }) {
@@ -75,9 +76,9 @@ export function TeamPanel({ data }: { data: ProjectMonitoringDTO }) {
         <div>
           <CardTitle className="flex items-center gap-1.5">
             Tim project
-            <InfoTip label="Keterangan tim project">Personil yang ditugaskan. Beban kerja dihitung dari semua project berjalan —{" "}
+            <InfoTip label="Keterangan tim project">Personil yang ditugaskan. Beban kerja dihitung dari semua project berjalan;{" "}
             <Link href="/projects/personnel" className="text-accent hover:underline">
-              lihat mapping personil
+              lihat penugasan personil
             </Link>
             .</InfoTip>
           </CardTitle>
@@ -91,10 +92,9 @@ export function TeamPanel({ data }: { data: ProjectMonitoringDTO }) {
       </CardHeader>
       <CardContent className="p-0">
         {warnCount > 0 && (
-          <div className="mx-5 mb-3 rounded border border-signal-soonBorder bg-signal-soonBg px-3 py-2 text-sm text-signal-soon flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 shrink-0" />
+          <Notice tone="warning" className="mx-5 mb-3">
             {warnCount} personil memiliki sertifikasi yang habis sebelum penugasannya selesai.
-          </div>
+          </Notice>
         )}
         {data.team.length === 0 ? (
           <EmptyState icon={Users} text="Belum ada personil yang ditugaskan ke project ini." action={data.canManage ? { label: "Tugaskan personil", onClick: () => openForm(null) } : undefined} />
@@ -105,13 +105,13 @@ export function TeamPanel({ data }: { data: ProjectMonitoringDTO }) {
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-medium text-ink dark:text-slate-100">{m.name}</p>
-                    <span className="text-xs text-slate-500">· {m.role}</span>
+                    <span className="text-xs text-slate-500">{m.role}</span>
                     <LoadBadge count={m.activeProjects} />
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {m.nip ? `${m.nip} · ` : ""}
-                    {m.position || "—"}
-                    {(m.startDate || m.endDate) && ` · ${fmtDate(m.startDate)} – ${fmtDate(m.endDate)}`}
+                    {m.nip ? `${m.nip}, ` : ""}
+                    {m.position || "-"}
+                    {(m.startDate || m.endDate) && `, ${fmtDate(m.startDate)} – ${fmtDate(m.endDate)}`}
                   </p>
                   {m.warnings.map((w) => (
                     <p key={w.name} className={cn("text-xs mt-1 flex items-center gap-1", w.expired ? "text-signal-expired" : "text-signal-soon")}>
@@ -122,7 +122,7 @@ export function TeamPanel({ data }: { data: ProjectMonitoringDTO }) {
                 </div>
                 {data.canManage && (
                   <div className="flex gap-1 shrink-0">
-                    <button type="button" aria-label="Edit penugasan" onClick={() => openForm(m)} className="p-1.5 rounded text-slate-400 hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <button type="button" aria-label="Ubah penugasan" onClick={() => openForm(m)} className="p-1.5 rounded text-slate-400 hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800">
                       <Pencil className="h-4 w-4" />
                     </button>
                     <DeleteButton what="penugasan" onConfirm={() => send("DELETE", `${base}/${m.id}`, undefined, "Personil dikeluarkan dari tim.")} />
@@ -134,7 +134,7 @@ export function TeamPanel({ data }: { data: ProjectMonitoringDTO }) {
         )}
       </CardContent>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit penugasan" : "Tugaskan personil"} maxWidth="max-w-lg">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Ubah penugasan" : "Tugaskan personil"} maxWidth="max-w-lg">
         <div className="space-y-4">
           <div>
             <Label htmlFor="tm-emp">Personil</Label>
@@ -142,12 +142,12 @@ export function TeamPanel({ data }: { data: ProjectMonitoringDTO }) {
               <Input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Ketik untuk menyaring nama/NIP/jabatan…" className="mb-2" aria-label="Saring personil" />
             )}
             <Select id="tm-emp" value={form.employeeId} disabled={!!editing} onChange={(e) => set("employeeId", e.target.value)}>
-              <option value="">— pilih personil —</option>
+              <option value="">Pilih personil</option>
               {(editing ? data.employees : options).map((e) => (
                 <option key={e.id} value={e.id}>
                   {e.name}
                   {e.nip ? ` (${e.nip})` : ""}
-                  {e.position ? ` — ${e.position}` : ""}
+                  {e.position ? `, ${e.position}` : ""}
                 </option>
               ))}
             </Select>
@@ -162,7 +162,7 @@ export function TeamPanel({ data }: { data: ProjectMonitoringDTO }) {
             </datalist>
           </div>
           <details className="text-sm" open={!!(form.startDate || form.endDate)}>
-            <summary className="cursor-pointer text-slate-500 select-none">Periode penugasan (opsional — default mengikuti project)</summary>
+            <summary className="cursor-pointer text-slate-500 select-none">Periode penugasan (opsional, mengikuti jadwal project bila dikosongkan)</summary>
             <div className="grid grid-cols-2 gap-3 mt-3">
               <div>
                 <Label htmlFor="tm-start">Mulai</Label>

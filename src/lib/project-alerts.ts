@@ -157,7 +157,7 @@ async function sendMonitoringAlertEmail(params: {
 }): Promise<{ status: "SENT" | "FAILED" | "SKIPPED"; errorMessage?: string }> {
   const transporter = getTransporter();
   if (!transporter) {
-    return { status: "SKIPPED", errorMessage: "GMAIL_USER dan GMAIL_APP_PASSWORD belum dikonfigurasi — email tidak dikirim (mode simulasi)." };
+    return { status: "SKIPPED", errorMessage: "GMAIL_USER dan GMAIL_APP_PASSWORD belum dikonfigurasi, email tidak dikirim (mode simulasi)." };
   }
   const fromName = process.env.EMAIL_FROM_NAME || "Reminder System - PT Sucofindo (Persero)";
   const appUrl = (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
@@ -174,7 +174,7 @@ async function sendMonitoringAlertEmail(params: {
 <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #E2E8F0;border-radius:8px;">
 <tr><td style="background:#0F172A;padding:18px 24px;border-radius:8px 8px 0 0;">
 <span style="color:#ffffff;font-size:14px;font-weight:bold;">PT Sucofindo (Persero)</span><br/>
-<span style="color:#0EA89B;font-size:12px;">Reminder System · Monitoring Project</span></td></tr>
+<span style="color:#0EA89B;font-size:12px;">Reminder System, Monitoring Project</span></td></tr>
 <tr><td style="padding:24px;font-size:14px;line-height:1.55;color:#334155;">
 <p>Yth. ${esc(params.project.pic)},</p>
 <p>Dengan hormat, project berikut memerlukan perhatian Bapak/Ibu:</p>
@@ -182,7 +182,7 @@ async function sendMonitoringAlertEmail(params: {
 <p style="margin:0 0 12px;color:#64748B;">${esc(params.project.projectNumber)}</p>
 <table width="100%" cellpadding="0" cellspacing="0">${items}</table>
 <p style="margin-top:20px;"><a href="${link}" style="background:#0F172A;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:6px;display:inline-block;">Lihat Monitoring Project</a></p>
-<p style="color:#94A3B8;font-size:12px;margin-top:24px;">Email ini dikirim otomatis oleh Reminder System — PT Sucofindo (Persero). Mohon tidak membalas email ini.</p>
+<p style="color:#94A3B8;font-size:12px;margin-top:24px;">Email ini dikirim otomatis oleh Reminder System, PT Sucofindo (Persero). Mohon tidak membalas email ini.</p>
 </td></tr></table></td></tr></table></body></html>`;
 
   try {

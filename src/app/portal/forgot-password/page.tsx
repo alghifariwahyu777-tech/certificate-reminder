@@ -6,6 +6,7 @@ import { Mail, ArrowLeft } from "lucide-react";
 import { Input, Label } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { SucofindoLogo } from "@/components/brand/SucofindoLogo";
+import { Notice } from "@/components/ui/Notice";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -47,7 +48,7 @@ export default function ForgotPasswordPage() {
         {submitted ? (
           <div className="text-center space-y-4">
             <h1 className="font-display text-xl font-semibold text-ink dark:text-slate-100">
-              Cek Email Anda
+              Cek email Anda
             </h1>
             <p className="text-sm text-slate-500">
               Jika email <strong>{email}</strong> terdaftar, kami sudah mengirimkan tautan untuk
@@ -55,16 +56,16 @@ export default function ForgotPasswordPage() {
             </p>
             <Link href="/portal/login" className="inline-flex items-center gap-1.5 text-sm text-accent hover:text-accent-light">
               <ArrowLeft className="h-4 w-4" />
-              Kembali ke Login
+              Kembali ke halaman masuk
             </Link>
           </div>
         ) : (
           <>
             <h1 className="font-display text-xl font-semibold text-ink dark:text-slate-100 mb-1.5">
-              Lupa Password
+              Lupa kata sandi
             </h1>
             <p className="text-sm text-slate-500 mb-6">
-              Masukkan email akun Client Portal Anda, kami akan kirimkan tautan reset password.
+              Masukkan email akun Portal Klien Anda, kami akan kirimkan tautan atur ulang kata sandi.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -85,13 +86,13 @@ export default function ForgotPasswordPage() {
               </div>
 
               {error && (
-                <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+                <Notice tone="danger">
                   {error}
-                </div>
+                </Notice>
               )}
 
               <Button type="submit" isLoading={loading} className="w-full">
-                Kirim Tautan Reset
+                Kirim tautan reset
               </Button>
             </form>
 
@@ -100,7 +101,7 @@ export default function ForgotPasswordPage() {
               className="mt-5 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-ink dark:hover:text-slate-200"
             >
               <ArrowLeft className="h-4 w-4" />
-              Kembali ke Login
+              Kembali ke halaman masuk
             </Link>
           </>
         )}

@@ -8,7 +8,7 @@
  *  - AC   = actual cost recorded so far
  *  - EV   = progress% × BAC (budgeted cost of the work actually done)
  *  - CPI  = EV / AC  (≥ 1 = spending less than budgeted for the work done)
- *  - EAC  = AC + (BAC − EV) — "prakiraan biaya akhir jika sisa pekerjaan berjalan
+ *  - EAC  = AC + (BAC − EV) — "proyeksi biaya akhir jika sisa pekerjaan berjalan
  *           sesuai RAB": what has been spent, plus the RAB for the work not yet done.
  *           Deliberately simple and explainable; it never assumes the remaining
  *           work will be cheaper than planned, and any overrun already incurred
@@ -38,7 +38,7 @@ export const BRIDGE_SHORT: Record<string, string> = {
   delay: "Keterlambatan",
   extra: "Kerja tambahan",
   overrun: "Biaya rutin",
-  forecast: "Prakiraan",
+  forecast: "Proyeksi",
 };
 
 export type MarginAnalysis = {
@@ -167,7 +167,7 @@ export function analyzeMargin(input: MonitoringInput, summary: MonitoringSummary
       amount: -otherOverrun,
       kind: "delta",
     });
-  bridge.push({ key: "forecast", label: completed ? "Margin akhir" : "Prakiraan margin akhir", amount: forecastMargin, kind: "end" });
+  bridge.push({ key: "forecast", label: completed ? "Margin akhir" : "Proyeksi margin akhir", amount: forecastMargin, kind: "end" });
 
   // time
   const baselineEnd = bl?.endDate ?? input.targetEndDate;
@@ -349,7 +349,7 @@ export const SIGNAL_LABEL: Record<Signal, string> = { good: "Baik", warn: "Waspa
 export const CAUSE_LABEL: Record<string, string> = { NORMAL: "Normal", DELAY: "Akibat keterlambatan", EXTRA_SCOPE: "Pekerjaan tambahan" };
 
 // ---------------------------------------------------------------------------
-// Pendapatan, biaya, laba: RAB vs realisasi vs prakiraan (the finance view)
+// Pendapatan, biaya, laba: RAB vs realisasi vs proyeksi (the finance view)
 // ---------------------------------------------------------------------------
 
 export type PnlLine = { plan: number | null; actual: number; forecast: number | null };

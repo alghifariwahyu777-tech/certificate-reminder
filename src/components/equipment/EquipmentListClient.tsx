@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus, Eye, Pencil, Trash2, X, ArrowUpDown } from "lucide-react";
 import { SearchPopoverButton } from "@/components/ui/SearchPopoverButton";
+import { filterGroupClass, toolbarActionsClass, toolbarClass } from "@/components/ui/Toolbar";
 import { Input, Select } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -117,7 +118,7 @@ export function EquipmentListClient({
         return;
       }
       setItems((prev) => prev.filter((i) => i.id !== deleteTarget.id));
-      showToast("Alat dipindahkan ke Trash.");
+      showToast("Alat dipindahkan ke Sampah.");
       setDeleteTarget(null);
       router.refresh();
     } finally {
@@ -150,18 +151,18 @@ export function EquipmentListClient({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
-          <div className="col-span-2 sm:col-span-1">
+      <div className={toolbarClass}>
+        <div className={filterGroupClass}>
+          <div>
             <SearchPopoverButton
               value={search}
               onChange={setSearch}
-              label="Cari Alat"
+              label="Cari alat"
               placeholder="Nama alat, nomor aset, atau PIC..."
             />
           </div>
           <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-            <option value="">Semua Kategori</option>
+            <option value="">Semua kategori</option>
             {categories.map((c) => (
               <option key={c.id} value={c.name}>
                 {c.name}
@@ -169,13 +170,13 @@ export function EquipmentListClient({
             ))}
           </Select>
           <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="">Semua Status</option>
+            <option value="">Semua status</option>
             <option value="ACTIVE">Aktif</option>
             <option value="EXPIRING_SOON">Segera berakhir</option>
             <option value="EXPIRED">Berakhir</option>
           </Select>
           <Select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
-            <option value="">Semua Tahun</option>
+            <option value="">Semua tahun</option>
             {years.map((y) => (
               <option key={y} value={y}>
                 {y}
@@ -187,7 +188,7 @@ export function EquipmentListClient({
           <Link href="/equipment/new">
             <Button>
               <Plus className="h-4 w-4" />
-              Tambah Alat
+              Tambah alat
             </Button>
           </Link>
         )}
@@ -205,7 +206,7 @@ export function EquipmentListClient({
             </Button>
             <Button variant="danger" size="sm" onClick={() => setBulkDeleteOpen(true)}>
               <Trash2 className="h-3.5 w-3.5" />
-              Hapus Terpilih
+              Hapus terpilih
             </Button>
           </div>
         </div>
@@ -215,7 +216,7 @@ export function EquipmentListClient({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-slate-500 border-b border-slate-100 bg-slate-50/60">
+              <tr className="th-row">
                 {canManage && (
                   <th className="px-4 py-3 font-medium w-10">
                     <input
@@ -236,7 +237,7 @@ export function EquipmentListClient({
                   <SortHeader label="PIC" field="picName" current={sortBy} dir={sortDir} onToggle={toggleSort} />
                 </th>
                 <th className="px-4 py-3 font-medium">
-                  <SortHeader label="Kalibrasi Berikutnya" field="nextCalibrationDate" current={sortBy} dir={sortDir} onToggle={toggleSort} />
+                  <SortHeader label="Kalibrasi berikutnya" field="nextCalibrationDate" current={sortBy} dir={sortDir} onToggle={toggleSort} />
                 </th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium text-right">Aksi</th>
@@ -245,7 +246,7 @@ export function EquipmentListClient({
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={canManage ? 7 : 6} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={canManage ? 7 : 6} className="px-4 py-10 text-center text-slate-500">
                     Belum ada alat yang cocok.
                   </td>
                 </tr>
@@ -268,7 +269,7 @@ export function EquipmentListClient({
                       <td className="px-4 py-3">
                         <p className="font-medium text-ink">{e.name}</p>
                         <p className="text-xs text-slate-400 font-mono">
-                          {[e.brand, e.model, e.assetNumber].filter(Boolean).join(" · ") || "-"}
+                          {[e.brand, e.model, e.assetNumber].filter(Boolean).join(", ") || "-"}
                         </p>
                       </td>
                       <td className="px-4 py-3 text-slate-600">{e.categoryName}</td>
@@ -296,7 +297,7 @@ export function EquipmentListClient({
                               <Link
                                 href={`/equipment/${e.id}/edit`}
                                 className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
-                                aria-label="Edit"
+                                aria-label="Ubah"
                               >
                                 <Pencil className="h-4 w-4" />
                               </Link>
@@ -320,11 +321,11 @@ export function EquipmentListClient({
         </div>
       </Card>
 
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus Alat">
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus alat">
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Apakah Anda yakin ingin menghapus alat{" "}
           <strong className="text-ink dark:text-slate-100">{deleteTarget?.name}</strong>? Data akan dipindahkan
-          ke Trash dan bisa dipulihkan.
+          ke Sampah dan bisa dipulihkan.
         </p>
         <div className="flex justify-end gap-2 mt-5">
           <Button variant="outline" onClick={() => setDeleteTarget(null)}>
@@ -336,10 +337,10 @@ export function EquipmentListClient({
         </div>
       </Modal>
 
-      <Modal isOpen={bulkDeleteOpen} onClose={() => setBulkDeleteOpen(false)} title="Hapus Alat Terpilih">
+      <Modal isOpen={bulkDeleteOpen} onClose={() => setBulkDeleteOpen(false)} title="Hapus alat terpilih">
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          Akan memindahkan <strong>{selectedIds.size}</strong> alat ke Trash. Data bisa dipulihkan nanti dari
-          halaman Trash. Lanjutkan?
+          Akan memindahkan <strong>{selectedIds.size}</strong> alat ke Sampah. Data bisa dipulihkan nanti dari
+          halaman Sampah. Lanjutkan?
         </p>
         <div className="flex justify-end gap-2 mt-5">
           <Button variant="outline" onClick={() => setBulkDeleteOpen(false)}>

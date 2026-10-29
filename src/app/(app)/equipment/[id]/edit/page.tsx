@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { EquipmentForm } from "@/components/equipment/EquipmentForm";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function EditEquipmentPage(context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -20,7 +21,7 @@ export default async function EditEquipmentPage(context: { params: Promise<{ id:
   return (
     <>
       <Navbar title="Ubah Data Alat" subtitle={equipment.name} adminName={session.name} role={session.role} />
-      <div className="p-5 md:p-8">
+      <PageBody width="form">
         <EquipmentForm
           employees={employees.map((e) => ({ id: e.id, name: e.name, employeeId: e.employeeId }))}
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
@@ -51,7 +52,7 @@ export default async function EditEquipmentPage(context: { params: Promise<{ id:
             fileMimeType: equipment.fileMimeType,
           }}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

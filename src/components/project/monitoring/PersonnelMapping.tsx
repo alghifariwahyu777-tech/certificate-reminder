@@ -1,5 +1,8 @@
 "use client";
 
+import { Gauge } from "lucide-react";
+import { ENTITY_ICON } from "@/lib/entity-icons";
+import { StatCard, StatGrid } from "@/components/ui/Stat";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, Plus, UserPlus, Users } from "lucide-react";
@@ -14,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { FormError, Stat, SubTabs, fmtDate, useMonitoringApi } from "./shared";
 import { LoadBadge } from "./TeamPanel";
 
-const ROLE_SUGGESTIONS = ["Ketua Tim", "Inspektur", "Auditor", "Surveyor", "Tenaga Ahli", "Analis Laboratorium", "Pengawas Lapangan", "Admin Project"];
+const ROLE_SUGGESTIONS = ["Ketua tim", "Inspektur", "Auditor", "Surveyor", "Tenaga ahli", "Analis laboratorium", "Pengawas lapangan", "Admin project"];
 
 type ProjectOption = { id: string; name: string; number: string };
 type View = "bertugas" | "kosong" | "semua";
@@ -54,9 +57,8 @@ export function PersonnelMapping({ rows, projects, canManage }: { rows: MappingR
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="flex items-center gap-1.5 text-[13.5px] font-semibold text-ink dark:text-slate-100">
           Penugasan personil di project berjalan
-          <InfoTip label="Tentang mapping personil">
-            Satu personil dapat bertugas di beberapa project sekaligus (SDB). Halaman ini menunjukkan siapa bertugas di mana, siapa yang bebannya tinggi (3 project atau lebih),
-            dan sertifikasi yang berakhir selama masa tugas.
+          <InfoTip label="Tentang penugasan personil">
+            Menunjukkan siapa bertugas di project mana, siapa yang bebannya tinggi (3 project atau lebih), dan sertifikasi yang berakhir selama masa tugas.
           </InfoTip>
         </p>
         {canManage && (
@@ -67,16 +69,17 @@ export function PersonnelMapping({ rows, projects, canManage }: { rows: MappingR
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Stat label="Personil bertugas" value={`${assigned.length} orang`} hint={`${idle} personil aktif belum bertugas di project berjalan`} />
-        <Stat label="Beban tinggi" tone={busy ? "warn" : "default"} value={`${busy} orang`} hint="Bertugas di 3 project atau lebih sekaligus" />
-        <Stat
+      <StatGrid cols={3}>
+        <StatCard icon={ENTITY_ICON.employee} label="Personil bertugas" value={`${assigned.length} orang`} sub={`${idle} personil aktif belum bertugas di project berjalan`} />
+        <StatCard icon={Gauge} label="Beban tinggi" tone={busy ? "warn" : "default"} value={`${busy} orang`} sub="Bertugas di 3 project atau lebih sekaligus" />
+        <StatCard
+          icon={AlertTriangle}
           label="Sertifikasi bermasalah"
           tone={expired ? "bad" : withWarn.length ? "warn" : "good"}
           value={`${withWarn.length} orang`}
-          hint={expired ? `${expired} di antaranya sudah berakhir, tetapi masih bertugas` : "Berakhir sebelum masa tugas selesai"}
+          sub={expired ? `${expired} di antaranya sudah berakhir, tetapi masih bertugas` : "Berakhir sebelum masa tugas selesai"}
         />
-      </div>
+      </StatGrid>
 
       <Card>
         <div className="flex flex-col gap-3 border-b border-line px-4 py-3 lg:flex-row lg:items-center dark:border-slate-800">
@@ -102,10 +105,9 @@ export function PersonnelMapping({ rows, projects, canManage }: { rows: MappingR
 
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-3 px-5 py-12 text-center">
-            <Users className="h-7 w-7 text-slate-400" />
             <p className="max-w-md text-sm text-slate-500">
               {rows.length === 0
-                ? "Belum ada data personil. Tambahkan personil terlebih dahulu pada menu Employees."
+                ? "Belum ada data personil. Tambahkan personil terlebih dahulu pada menu Karyawan."
                 : view === "bertugas" && assigned.length === 0
                   ? "Belum ada personil yang ditugaskan ke project berjalan."
                   : "Tidak ada personil yang cocok dengan pencarian atau filter."}
@@ -113,7 +115,7 @@ export function PersonnelMapping({ rows, projects, canManage }: { rows: MappingR
             {rows.length === 0 ? (
               <Link href="/employees">
                 <Button variant="outline" size="sm">
-                  Buka Employees
+                  Buka Karyawan
                 </Button>
               </Link>
             ) : (
@@ -130,7 +132,7 @@ export function PersonnelMapping({ rows, projects, canManage }: { rows: MappingR
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line bg-slate-50/70 text-left text-[12px] text-slate-500 dark:border-slate-800 dark:bg-slate-800/30">
+                <tr className="th-row">
                   <th className="py-2.5 pl-5 pr-3 font-semibold">Personil</th>
                   <th className="px-3 py-2.5 font-semibold">Beban</th>
                   <th className="px-3 py-2.5 font-semibold">Bertugas di</th>
@@ -143,7 +145,7 @@ export function PersonnelMapping({ rows, projects, canManage }: { rows: MappingR
                   <tr key={r.employeeId} className="border-b border-line/70 align-top last:border-0 dark:border-slate-800/60">
                     <td className="min-w-[12rem] py-3 pl-5 pr-3">
                       <p className="font-semibold text-ink dark:text-slate-100">{r.name}</p>
-                      <p className="text-[12.5px] text-slate-500">{[r.nip, r.position, r.department].filter(Boolean).join(" · ") || "-"}</p>
+                      <p className="text-[12.5px] text-slate-500">{[r.nip, r.position, r.department].filter(Boolean).join(", ") || "-"}</p>
                     </td>
                     <td className="whitespace-nowrap px-3 py-3">
                       {r.activeProjects > 0 ? <LoadBadge count={r.activeProjects} /> : <span className="text-[12.5px] text-slate-400">Belum bertugas</span>}

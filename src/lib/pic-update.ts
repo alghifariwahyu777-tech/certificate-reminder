@@ -81,7 +81,7 @@ export async function applyProgressUpdate(
     select: { id: true, projectName: true, projectNumber: true, status: true },
   });
   if (!project) return { error: "Project tidak ditemukan.", status: 404 } as const;
-  if (project.status !== "ONGOING") return { error: "Project ini sudah tidak berjalan — update progres ditutup.", status: 400 } as const;
+  if (project.status !== "ONGOING") return { error: "Project ini sudah tidak berjalan, update progres ditutup.", status: 400 } as const;
 
   const reportDate = new Date(input.reportDate);
   if (reportDate.getTime() > getJakartaToday().getTime()) {
@@ -133,10 +133,10 @@ export async function applyProgressUpdate(
     entityType: "ProjectMonitoring",
     entityId: projectId,
     description:
-      `Update progres oleh PIC${actor.via === "LINK" ? " (link email)" : ""}: ${input.actualPercent}%` +
+      `Perbarui progres oleh PIC${actor.via === "LINK" ? " (link email)" : ""}: ${input.actualPercent}%` +
       (milestoneIds.length ? `, milestone selesai: ${milestoneIds.map((m) => m.name).join(", ")}` : "") +
       (input.issueTitle?.trim() ? `, kendala baru: "${input.issueTitle.trim()}"` : "") +
-      ` — project "${project.projectName}" (${project.projectNumber}).`,
+      `, project "${project.projectName}" (${project.projectNumber}).`,
   });
 
   return { ok: true } as const;

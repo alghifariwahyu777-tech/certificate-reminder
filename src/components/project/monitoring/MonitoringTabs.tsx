@@ -1,14 +1,15 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
+import { TabNav } from "@/components/ui/TabNav";
 import { cn } from "@/lib/utils";
 import { SubTabs } from "./shared";
 
 const TABS = [
   { key: "ringkasan", label: "Ringkasan" },
-  { key: "jadwal", label: "Jadwal & Progres" },
+  { key: "jadwal", label: "Jadwal dan progres" },
   { key: "keuangan", label: "Keuangan" },
-  { key: "tim", label: "Risiko, HSE & Tim" },
+  { key: "tim", label: "Risiko, HSE dan tim" },
   { key: "dokumen", label: "Dokumen" },
 ] as const;
 
@@ -65,29 +66,7 @@ export function MonitoringTabs({ panels }: { panels: Record<MonitoringTabKey, Pa
 
   return (
     <div className="space-y-5">
-      <div className="no-scrollbar -mx-1 overflow-x-auto overflow-y-hidden border-b border-line dark:border-slate-800">
-        <div className="flex gap-1 px-1">
-          {TABS.map((t) => {
-            const badge = badgeOf(panels[t.key]);
-            return (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => go(t.key)}
-                className={cn(
-                  "-mb-px whitespace-nowrap border-b-2 px-3.5 py-2.5 text-[13.5px] font-semibold transition-colors",
-                  tab === t.key
-                    ? "border-brand-blueDark text-brand-blueDark dark:border-slate-100 dark:text-slate-100"
-                    : "border-transparent text-slate-500 hover:text-ink dark:hover:text-slate-200"
-                )}
-              >
-                {t.label}
-                {badge > 0 && <span className="ml-1.5 rounded-full bg-signal-expired px-1.5 py-0.5 text-[10px] leading-none text-white">{badge}</span>}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <TabNav label="Bagian detail project" tabs={TABS.map((t) => ({ ...t, badge: badgeOf(panels[t.key]) }))} value={tab} onChange={(k) => go(k)} />
       {isSections(current) ? (
         <SectionedPanel sections={current} value={section[tab] && current.some((x) => x.key === section[tab]) ? (section[tab] as string) : current[0].key} onChange={(k) => go(tab, k)} />
       ) : (

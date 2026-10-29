@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { InfoTip } from "@/components/ui/InfoTip";
 import { FormError, ProgressBar, fmtDate, useOpenFromHash, type Tone } from "./shared";
 import type { ProjectMonitoringDTO } from "./types";
+import { Notice } from "@/components/ui/Notice";
 
 const versionLabel = (v: number) => (v === 0 ? "RAB awal" : `Revisi ${v}`);
 
@@ -121,7 +122,7 @@ export function RabCard({ data }: { data: ProjectMonitoringDTO }) {
       <Modal isOpen={history} onClose={() => setHistory(false)} title="Riwayat RAB" maxWidth="max-w-2xl">
         <table className="w-full text-[13px]">
           <thead>
-            <tr className="border-b border-line text-left text-[12px] text-slate-500">
+            <tr className="th-row">
               <th className="py-2 pr-3 font-medium">Versi</th>
               <th className="py-2 pr-3 text-right font-medium">Nilai proyek</th>
               <th className="py-2 pr-3 text-right font-medium">Total RAB</th>
@@ -232,7 +233,7 @@ export function RabSummaryBlocks({ rab }: { rab: RabData }) {
           <p className="mb-2 font-semibold text-ink dark:text-slate-100">Rencana per tahun</p>
           <table className="w-full">
             <thead>
-              <tr className="border-b border-line text-left text-[12px] text-slate-500">
+              <tr className="th-row">
                 <th className="py-1.5 font-medium">Tahun</th>
                 <th className="py-1.5 text-right font-medium">Pendapatan</th>
                 <th className="py-1.5 text-right font-medium">Biaya operasi</th>
@@ -411,12 +412,12 @@ export function RabUploadDialog({ data }: { data: ProjectMonitoringDTO }) {
           {preview && d && (
             <>
               {(preview.numberMismatch || d.warnings.length > 0) && (
-                <div className="space-y-1 rounded-lg border border-signal-soonBorder bg-signal-soonBg px-4 py-3 text-signal-soon">
+                <Notice tone="warning">
                   {preview.numberMismatch && <p>{preview.numberMismatch}</p>}
                   {d.warnings.map((w, i) => (
                     <p key={i}>{w}</p>
                   ))}
-                </div>
+                </Notice>
               )}
 
               <div>
@@ -438,7 +439,7 @@ export function RabUploadDialog({ data }: { data: ProjectMonitoringDTO }) {
                   </p>
                   <table className="w-full text-[13px]">
                     <thead>
-                      <tr className="text-[12px] text-slate-500">
+                      <tr className="th-row">
                         <th />
                         <th className="pb-1 text-right font-medium">Sebelumnya</th>
                         <th className="pb-1 text-right font-medium">RAB ini</th>
@@ -554,7 +555,7 @@ export function RabUploadDialog({ data }: { data: ProjectMonitoringDTO }) {
 }
 
 // ---------------------------------------------------------------------------
-// Pendapatan, biaya, laba: RAB vs realisasi vs prakiraan
+// Pendapatan, biaya, laba: RAB vs realisasi vs proyeksi
 // ---------------------------------------------------------------------------
 
 function PnlTable({ data }: { data: ProjectMonitoringDTO }) {
@@ -571,7 +572,7 @@ function PnlTable({ data }: { data: ProjectMonitoringDTO }) {
           {rp(p.revenue.actual)}
           <span className="text-slate-400">{share(p.revenue.actual, p.revenue.forecast)}</span>
           <span className="block text-[11.5px] font-normal text-slate-500">
-            Ditagih {rp(p.revenue.invoiced)} · diterima {rp(p.revenue.paid)}
+            Ditagih {rp(p.revenue.invoiced)}, diterima {rp(p.revenue.paid)}
           </span>
         </>
       ),
@@ -606,7 +607,7 @@ function PnlTable({ data }: { data: ProjectMonitoringDTO }) {
           Pendapatan, biaya, dan laba
           <InfoTip label="Keterangan pendapatan dan biaya">
             <strong>RAB</strong> = rencana awal (baseline). <strong>Realisasi</strong> = s.d. hari ini; pendapatan diakui sesuai progres pekerjaan (progress basis), sedangkan
-            ditagih dan diterima mengikuti termin. <strong>Prakiraan akhir</strong> = bila sisa pekerjaan berjalan sesuai RAB. Laba operasi belum dikurangi overhead
+            ditagih dan diterima mengikuti termin. <strong>Proyeksi akhir</strong> = bila sisa pekerjaan berjalan sesuai RAB. Laba operasi belum dikurangi overhead
             {data.rab.latest?.overhead ? ` (${formatRupiah(data.rab.latest.overhead, true)})` : ""}.
           </InfoTip>
         </p>
@@ -617,11 +618,11 @@ function PnlTable({ data }: { data: ProjectMonitoringDTO }) {
       <div className="overflow-x-auto rounded-lg border border-line dark:border-slate-700">
         <table className="w-full text-[13px]">
           <thead>
-            <tr className="bg-slate-50/80 text-left text-[12px] text-slate-500 dark:bg-slate-800/40">
+            <tr className="th-row">
               <th className="px-4 py-2 font-semibold" />
               <th className="px-4 py-2 text-right font-semibold">RAB</th>
               <th className="px-4 py-2 text-right font-semibold">Realisasi s.d. saat ini</th>
-              <th className="px-4 py-2 text-right font-semibold">Prakiraan akhir</th>
+              <th className="px-4 py-2 text-right font-semibold">Proyeksi akhir</th>
             </tr>
           </thead>
           <tbody>
@@ -641,7 +642,7 @@ function PnlTable({ data }: { data: ProjectMonitoringDTO }) {
         <div className="mt-3 overflow-x-auto rounded-lg border border-line dark:border-slate-700">
           <table className="w-full text-[13px]">
             <thead>
-              <tr className="bg-slate-50/80 text-left text-[12px] text-slate-500 dark:bg-slate-800/40">
+              <tr className="th-row">
                 <th className="px-4 py-2 font-semibold">Per tahun</th>
                 <th className="px-4 py-2 text-right font-semibold">Pendapatan RAB / realisasi</th>
                 <th className="px-4 py-2 text-right font-semibold">Biaya RAB / realisasi</th>

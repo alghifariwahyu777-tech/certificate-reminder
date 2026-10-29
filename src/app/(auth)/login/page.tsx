@@ -12,7 +12,7 @@ export default function LoginPage() {
       </div>
 
       {/* Left: ledger rail panel, hidden on small screens */}
-      <div className="hidden lg:flex lg:w-1/2 bg-ink text-white flex-col justify-between p-12">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-b from-[#1A5A8E] via-[#123F6B] to-[#0A2440] text-white flex-col justify-between p-12">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white shrink-0 p-1.5">
             <SucofindoMark size={26} />
@@ -26,20 +26,19 @@ export default function LoginPage() {
         </div>
 
         <div>
-          <p className="font-mono text-xs text-slate-400 mb-3">
-            PT Sucofindo (Persero) — Internal System
+          <p className="text-xs text-slate-300 mb-3">
+            PT Sucofindo (Persero)
           </p>
           <h2 className="font-display text-3xl font-semibold leading-tight max-w-md">
-            Track. Remind. Renew. Stay Certified.
+            Pantau masa berlaku. Tindak lanjuti tepat waktu.
           </h2>
-          <p className="text-slate-400 mt-4 max-w-sm text-sm">
-            An internal platform to monitor client certifications, inspections, and
-            calibrations—keeping validity, renewals, and supporting documents under control.
+          <p className="text-slate-300 mt-4 max-w-sm text-sm">
+            Satu sistem untuk memantau sertifikat klien, sertifikasi personil, project, dan kalibrasi alat.
           </p>
         </div>
 
-        <p className="text-xs text-slate-500 font-mono">
-          © {new Date().getFullYear()} PT Sucofindo (Persero) — Internal Use Only
+        <p className="text-xs text-slate-400">
+          © {new Date().getFullYear()} PT Sucofindo (Persero). Untuk penggunaan internal.
         </p>
       </div>
 
@@ -53,19 +52,19 @@ export default function LoginPage() {
             </span>
           </div>
 
-          <h1 className="font-display text-2xl font-semibold text-ink mb-1.5">Masuk ke akun Admin</h1>
+          <h1 className="font-display text-2xl font-semibold text-ink mb-1.5">Masuk</h1>
           <p className="text-sm text-slate-500 mb-8">
-            Masukkan email dan kata sandi Anda untuk mengelola registry sertifikat.
+            Gunakan email dan kata sandi akun Anda.
           </p>
 
           <Suspense fallback={null}>
             <LoginForm />
           </Suspense>
 
-          <p className="text-center text-sm text-slate-400 mt-6">
+          <p className="text-center text-sm text-slate-500 mt-6">
             Anda klien Sucofindo?{" "}
             <Link href="/portal/login" className="text-accent hover:text-accent-light font-medium">
-              Masuk ke Client Portal
+              Masuk ke Portal Klien
             </Link>
           </p>
         </div>

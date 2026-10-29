@@ -28,7 +28,7 @@ export type CashflowMonth = { key: string; t: number; inflow: number; outflow: n
  * Six months back and six ahead. Past months use payments received and costs
  * booked. Coming months expect invoiced terms on their due date (already
  * overdue ones in the current month), planned terms on their planned billing
- * date, and the remaining cost (prakiraan biaya akhir − biaya keluar) spread
+ * date, and the remaining cost (proyeksi biaya akhir − biaya keluar) spread
  * over the remaining months in proportion to the planned progress.
  */
 export function cashflowForecast(

@@ -10,6 +10,7 @@ import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
 import { useToast } from "@/components/ui/Toast";
 import { formatDate } from "@/lib/utils";
 import { APPLICATION_STATUS_LABELS, APPLICATION_STATUS_COLORS } from "@/lib/application";
+import { Notice } from "@/components/ui/Notice";
 
 type ApplicationInfo = {
   id: string;
@@ -51,9 +52,9 @@ type StageInfo = {
 };
 
 const DOC_STATUS_LABELS: Record<string, string> = {
-  UPLOADED: "Menunggu Review",
+  UPLOADED: "Menunggu review",
   APPROVED: "Disetujui",
-  REVISION_REQUIRED: "Perlu Revisi",
+  REVISION_REQUIRED: "Perlu revisi",
 };
 const DOC_STATUS_COLORS: Record<string, string> = {
   UPLOADED: "text-accent bg-accent/5 border-accent/20",
@@ -132,7 +133,7 @@ export function PortalApplicationDetail({
         className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-ink dark:hover:text-slate-200"
       >
         <ArrowLeft className="h-4 w-4" />
-        Kembali ke Pengajuan Saya
+        Kembali ke pengajuan saya
       </Link>
 
       <Card>
@@ -167,29 +168,27 @@ export function PortalApplicationDetail({
           )}
           <p className="text-xs text-slate-400 pt-1">
             Dibuat {formatDate(application.createdAt)}
-            {application.submittedAt ? ` · Diajukan ${formatDate(application.submittedAt)}` : ""}
+            {application.submittedAt ? `, Diajukan ${formatDate(application.submittedAt)}` : ""}
           </p>
         </CardContent>
       </Card>
 
       {certificate && (
-        <div className="flex items-center gap-2.5 rounded-md border border-signal-activeBorder bg-signal-activeBg px-4 py-3 text-sm text-signal-active">
-          <Award className="h-4 w-4 shrink-0" />
+        <Notice tone="success">
           <span>
-            Sertifikat <strong>{certificate.certificateNumber}</strong> telah diterbitkan — berlaku hingga{" "}
+            Sertifikat <strong>{certificate.certificateNumber}</strong> telah diterbitkan, berlaku hingga{" "}
             {formatDate(certificate.expiryDate)}.
           </span>
           <Link href="/portal/certificates" className="ml-auto underline font-medium shrink-0">
-            Lihat di Sertifikat Saya
+            Lihat di sertifikat saya
           </Link>
-        </div>
+        </Notice>
       )}
 
       {stages.length > 0 && (
         <Card>
           <CardHeader className="flex flex-row items-center gap-2">
-            <Workflow className="h-4 w-4 text-slate-400" />
-            <CardTitle>Progress Sertifikasi</CardTitle>
+            <CardTitle>Progres sertifikasi</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -228,7 +227,7 @@ export function PortalApplicationDetail({
 
       <Card>
         <CardHeader>
-          <CardTitle>Checklist Dokumen</CardTitle>
+          <CardTitle>Daftar periksa dokumen</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -325,13 +324,13 @@ export function PortalApplicationDetail({
               </p>
             )}
             {submitError && (
-              <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+              <Notice tone="danger">
                 {submitError}
-              </div>
+              </Notice>
             )}
             <Button onClick={handleSubmit} isLoading={submitting}>
               <Send className="h-4 w-4" />
-              {application.status === "REVISION_REQUIRED" ? "Ajukan Ulang" : "Ajukan Permohonan"}
+              {application.status === "REVISION_REQUIRED" ? "Ajukan ulang" : "Ajukan permohonan"}
             </Button>
           </CardContent>
         </Card>

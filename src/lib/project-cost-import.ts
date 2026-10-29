@@ -169,7 +169,7 @@ export async function parseCostWorkbook(buffer: Buffer, opts: { restrictToProjec
   // ---- costs
   if (costSheet) {
     const { headerRow, map, missing } = mapHeader(costSheet, COST_COLUMNS);
-    if (missing.length) preview.missingSheets.push(`Sheet "${costSheet.name}": kolom wajib tidak ditemukan — ${missing.join(", ")}`);
+    if (missing.length) preview.missingSheets.push(`Sheet "${costSheet.name}": kolom wajib tidak ditemukan, ${missing.join(", ")}`);
     else {
       const keysInFile = new Set<string>();
       const candidates: (CostRow & { projectId?: string; key?: string })[] = [];
@@ -216,7 +216,7 @@ export async function parseCostWorkbook(buffer: Buffer, opts: { restrictToProjec
               ? "Tanggal tidak valid (gunakan format tanggal Excel atau dd/mm/yyyy)"
               : !category
                 ? account
-                  ? `Akun ${account} tidak ada pada RAB project ini — isi kolom Kategori`
+                  ? `Akun ${account} tidak ada pada RAB project ini, isi kolom Kategori`
                   : "Kategori atau Akun wajib diisi"
                 : !description
                   ? "Keterangan kosong"
@@ -254,7 +254,7 @@ export async function parseCostWorkbook(buffer: Buffer, opts: { restrictToProjec
   // ---- budget (RAB)
   if (budgetSheet) {
     const { headerRow, map, missing } = mapHeader(budgetSheet, BUDGET_COLUMNS);
-    if (missing.length) preview.missingSheets.push(`Sheet "${budgetSheet.name}": kolom wajib tidak ditemukan — ${missing.join(", ")}`);
+    if (missing.length) preview.missingSheets.push(`Sheet "${budgetSheet.name}": kolom wajib tidak ditemukan, ${missing.join(", ")}`);
     else {
       for (let r = headerRow + 1; r <= budgetSheet.rowCount; r++) {
         const row = budgetSheet.getRow(r);
@@ -396,8 +396,8 @@ export async function buildCostTemplate(projects: { projectNumber: string; proje
   [
     "PETUNJUK IMPORT BIAYA & RAB PROJECT",
     "",
-    "Sheet \"Biaya\" — realisasi biaya. Satu baris = satu transaksi. Baris yang sudah pernah diimpor otomatis dilewati, jadi file yang sama/bertambah boleh diunggah ulang.",
-    "Sheet \"RAB\" — anggaran per kategori. Mengimpor RAB akan MENGGANTI RAB project tersebut. RAB pertama yang diimpor menjadi baseline (rencana awal).",
+    "Sheet \"Biaya\", realisasi biaya. Satu baris = satu transaksi. Baris yang sudah pernah diimpor otomatis dilewati, jadi file yang sama/bertambah boleh diunggah ulang.",
+    "Sheet \"RAB\", anggaran per kategori. Mengimpor RAB akan MENGGANTI RAB project tersebut. RAB pertama yang diimpor menjadi baseline (rencana awal).",
     "Kolom \"Akun\" (opsional): kode akun sesuai RAB Sucofindo (mis. 4421). Bila Kategori dikosongkan, kategori diisi otomatis dari akun pada RAB project.",
     "Kolom \"Penyebab\" (opsional): Normal / Keterlambatan / Pekerjaan tambahan. Diisi bila biaya timbul karena project terlambat atau karena pekerjaan di luar kontrak awal.",
     "No. Project harus sama persis dengan nomor project di sistem. Daftar nomor project ada di bawah.",
@@ -405,7 +405,7 @@ export async function buildCostTemplate(projects: { projectNumber: string; proje
     "Urutan kolom bebas; kolom lain di file Anda akan diabaikan.",
     "",
     "DAFTAR PROJECT:",
-    ...projects.map((p) => `${p.projectNumber}  —  ${p.projectName}`),
+    ...projects.map((p) => `${p.projectNumber} - ${p.projectName}`),
   ].forEach((t, i) => {
     const c = info.getCell(i + 1, 1);
     c.value = t;

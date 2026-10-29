@@ -4,6 +4,7 @@ import { getPersonnelEmailTemplate } from "@/lib/email-template-db";
 import { DEFAULT_PERSONNEL_SIMPLE_FIELDS, DEFAULT_PERSONNEL_BODY_HTML } from "@/lib/personnel-email-template";
 import { Navbar } from "@/components/layout/Navbar";
 import { PersonnelEmailTemplateEditor } from "@/components/PersonnelEmailTemplateEditor";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function PersonnelEmailTemplatePage() {
   const session = await getSession();
@@ -16,11 +17,11 @@ export default async function PersonnelEmailTemplatePage() {
     <>
       <Navbar
         title="Template Email Sertifikasi Personil"
-        subtitle="Sesuaikan isi email reminder untuk sertifikasi personil"
+        subtitle="Isi email pengingat sertifikasi personil"
         adminName={session.name}
         role={session.role}
       />
-      <div className="p-5 md:p-8">
+      <PageBody>
         <PersonnelEmailTemplateEditor
           initialMode={template.mode === "ADVANCED" ? "ADVANCED" : "SIMPLE"}
           initialSubject={template.subject}
@@ -34,7 +35,7 @@ export default async function PersonnelEmailTemplatePage() {
           }}
           initialBodyHtml={template.bodyHtml || DEFAULT_PERSONNEL_BODY_HTML}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

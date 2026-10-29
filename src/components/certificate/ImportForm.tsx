@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
+import { Notice } from "@/components/ui/Notice";
 
 type RowResult = {
   row: number;
@@ -84,17 +85,16 @@ export function ImportForm() {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>1. Unduh Template</CardTitle>
+          <CardTitle>1. Unduh template</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">
-            Gunakan template ini supaya kolom-kolomnya sesuai. Kategori, Klien, dan Divisi yang
-            belum ada di sistem akan otomatis dibuat berdasarkan nama yang Anda tulis.
+            Isi data pada template ini. Kategori, klien, dan divisi yang belum terdaftar akan dibuat otomatis.
           </p>
           <a href="/api/certificates/import/template">
             <Button variant="outline">
               <Download className="h-4 w-4" />
-              Download Template Excel
+              Unduh template Excel
             </Button>
           </a>
         </CardContent>
@@ -102,17 +102,14 @@ export function ImportForm() {
 
       <Card>
         <CardHeader>
-          <CardTitle>2. Unggah File</CardTitle>
+          <CardTitle>2. Unggah file</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded border border-accent/20 bg-accent/5 px-3 py-2.5 flex gap-2">
-            <Info className="h-4 w-4 text-accent shrink-0 mt-0.5" />
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-              Kolom wajib: Certificate Number, Certificate Name, Category, Client, Issue Date,
-              Expiry Date, PIC. Baris dengan Nomor Sertifikat yang sudah ada akan dilewati
-              (tidak menimpa data lama).
+          <Notice tone="info">
+            <p>
+              Kolom wajib: Certificate Number, Certificate Name, Category, Client, Issue Date, Expiry Date, PIC. Nomor sertifikat yang sudah terdaftar dilewati, data lama tidak ditimpa.
             </p>
-          </div>
+          </Notice>
 
           <label
             htmlFor="excel-upload"
@@ -126,14 +123,14 @@ export function ImportForm() {
           </label>
 
           {error && (
-            <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+            <Notice tone="danger">
               {error}
-            </div>
+            </Notice>
           )}
 
           <Button onClick={handleUpload} disabled={!file} isLoading={uploading}>
             <Upload className="h-4 w-4" />
-            Proses Import
+            Proses impor
           </Button>
         </CardContent>
       </Card>
@@ -141,13 +138,13 @@ export function ImportForm() {
       {summary && (
         <Card>
           <CardHeader>
-            <CardTitle>Hasil Import</CardTitle>
+            <CardTitle>Hasil impor</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex gap-4 text-sm font-mono">
               <span className="text-signal-active">{summary.created} dibuat</span>
               <span className="text-slate-400">{summary.skipped} dilewati</span>
-              <span className="text-signal-expired">{summary.errors} error</span>
+              <span className="text-signal-expired">{summary.errors} gagal</span>
             </div>
             {summary.results.length > 0 && (
               <div className="rounded border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-800 max-h-96 overflow-y-auto">

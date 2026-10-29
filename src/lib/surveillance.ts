@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 export const SURVEILLANCE_STATUS_LABELS: Record<string, string> = {
   SCHEDULED: "Terjadwal",
   CONFIRMED: "Dikonfirmasi",
-  IN_PROGRESS: "Sedang Berjalan",
+  IN_PROGRESS: "Sedang berjalan",
   COMPLETED: "Selesai",
   CANCELLED: "Dibatalkan",
   POSTPONED: "Ditunda",

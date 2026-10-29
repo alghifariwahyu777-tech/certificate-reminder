@@ -9,10 +9,11 @@ import { InfoTip } from "@/components/ui/InfoTip";
 import { HEALTH_LABEL, formatPercent, formatRupiah, shortDate } from "@/lib/project-monitoring-shared";
 import type { AgingBucket, HealthTrendRow, PortfolioRow } from "@/lib/project-monitoring";
 import { cn } from "@/lib/utils";
+import { WrapTick } from "./PortfolioMore";
 
 const DAY = 86400000;
 const HEALTH_DOT: Record<string, string> = { KRITIS: "#C2362F", WASPADA: "#D69E2E", ON_TRACK: "#2F855A", SELESAI: "#1671B8", BATAL: "#94A3B8" };
-const tooltipStyle = { borderRadius: 8, border: "1px solid #E3E8EF", fontSize: 12, fontFamily: "var(--font-body)" };
+const tooltipStyle = { borderRadius: 8, border: "1px solid #E6EBF1", fontSize: 12, fontFamily: "var(--font-body)" };
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 
 /** Prev / next pager used by the dashboard lists that can hold dozens of projects. */
@@ -81,7 +82,7 @@ export function ScheduleTimeline({ rows, today }: { rows: PortfolioRow[]; today:
           <CardTitle className="flex items-center gap-1.5">
             Jadwal portofolio
             <InfoTip label="Keterangan jadwal portofolio">
-              Setiap baris satu project berjalan. Batang abu-abu = rentang rencana (mulai sampai target selesai), bagian biru = progres realisasi. Tanda belah ketupat = prakiraan
+              Setiap baris satu project berjalan. Batang abu-abu = rentang rencana (mulai sampai target selesai), bagian biru = progres realisasi. Tanda belah ketupat = proyeksi
               selesai, dihitung dari durasi rencana dibagi kinerja waktu; merah bila melewati target. Garis tegak = hari ini.
             </InfoTip>
           </CardTitle>
@@ -125,7 +126,7 @@ export function ScheduleTimeline({ rows, today }: { rows: PortfolioRow[]; today:
                         {r.projectName}
                       </p>
                       <p className={cn("text-[11px]", slip > 0 ? "font-semibold text-signal-expired" : "text-slate-500")}>
-                        {slip > 0 ? `Prakiraan terlambat ${slip} hari` : `Target ${shortDate(end)}`}
+                        {slip > 0 ? `Proyeksi terlambat ${slip} hari` : `Target ${shortDate(end)}`}
                       </p>
                     </div>
                     <div className="relative h-7 flex-1" title={`Rencana s.d. hari ini ${formatPercent(r.summary.plannedPercent)}, realisasi ${formatPercent(r.summary.actualPercent)}`}>
@@ -136,7 +137,7 @@ export function ScheduleTimeline({ rows, today }: { rows: PortfolioRow[]; today:
                         <span
                           className={cn("absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-2 border-white", forecast > end ? "bg-signal-expiredBar" : "bg-signal-activeBar")}
                           style={{ left: `${Math.min(100, pos(forecast))}%` }}
-                          title={`Prakiraan selesai ${shortDate(forecast)}`}
+                          title={`Proyeksi selesai ${shortDate(forecast)}`}
                         />
                       )}
                     </div>
@@ -150,7 +151,7 @@ export function ScheduleTimeline({ rows, today }: { rows: PortfolioRow[]; today:
           <span className="inline-flex items-center gap-1.5"><span className="h-2 w-5 rounded bg-slate-200" />Rentang rencana</span>
           <span className="inline-flex items-center gap-1.5"><span className="h-2 w-5 rounded bg-accent" />Progres realisasi</span>
           <span className="inline-flex items-center gap-1.5"><span className="h-3 w-0.5 bg-ink/60" />Posisi rencana hari ini</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rotate-45 bg-signal-expiredBar" />Prakiraan selesai</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rotate-45 bg-signal-expiredBar" />Proyeksi selesai</span>
         </div>
       </CardContent>
     </Card>
@@ -174,7 +175,7 @@ export function MarginGapCard({ rows }: { rows: PortfolioRow[] }) {
         <CardTitle className="flex items-center gap-1.5">
           Kekurangan margin
           <InfoTip label="Keterangan kekurangan margin">
-            Selisih rupiah antara target margin dan prakiraan margin akhir, per project. Diurutkan dari yang terbesar: perbaikan pada project teratas paling berpengaruh pada
+            Selisih rupiah antara target margin dan proyeksi margin akhir, per project. Diurutkan dari yang terbesar: perbaikan pada project teratas paling berpengaruh pada
             margin portofolio.
           </InfoTip>
         </CardTitle>
@@ -182,7 +183,7 @@ export function MarginGapCard({ rows }: { rows: PortfolioRow[] }) {
       </div>
       <CardContent>
         {top.length === 0 ? (
-          <p className="py-10 text-center text-sm text-slate-400">Semua project memenuhi target margin.</p>
+          <p className="py-10 text-center text-sm text-slate-500">Semua project memenuhi target margin.</p>
         ) : (
           <ul className="space-y-2.5">
             {top.map((r) => (
@@ -227,7 +228,7 @@ export function AgingCard({ aging }: { aging: AgingBucket[] }) {
         <CardTitle className="flex items-center gap-1.5">
           Umur piutang
           <InfoTip label="Keterangan umur piutang">
-            Invoice yang sudah ditagih tetapi belum dibayar, dikelompokkan menurut lama lewat jatuh tempo (JT = jatuh tempo). Makin ke kanan makin lama tertunggak dan makin perlu ditindaklanjuti.
+            Invoice yang sudah ditagih tetapi belum dibayar, dikelompokkan menurut lama lewat jatuh tempo. Makin ke kanan makin lama tertunggak dan makin perlu ditindaklanjuti.
           </InfoTip>
         </CardTitle>
         <p className="mt-0.5 text-[12.5px] text-slate-500">
@@ -238,9 +239,9 @@ export function AgingCard({ aging }: { aging: AgingBucket[] }) {
         <div className="h-40">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={aging} margin={{ top: 8, right: 4, left: -18, bottom: 0 }}>
-              <CartesianGrid stroke="#E9EDF2" vertical={false} />
-              <XAxis dataKey="label" tickFormatter={(l: string) => (l === "Belum jatuh tempo" ? "Belum JT" : l)} tick={{ fontSize: 10, fill: "#5B6B7F" }} interval={0} axisLine={{ stroke: "#E3E8EF" }} tickLine={false} />
-              <YAxis tickFormatter={(v: number) => (v / 1e6).toLocaleString("id-ID", { maximumFractionDigits: 0 })} tick={{ fontSize: 10, fill: "#5B6B7F" }} axisLine={false} tickLine={false} />
+              <CartesianGrid stroke="#E6EBF1" vertical={false} />
+              <XAxis dataKey="label" height={34} tick={<WrapTick />} interval={0} axisLine={{ stroke: "#E6EBF1" }} tickLine={false} />
+              <YAxis tickFormatter={(v: number) => (v / 1e6).toLocaleString("id-ID", { maximumFractionDigits: 0 })} tick={{ fontSize: 10, fill: "#64748B" }} axisLine={false} tickLine={false} />
               <Tooltip cursor={{ fill: "#F1F5F9" }} contentStyle={tooltipStyle} formatter={(v) => [formatRupiah(Number(v), true), "Piutang"]} />
               <Bar dataKey="amount" radius={[3, 3, 0, 0]} maxBarSize={36} isAnimationActive={false}>
                 {aging.map((b, i) => (
@@ -295,9 +296,9 @@ export function HealthTrendCard({ trend }: { trend: HealthTrendRow[] }) {
         <div className="h-40">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 8, right: 4, left: -24, bottom: 0 }}>
-              <CartesianGrid stroke="#E9EDF2" vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#5B6B7F" }} axisLine={{ stroke: "#E3E8EF" }} tickLine={false} minTickGap={8} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "#5B6B7F" }} axisLine={false} tickLine={false} />
+              <CartesianGrid stroke="#E6EBF1" vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#64748B" }} axisLine={{ stroke: "#E6EBF1" }} tickLine={false} minTickGap={8} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "#64748B" }} axisLine={false} tickLine={false} />
               <Tooltip cursor={{ fill: "#F1F5F9" }} contentStyle={tooltipStyle} labelFormatter={(l) => `Minggu ${l}`} />
               <Bar dataKey="KRITIS" name={HEALTH_LABEL.KRITIS} stackId="h" fill={HEALTH_DOT.KRITIS} maxBarSize={28} isAnimationActive={false} />
               <Bar dataKey="WASPADA" name={HEALTH_LABEL.WASPADA} stackId="h" fill={HEALTH_DOT.WASPADA} maxBarSize={28} isAnimationActive={false} />

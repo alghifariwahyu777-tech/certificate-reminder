@@ -6,13 +6,13 @@ import { ArrowLeft, FileText, Workflow, CalendarClock, Clock, ShieldCheck } from
 
 const STAGE_TYPE_LABELS: Record<string, string> = {
   APPLICATION: "Permohonan",
-  DOCUMENT_REVIEW: "Review Dokumen",
+  DOCUMENT_REVIEW: "Review dokumen",
   PREPARATION: "Persiapan",
   AUDIT: "Audit",
   ASSESSMENT: "Assessment",
-  CERTIFICATION_DECISION: "Keputusan Sertifikasi",
-  CERTIFICATE_ISSUANCE: "Penerbitan Sertifikat",
-  SURVEILLANCE: "Surveillance",
+  CERTIFICATION_DECISION: "Keputusan sertifikasi",
+  CERTIFICATE_ISSUANCE: "Penerbitan sertifikat",
+  SURVEILLANCE: "Surveilans",
   COMPLETED: "Selesai",
   CUSTOM: "Kustom",
 };
@@ -36,7 +36,7 @@ export default async function PortalServiceDetailPage(context: { params: Promise
         className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-ink dark:hover:text-slate-200"
       >
         <ArrowLeft className="h-4 w-4" />
-        Kembali ke Katalog Layanan
+        Kembali ke katalog Layanan
       </Link>
 
       <Card>
@@ -51,13 +51,13 @@ export default async function PortalServiceDetailPage(context: { params: Promise
           <div className="flex flex-wrap gap-2">
             {service.requiresAudit && (
               <span className="stamp-badge text-accent bg-accent/5 border-accent/20">
-                <ShieldCheck className="h-3 w-3" /> Membutuhkan Audit
+                <ShieldCheck className="h-3 w-3" /> Membutuhkan audit
               </span>
             )}
             {service.requiresSurveillance && (
               <span className="stamp-badge text-signal-soon bg-signal-soonBg border-signal-soonBorder">
                 <CalendarClock className="h-3 w-3" />
-                Surveillance {service.surveillanceCount}x setiap {service.surveillanceIntervalMonths} bulan
+                Surveilans {service.surveillanceCount} kali, setiap {service.surveillanceIntervalMonths} bulan
               </span>
             )}
             {service.estimatedProcessingDays && (
@@ -71,12 +71,11 @@ export default async function PortalServiceDetailPage(context: { params: Promise
 
       <Card>
         <CardHeader className="flex flex-row items-center gap-2">
-          <FileText className="h-4 w-4 text-slate-400" />
-          <CardTitle>Dokumen yang Perlu Disiapkan</CardTitle>
+          <CardTitle>Dokumen yang perlu disiapkan</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {service.requirements.length === 0 ? (
-            <p className="px-5 py-6 text-center text-sm text-slate-400">Belum ada persyaratan dokumen tercantum.</p>
+            <p className="px-5 py-6 text-center text-sm text-slate-500">Belum ada persyaratan dokumen tercantum.</p>
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {service.requirements.map((r) => (
@@ -100,17 +99,16 @@ export default async function PortalServiceDetailPage(context: { params: Promise
 
       <Card>
         <CardHeader className="flex flex-row items-center gap-2">
-          <Workflow className="h-4 w-4 text-slate-400" />
-          <CardTitle>Alur Proses</CardTitle>
+          <CardTitle>Alur proses</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {service.stages.length === 0 ? (
-            <p className="px-5 py-6 text-center text-sm text-slate-400">Belum ada alur proses tercantum.</p>
+            <p className="px-5 py-6 text-center text-sm text-slate-500">Belum ada alur proses tercantum.</p>
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {service.stages.map((s) => (
                 <div key={s.id} className="flex items-start gap-3 px-5 py-3">
-                  <span className="h-6 w-6 rounded-full bg-ink text-white text-xs font-mono flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="h-6 w-6 rounded-full bg-brand-blueDark text-white text-xs flex items-center justify-center shrink-0 mt-0.5">
                     {s.sequence}
                   </span>
                   <div>
@@ -127,8 +125,7 @@ export default async function PortalServiceDetailPage(context: { params: Promise
       </Card>
 
       <p className="text-xs text-slate-400 text-center">
-        Untuk mengajukan layanan ini, silakan hubungi PIC Anda di PT Sucofindo (Persero). Fitur
-        pengajuan online langsung dari portal akan segera hadir.
+        Untuk mengajukan layanan ini, hubungi PIC Anda di PT Sucofindo (Persero).
       </p>
     </div>
   );

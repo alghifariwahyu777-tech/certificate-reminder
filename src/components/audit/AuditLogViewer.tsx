@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/Button";
 import { SkeletonListItems } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { SearchPopoverButton } from "@/components/ui/SearchPopoverButton";
+import { filterGroupClass } from "@/components/ui/Toolbar";
 
 type AuditLogItem = {
   id: string;
@@ -142,25 +143,25 @@ export function AuditLogViewer() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex-1 max-w-sm">
+      <div className={filterGroupClass}>
+        <div>
           <SearchPopoverButton
             value={search}
             onChange={setSearch}
-            label="Cari Aktivitas"
+            label="Cari aktivitas"
             placeholder="Nama pengguna atau deskripsi..."
           />
         </div>
-        <Select value={action} onChange={(e) => setAction(e.target.value)} className="sm:w-48">
-          <option value="">Semua Aksi</option>
+        <Select value={action} onChange={(e) => setAction(e.target.value)}>
+          <option value="">Semua aksi</option>
           {ACTIONS.map((a) => (
             <option key={a} value={a}>
               {a}
             </option>
           ))}
         </Select>
-        <Select value={entityType} onChange={(e) => setEntityType(e.target.value)} className="sm:w-48">
-          <option value="">Semua Entitas</option>
+        <Select value={entityType} onChange={(e) => setEntityType(e.target.value)}>
+          <option value="">Semua entitas</option>
           {ENTITY_TYPES.map((e) => (
             <option key={e} value={e}>
               {e}
@@ -173,7 +174,7 @@ export function AuditLogViewer() {
         {loading ? (
           <SkeletonListItems items={8} />
         ) : logs.length === 0 ? (
-          <p className="px-5 py-10 text-center text-sm text-slate-400">Tidak ada aktivitas yang cocok.</p>
+          <p className="px-5 py-10 text-center text-sm text-slate-500">Tidak ada aktivitas yang cocok.</p>
         ) : (
           <div className="divide-y divide-slate-100">
             {logs.map((log) => {
@@ -190,7 +191,7 @@ export function AuditLogViewer() {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-ink">{log.description}</p>
                     <p className="text-xs text-slate-400 mt-0.5 font-mono">
-                      {log.userName} · {log.entityType} ·{" "}
+                      {log.userName}, {log.entityType},{" "}
                       {new Date(log.createdAt).toLocaleString("id-ID", {
                         day: "2-digit",
                         month: "short",

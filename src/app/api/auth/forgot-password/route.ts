@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #1e293b;">
             <div style="background: #0F172A; padding: 20px 24px; border-radius: 8px 8px 0 0; border-bottom: 3px solid #0EA89B;">
-              <span style="color: #ffffff; font-size: 14px; font-weight: bold;">PT Sucofindo (Persero) — Reminder System</span>
+              <span style="color: #ffffff; font-size: 14px; font-weight: bold;">PT Sucofindo (Persero), Reminder System</span>
             </div>
             <div style="border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px; padding: 24px;">
               <p>Halo ${user.name},</p>
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
               <p style="margin: 24px 0;">
                 <a href="${resetUrl}" style="display:inline-block;padding:12px 24px;background:#0EA89B;color:#ffffff;border-radius:6px;text-decoration:none;font-weight:bold;">Reset Password</a>
               </p>
-              <p style="font-size: 12px; color: #94a3b8;">Jika Anda tidak meminta ini, abaikan saja email ini — password Anda tidak akan berubah.</p>
+              <p style="font-size: 12px; color: #94a3b8;">Jika Anda tidak meminta ini, abaikan saja email ini, password Anda tidak akan berubah.</p>
             </div>
           </div>`,
       })

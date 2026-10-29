@@ -257,15 +257,15 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
 
   const fields: { label: string; value: string }[] = [
     { label: "Kategori", value: project.category.name },
-    { label: "Klien / Pemberi Kerja", value: project.clientName },
+    { label: "Klien / pemberi kerja", value: project.clientName },
     { label: "PIC", value: project.pic },
     { label: "Email PIC", value: project.picEmail || "-" },
-    { label: "Email CC (Atasan)", value: project.ccEmail || "-" },
-    { label: "Nilai Kontrak", value: formatRupiah(project.contractValue?.toString()) },
-    { label: "Tanggal Mulai", value: project.startDate ? formatDate(project.startDate) : "-" },
-    { label: "Target Selesai", value: formatDate(project.targetEndDate) },
+    { label: "Email CC (atasan)", value: project.ccEmail || "-" },
+    { label: "Nilai kontrak", value: formatRupiah(project.contractValue?.toString()) },
+    { label: "Tanggal mulai", value: project.startDate ? formatDate(project.startDate) : "-" },
+    { label: "Target selesai", value: formatDate(project.targetEndDate) },
     {
-      label: "Sisa Hari",
+      label: "Sisa hari",
       value:
         project.status !== "ONGOING"
           ? "-"
@@ -273,7 +273,7 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
             ? `Terlambat ${Math.abs(days)} hari`
             : `${days} hari lagi`,
     },
-    { label: "Tanggal Selesai Aktual", value: project.actualEndDate ? formatDate(project.actualEndDate) : "-" },
+    { label: "Tanggal selesai aktual", value: project.actualEndDate ? formatDate(project.actualEndDate) : "-" },
   ];
 
   const kontrak = (
@@ -340,8 +340,7 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
         </CardHeader>
         <CardContent>
           {!project.fileUrl ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-10 text-slate-400">
-              <FileWarning className="h-8 w-8" />
+            <div className="py-10 text-center text-slate-500">
               <p className="text-sm">Belum ada dokumen yang diunggah.</p>
             </div>
           ) : project.fileMimeType?.startsWith("image/") ? (
@@ -381,17 +380,17 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
             <div className="min-w-0">
               <Link href="/projects/dashboard" className="inline-flex items-center gap-1 text-[12.5px] text-slate-500 hover:text-ink dark:hover:text-slate-200">
                 <ArrowLeft className="h-3.5 w-3.5" />
-                Monitoring Project
+                Monitoring project
               </Link>
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                <h1 className="text-[22px] font-bold leading-tight text-ink md:text-[24px] dark:text-slate-100">{project.projectName}</h1>
+              <h1 className="mt-1.5 max-w-3xl text-[22px] font-bold leading-tight text-ink md:text-[24px] dark:text-slate-100">{project.projectName}</h1>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px] text-slate-500">
                 <span className="rounded-full border border-line bg-paper px-2.5 py-0.5 text-[12px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                   {STATUS_LABEL[project.status]}
                 </span>
+                <span>
+                  {project.projectNumber}, {project.category.name}
+                </span>
               </div>
-              <p className="mt-1 text-[13px] text-slate-500">
-                {project.projectNumber} · {project.category.name}
-              </p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
               <a href={`/api/projects/${project.id}/report`}>
@@ -405,14 +404,14 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
                   <Link href={`/projects/${project.id}/edit`}>
                     <Button variant="outline" size="sm">
                       <Pencil className="h-4 w-4" />
-                      Edit project
+                      Ubah project
                     </Button>
                   </Link>
                   {project.status === "ONGOING" && (
                     <a href="#jadwal/progres/baru">
                       <Button size="sm">
                         <TrendingUp className="h-4 w-4" />
-                        Update progres
+                        Perbarui progres
                       </Button>
                     </a>
                   )}
@@ -420,11 +419,11 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
               )}
             </div>
           </div>
-          <dl className="grid grid-cols-2 border-t border-line bg-paper/60 sm:grid-cols-3 xl:grid-cols-6 dark:border-slate-800 dark:bg-slate-800/30">
+          <dl className="grid grid-cols-2 border-t border-line bg-paper/60 sm:grid-cols-3 2xl:grid-cols-6 dark:border-slate-800 dark:bg-slate-800/30">
             {meta.map((x) => (
-              <div key={x.k} className="min-w-0 border-b border-r border-line px-5 py-3 md:px-6 xl:border-b-0 dark:border-slate-800">
+              <div key={x.k} className="min-w-0 border-b border-r border-line px-5 py-3 md:px-6 2xl:border-b-0 dark:border-slate-800">
                 <dt className="text-[12px] text-slate-500">{x.k}</dt>
-                <dd className="mt-0.5 truncate text-[14px] font-semibold text-ink dark:text-slate-100" title={x.v}>
+                <dd className="mt-0.5 break-words text-[14px] font-semibold leading-snug text-ink dark:text-slate-100" title={x.v}>
                   {x.v}
                 </dd>
                 {x.k === "Durasi" && project.status === "ONGOING" ? (
@@ -468,16 +467,16 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
             ],
             keuangan: [
               { key: "margin", label: "Margin", node: <MarginPanel data={monitoring} /> },
-              { key: "biaya", label: "RAB & biaya", node: <CostPanel data={monitoring} /> },
-              { key: "termin", label: "Termin & penagihan", badge: summary.overdueInvoiceCount || undefined, node: <TermPanel data={monitoring} /> },
+              { key: "biaya", label: "RAB dan biaya", node: <CostPanel data={monitoring} /> },
+              { key: "termin", label: "Termin dan penagihan", badge: summary.overdueInvoiceCount || undefined, node: <TermPanel data={monitoring} /> },
             ],
             tim: [
-              { key: "kendala", label: "Kendala & risiko", badge: summary.openHighIssues || undefined, node: <IssuePanel data={monitoring} /> },
+              { key: "kendala", label: "Kendala dan risiko", badge: summary.openHighIssues || undefined, node: <IssuePanel data={monitoring} /> },
               { key: "hse", label: "HSE", badge: monitoring.hse.summary.signal === "bad" ? 1 : undefined, node: <HsePanel data={monitoring} /> },
               { key: "personil", label: "Tim", badge: monitoring.team.filter((m) => m.warnings.some((w) => w.expired)).length || undefined, node: <TeamPanel data={monitoring} /> },
             ],
             dokumen: [
-              { key: "kontrak", label: "Kontrak & addendum", node: kontrak },
+              { key: "kontrak", label: "Kontrak dan addendum", node: kontrak },
               { key: "penutupan", label: "Penutupan", node: <CloseoutPanel data={monitoring} /> },
             ],
           }}

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
 import { useToast } from "@/components/ui/Toast";
+import { Notice } from "@/components/ui/Notice";
 
 function toDateInputValue(value?: string | null) {
   if (!value) return "";
@@ -164,18 +165,18 @@ export function ProjectForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {!isEdit && (
         <Card>
           <CardContent className="space-y-3">
             <div>
               <p className="font-bold text-[15px] text-ink dark:text-slate-100">Isi otomatis dari RAB</p>
               <p className="mt-0.5 text-[13px] text-slate-500">
-                Pilih file RAB (template Sucofindo). Nomor SPMK, nama, klien, manajer proyek, nilai, dan periode project terisi otomatis, dan RAB langsung tersimpan sebagai baseline saat project disimpan.
+                Pilih file RAB (template Sucofindo). Nomor, nama, klien, manajer, nilai, dan periode project terisi otomatis. RAB tersimpan sebagai baseline saat project disimpan.
               </p>
             </div>
             <label className="block cursor-pointer">
-              <div className="flex items-center gap-2 rounded-md border border-dashed border-slate-300 px-3 py-2.5 text-sm text-slate-500 hover:border-accent hover:bg-accent/5">
+              <div className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 px-4 py-5 text-sm text-slate-500 transition-colors hover:border-accent hover:bg-accent/5 dark:border-slate-600">
                 {rab ? <CheckCircle2 className="h-4 w-4 text-signal-active" /> : <FileSpreadsheet className="h-4 w-4 text-brand-blue" />}
                 {rabBusy ? "Membaca RAB..." : rab && rabFile ? `${rabFile.name}: total RAB Rp ${Math.round(rab.operatingCost).toLocaleString("id-ID")}, margin ${rab.marginPct?.toLocaleString("id-ID") ?? "-"}%` : "Klik untuk memilih file RAB (.xlsx / .xlsm)"}
               </div>
@@ -190,13 +191,13 @@ export function ProjectForm({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="pr-number">Nomor Project</Label>
+              <Label htmlFor="pr-number">Nomor project</Label>
               <Input id="pr-number" {...register("projectNumber")} error={errors.projectNumber?.message} placeholder="Contoh: PRJ-2026-001" />
             </div>
             <div>
-              <Label htmlFor="pr-category">Kategori / Portofolio</Label>
+              <Label htmlFor="pr-category">Kategori / portofolio</Label>
               <Select id="pr-category" {...register("categoryId")} error={errors.categoryId?.message}>
-                <option value="">— Pilih kategori —</option>
+                <option value="">Pilih kategori</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -207,12 +208,12 @@ export function ProjectForm({
           </div>
 
           <div>
-            <Label htmlFor="pr-name">Nama Project</Label>
+            <Label htmlFor="pr-name">Nama project</Label>
             <Input id="pr-name" {...register("projectName")} error={errors.projectName?.message} placeholder="Nama pekerjaan/kontrak" />
           </div>
 
           <div>
-            <Label htmlFor="pr-client">Klien / Pemberi Kerja</Label>
+            <Label htmlFor="pr-client">Klien / pemberi kerja</Label>
             <Input id="pr-client" {...register("clientName")} error={errors.clientName?.message} />
           </div>
 
@@ -224,24 +225,24 @@ export function ProjectForm({
             <div>
               <Label htmlFor="pr-picEmail">Email PIC</Label>
               <Input id="pr-picEmail" type="email" {...register("picEmail")} error={errors.picEmail?.message} />
-              <p className="text-xs text-slate-400 mt-1">Reminder project akan dikirim ke email ini.</p>
+              <p className="text-xs text-slate-400 mt-1">Pengingat project dikirim ke email ini.</p>
             </div>
           </div>
 
           <div>
-            <Label htmlFor="pr-value">Nilai Kontrak (Rp)</Label>
+            <Label htmlFor="pr-value">Nilai kontrak (Rp)</Label>
             <Input id="pr-value" type="number" step="any" {...register("contractValue")} error={errors.contractValue?.message} placeholder="0" />
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <Label htmlFor="pr-start">Tanggal Mulai</Label>
+              <Label htmlFor="pr-start">Tanggal mulai</Label>
               <Input id="pr-start" type="date" {...register("startDate")} error={errors.startDate?.message} />
             </div>
             <div>
-              <Label htmlFor="pr-target">Target Selesai</Label>
+              <Label htmlFor="pr-target">Target selesai</Label>
               <Input id="pr-target" type="date" {...register("targetEndDate")} error={errors.targetEndDate?.message} />
-              <p className="text-xs text-slate-400 mt-1">Reminder dihitung dari tanggal ini.</p>
+              <p className="text-xs text-slate-400 mt-1">Pengingat dihitung dari tanggal ini.</p>
             </div>
             <div>
               <Label htmlFor="pr-status">Status</Label>
@@ -254,9 +255,9 @@ export function ProjectForm({
           </div>
 
           <div>
-            <Label htmlFor="pr-actualEnd">Tanggal Selesai Aktual (opsional)</Label>
+            <Label htmlFor="pr-actualEnd">Tanggal selesai aktual (opsional)</Label>
             <Input id="pr-actualEnd" type="date" {...register("actualEndDate")} error={errors.actualEndDate?.message} />
-            <p className="text-xs text-slate-400 mt-1">Isi saat pekerjaan benar-benar selesai — untuk catatan database.</p>
+            <p className="text-xs text-slate-400 mt-1">Diisi saat pekerjaan benar-benar selesai.</p>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.4fr_1fr_1fr]">
@@ -284,7 +285,7 @@ export function ProjectForm({
           </div>
 
           <div>
-            <Label htmlFor="pr-desc">Deskripsi / Lingkup Pekerjaan</Label>
+            <Label htmlFor="pr-desc">Deskripsi / lingkup pekerjaan</Label>
             <Textarea id="pr-desc" {...register("description")} error={errors.description?.message} rows={3} />
           </div>
 
@@ -294,9 +295,9 @@ export function ProjectForm({
           </div>
 
           <div>
-            <Label>Dokumen Kontrak</Label>
+            <Label>Dokumen kontrak</Label>
             <label className="cursor-pointer block">
-              <div className="flex items-center gap-2 rounded border border-dashed border-slate-300 px-3 py-2.5 text-sm text-slate-500 hover:border-accent hover:bg-accent/5">
+              <div className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 px-4 py-5 text-sm text-slate-500 transition-colors hover:border-accent hover:bg-accent/5 dark:border-slate-600">
                 {fileUrl && !uploading ? <FileText className="h-4 w-4 text-accent" /> : <UploadCloud className="h-4 w-4" />}
                 {uploading ? "Mengunggah..." : fileName || "Klik untuk unggah PDF, JPG, atau PNG (maks. 20 MB)"}
               </div>
@@ -313,19 +314,18 @@ export function ProjectForm({
       </Card>
 
       {serverError && (
-        <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2.5 text-sm text-signal-expired">
+        <Notice tone="danger">
           {serverError}
-        </div>
+        </Notice>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={() => router.back()}>
+          Batal
+        </Button>
         <Button type="submit" isLoading={isSubmitting} disabled={uploading}>
           <Save className="h-4 w-4" />
-          Simpan
-        </Button>
-        <Button type="button" variant="outline" onClick={() => router.back()}>
-          <X className="h-4 w-4" />
-          Batal
+          {isEdit ? "Simpan perubahan" : "Simpan project"}
         </Button>
       </div>
     </form>

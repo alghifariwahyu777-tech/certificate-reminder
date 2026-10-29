@@ -11,8 +11,8 @@ import { FileLink, FileUploadField, FormError, fmtDate, useMonitoringApi, EMPTY_
 import type { ProjectMonitoringDTO } from "./types";
 
 const CHECKS = [
-  { key: "bappDate", label: "BAPP", hint: "Berita Acara Penyelesaian Pekerjaan" },
-  { key: "bastDate", label: "BAST", hint: "Berita Acara Serah Terima" },
+  { key: "bappDate", label: "BAPP", hint: "Berita acara penyelesaian pekerjaan" },
+  { key: "bastDate", label: "BAST", hint: "Berita acara serah terima" },
   { key: "finalReportDate", label: "Laporan final", hint: "Laporan akhir diserahkan ke klien" },
 ] as const;
 
@@ -52,7 +52,7 @@ export function CloseoutPanel({ data }: { data: ProjectMonitoringDTO }) {
             Penutupan project
             <InfoTip label="Keterangan penutupan project">{data.status === "COMPLETED"
             ? `Checklist ${done}/3 lengkap.`
-            : "Diisi saat pekerjaan selesai. Bisa dicicil — tanggal dokumen diisi begitu dokumennya terbit."}</InfoTip>
+            : "Diisi saat pekerjaan selesai. Tanggal setiap dokumen dapat diisi bertahap saat dokumen tersebut terbit."}</InfoTip>
           </CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">

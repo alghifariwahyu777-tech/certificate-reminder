@@ -11,7 +11,7 @@ export async function generateExcelReport(table: ReportTable): Promise<Buffer> {
   // Title + generated-at rows above the table.
   sheet.mergeCells(1, 1, 1, table.columns.length);
   const titleCell = sheet.getCell(1, 1);
-  titleCell.value = `${table.title} — PT Sucofindo (Persero)`;
+  titleCell.value = `${table.title}, PT Sucofindo (Persero)`;
   titleCell.font = { bold: true, size: 13 };
 
   sheet.mergeCells(2, 1, 2, table.columns.length);

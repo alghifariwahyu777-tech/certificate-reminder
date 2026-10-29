@@ -22,22 +22,21 @@ export default async function PortalApplicationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-xl font-semibold text-ink dark:text-slate-100">
-            Pengajuan Sertifikasi
+            Pengajuan sertifikasi
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">Riwayat & status permohonan sertifikasi Anda.</p>
+          <p className="text-sm text-slate-500 mt-0.5">Riwayat dan status permohonan sertifikasi Anda.</p>
         </div>
         <Link href="/portal/applications/new">
           <Button>
             <Plus className="h-4 w-4" />
-            Ajukan Baru
+            Ajukan baru
           </Button>
         </Link>
       </div>
 
       {applications.length === 0 ? (
         <Card>
-          <div className="flex flex-col items-center justify-center gap-2 py-14 text-slate-400">
-            <ClipboardList className="h-8 w-8" />
+          <div className="py-10 text-center text-slate-500">
             <p className="text-sm">Anda belum memiliki pengajuan sertifikasi.</p>
           </div>
         </Card>
@@ -53,7 +52,7 @@ export default async function PortalApplicationsPage() {
                 <div>
                   <p className="text-sm font-medium text-ink dark:text-slate-100">{app.service.name}</p>
                   <p className="text-xs text-slate-400 font-mono mt-0.5">
-                    {app.applicationNumber} · Dibuat {formatDate(app.createdAt)}
+                    {app.applicationNumber}, Dibuat {formatDate(app.createdAt)}
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">

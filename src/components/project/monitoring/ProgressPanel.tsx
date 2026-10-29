@@ -85,13 +85,13 @@ function ReportsCard({ data }: { data: ProjectMonitoringDTO }) {
         {data.canManage && (
           <Button size="sm" onClick={() => openForm(null)}>
             <Plus className="h-4 w-4" />
-            Update progres
+            Perbarui progres
           </Button>
         )}
       </CardHeader>
       <CardContent className="p-0">
         {data.reports.length === 0 ? (
-          <EmptyState icon={ClipboardList} text="Belum ada laporan progres. Progres dapat diisi admin di sini atau oleh PIC melalui tautan email." action={data.canManage ? { label: "Update progres", onClick: () => openForm(null) } : undefined} />
+          <EmptyState icon={ClipboardList} text="Belum ada laporan progres. Progres dapat diisi admin di sini atau oleh PIC melalui tautan email." action={data.canManage ? { label: "Perbarui progres", onClick: () => openForm(null) } : undefined} />
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {data.reports.map((r) => {
@@ -123,7 +123,7 @@ function ReportsCard({ data }: { data: ProjectMonitoringDTO }) {
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         type="button"
-                        aria-label="Edit laporan"
+                        aria-label="Ubah laporan"
                         onClick={() => openForm(r)}
                         className="p-1.5 rounded text-slate-400 hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800"
                       >
@@ -139,7 +139,7 @@ function ReportsCard({ data }: { data: ProjectMonitoringDTO }) {
         )}
       </CardContent>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Edit laporan progres" : "Update progres"} maxWidth="max-w-lg">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Ubah laporan progres" : "Perbarui progres"} maxWidth="max-w-lg">
         {form && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
@@ -259,7 +259,7 @@ function PlanCard({ data }: { data: ProjectMonitoringDTO }) {
           <div className="overflow-x-auto max-h-80">
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-white dark:bg-slate-900">
-                <tr className="text-left text-xs text-slate-500 border-b border-slate-100 dark:border-slate-800">
+                <tr className="th-row">
                   <th className="px-5 py-2.5 font-medium">Periode</th>
                   <th className="px-5 py-2.5 font-medium text-right">Rencana kumulatif</th>
                 </tr>

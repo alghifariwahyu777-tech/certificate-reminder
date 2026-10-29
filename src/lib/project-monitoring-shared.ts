@@ -85,7 +85,7 @@ export type MonitoringThresholds = {
   deviationCritical: number;
   progressStaleDays: number;
   invoiceOverdueDays: number;
-  /** margin (aktual/prakiraan) turun ≥ ini poin dari rencana → butir keputusan */
+  /** margin (aktual/proyeksi) turun ≥ ini poin dari rencana → butir keputusan */
   marginDropAlert: number;
 };
 

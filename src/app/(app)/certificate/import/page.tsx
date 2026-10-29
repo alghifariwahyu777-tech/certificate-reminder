@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { ImportForm } from "@/components/certificate/ImportForm";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function ImportCertificatePage() {
   const session = await getSession();
@@ -16,9 +17,9 @@ export default async function ImportCertificatePage() {
         adminName={session.name}
         role={session.role}
       />
-      <div className="p-5 md:p-8 max-w-2xl">
+      <PageBody width="form">
         <ImportForm />
-      </div>
+      </PageBody>
     </>
   );
 }

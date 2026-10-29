@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { IconBox } from "@/components/ui/IconBox";
+import { ENTITY_ICON } from "@/lib/entity-icons";
 import { Card } from "@/components/ui/Card";
 import { Layers, ArrowRight, ShieldCheck, CalendarClock, Clock } from "lucide-react";
 
@@ -20,16 +22,14 @@ export default async function PortalServicesPage() {
 
       {services.length === 0 ? (
         <Card>
-          <p className="px-5 py-10 text-center text-sm text-slate-400">Belum ada layanan yang tersedia.</p>
+          <p className="px-5 py-10 text-center text-sm text-slate-500">Belum ada layanan yang tersedia.</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {services.map((service) => (
             <Link key={service.id} href={`/portal/services/${service.id}`}>
               <Card className="p-5 h-full hover:border-accent/40 transition-colors">
-                <div className="h-9 w-9 rounded bg-ink/5 text-ink flex items-center justify-center border border-ink/10 mb-3">
-                  <Layers className="h-4.5 w-4.5" />
-                </div>
+                <IconBox icon={ENTITY_ICON.service} className="mb-3" />
                 <p className="text-sm font-semibold text-ink dark:text-slate-100">{service.name}</p>
                 <p className="text-xs text-slate-400 font-mono mt-0.5">{service.code}</p>
                 {service.description && (
@@ -43,7 +43,7 @@ export default async function PortalServicesPage() {
                   )}
                   {service.requiresSurveillance && (
                     <span className="stamp-badge text-signal-soon bg-signal-soonBg border-signal-soonBorder">
-                      <CalendarClock className="h-3 w-3" /> Surveillance
+                      <CalendarClock className="h-3 w-3" /> Surveilans
                     </span>
                   )}
                   {service.estimatedProcessingDays && (

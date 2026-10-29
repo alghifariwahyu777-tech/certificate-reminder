@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/layout/Navbar";
 import { ServiceDetailManager } from "@/components/service/ServiceDetailManager";
 import { ArrowLeft } from "lucide-react";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function ServiceDetailPage(context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -31,10 +32,10 @@ export default async function ServiceDetailPage(context: { params: Promise<{ id:
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}
       />
-      <div className="p-5 md:p-8 space-y-5">
+      <PageBody>
         <Link href="/services" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-ink">
           <ArrowLeft className="h-4 w-4" />
-          Kembali ke Services
+          Kembali ke Layanan
         </Link>
 
         <ServiceDetailManager
@@ -62,7 +63,7 @@ export default async function ServiceDetailPage(context: { params: Promise<{ id:
             clientDescription: s.clientDescription,
           }))}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

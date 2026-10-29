@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { DepartmentManager } from "@/components/department/DepartmentManager";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function DepartmentsPage() {
   const session = await getSession();
@@ -12,8 +13,8 @@ export default async function DepartmentsPage() {
 
   return (
     <>
-      <Navbar title="Departemen" subtitle="Kelola divisi internal" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
-      <div className="p-5 md:p-8 max-w-3xl">
+      <Navbar title="Divisi" subtitle="Daftar divisi internal" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
+      <PageBody>
         <DepartmentManager
           canManage={session?.role === "ADMIN"}
           initialDepartments={departments.map((d) => ({
@@ -22,7 +23,7 @@ export default async function DepartmentsPage() {
             certificateCount: d._count.certificates,
           }))}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

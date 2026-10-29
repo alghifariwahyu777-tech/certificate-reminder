@@ -85,7 +85,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     action: "RENEW",
     entityType: "Renewal",
     entityId: renewal.id,
-    description: `Memperpanjang sertifikat "${certificate.certificateName}": ${certificate.certificateNumber} → ${parsed.data.newCertificateNumber}.`,
+    description: `Memperpanjang sertifikat "${certificate.certificateName}": ${certificate.certificateNumber} menjadi ${parsed.data.newCertificateNumber}.`,
   });
 
   return NextResponse.json({ renewal }, { status: 201 });

@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { IconBox } from "@/components/ui/IconBox";
+import { ENTITY_ICON } from "@/lib/entity-icons";
 import { Plus, Pencil, Trash2, FileType, X, Check } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Input, Label, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
+import { Notice } from "@/components/ui/Notice";
 
 type DocumentTypeItem = { id: string; name: string; description: string | null; usageCount: number };
 
@@ -110,7 +113,7 @@ export function DocumentTypeManager({
         {canManage && (
           <Button onClick={openAdd}>
             <Plus className="h-4 w-4" />
-            Tambah Jenis Dokumen
+            Tambah jenis dokumen
           </Button>
         )}
       </div>
@@ -118,18 +121,16 @@ export function DocumentTypeManager({
       <Card>
         <div className="divide-y divide-slate-100">
           {items.length === 0 && (
-            <p className="px-5 py-10 text-center text-sm text-slate-400">Belum ada jenis dokumen.</p>
+            <p className="px-5 py-10 text-center text-sm text-slate-500">Belum ada jenis dokumen.</p>
           )}
           {items.map((item) => (
             <div key={item.id} className="flex items-center justify-between px-5 py-3.5">
               <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded bg-ink/5 text-ink flex items-center justify-center border border-ink/10">
-                  <FileType className="h-4 w-4" />
-                </div>
+                <IconBox icon={ENTITY_ICON.documentType} />
                 <div>
                   <p className="text-sm font-medium text-ink">{item.name}</p>
                   <p className="text-xs text-slate-400">
-                    {item.description ? `${item.description} · ` : ""}
+                    {item.description ? `${item.description}, ` : ""}
                     <span className="font-mono">{item.usageCount} layanan</span>
                   </p>
                 </div>
@@ -139,7 +140,7 @@ export function DocumentTypeManager({
                   <button
                     onClick={() => openEdit(item)}
                     className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
-                    aria-label="Edit"
+                    aria-label="Ubah"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
@@ -160,7 +161,7 @@ export function DocumentTypeManager({
         </div>
       </Card>
 
-      <Modal isOpen={formOpen} onClose={() => setFormOpen(false)} title={editTarget ? "Edit Jenis Dokumen" : "Tambah Jenis Dokumen"}>
+      <Modal isOpen={formOpen} onClose={() => setFormOpen(false)} title={editTarget ? "Ubah jenis dokumen" : "Tambah jenis dokumen"}>
         <div className="space-y-4">
           <div>
             <Label htmlFor="dt-name">Nama</Label>
@@ -171,9 +172,9 @@ export function DocumentTypeManager({
             <Textarea id="dt-desc" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
           {formError && (
-            <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+            <Notice tone="danger">
               {formError}
-            </div>
+            </Notice>
           )}
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="outline" onClick={() => setFormOpen(false)}>
@@ -188,14 +189,14 @@ export function DocumentTypeManager({
         </div>
       </Modal>
 
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus Jenis Dokumen">
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus jenis dokumen">
         <p className="text-sm text-slate-600">
           Apakah Anda yakin ingin menghapus <strong className="text-ink">{deleteTarget?.name}</strong>?
         </p>
         {deleteError && (
-          <div className="mt-3 rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+          <Notice tone="danger" className="mt-3">
             {deleteError}
-          </div>
+          </Notice>
         )}
         <div className="flex justify-end gap-2 mt-5">
           <Button variant="outline" onClick={() => setDeleteTarget(null)}>

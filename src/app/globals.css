@@ -194,3 +194,21 @@ textarea:focus-visible {
 
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* One table header style everywhere */
+.th-row {
+  text-align: left;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #64748b;
+  border-bottom: 1px solid #e3e8ef;
+}
+.th-row > th {
+  font-weight: 600;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+.dark .th-row {
+  color: #94a3b8;
+  border-color: #1e293b;
+}

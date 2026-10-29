@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 const HEALTH_DOT: Record<string, string> = { KRITIS: "#C2362F", WASPADA: "#D69E2E", ON_TRACK: "#2F855A", SELESAI: "#1671B8", BATAL: "#94A3B8" };
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-const tooltipStyle = { borderRadius: 8, border: "1px solid #E3E8EF", fontSize: 12, fontFamily: "var(--font-body)" };
+const tooltipStyle = { borderRadius: 8, border: "1px solid #E6EBF1", fontSize: 12, fontFamily: "var(--font-body)" };
 const juta = (v: number) => `${(v / 1e6).toLocaleString("id-ID", { maximumFractionDigits: 0 })}`;
 
 // ---------------------------------------------------------------------------
@@ -59,12 +59,11 @@ export function ProjectMapCard({ rows }: { rows: PortfolioRow[] }) {
         <CardTitle className="flex items-center gap-1.5">
           Peta lokasi project
           <InfoTip label="Keterangan peta lokasi">
-            Setiap titik satu project berjalan, warna sesuai kondisi, ukuran sesuai nilai kontrak. Titik ditempatkan pada koordinat project bila diisi, atau pada ibu kota
-            provinsi lokasi pekerjaan. Lokasi diisi melalui Edit project. Klik titik untuk membuka project.
+            Setiap titik adalah satu project berjalan. Warna menunjukkan kondisi, ukuran menunjukkan nilai kontrak. Lokasi diisi melalui Ubah project. Klik titik untuk membuka project.
           </InfoTip>
         </CardTitle>
         <p className="mt-0.5 text-[12.5px] text-slate-500">
-          {placed.length} project di {byProvince.length} lokasi{missing ? ` · ${missing} project belum diisi lokasinya` : ""}
+          {placed.length} project di {byProvince.length} lokasi{missing ? `, ${missing} project belum diisi lokasinya` : ""}
         </p>
       </div>
       <CardContent>
@@ -94,7 +93,7 @@ export function ProjectMapCard({ rows }: { rows: PortfolioRow[] }) {
               >
                 <p className="font-semibold text-ink dark:text-slate-100">{active.r.projectName}</p>
                 <p className="text-slate-500">
-                  {active.r.location?.province ?? "Koordinat project"} · {HEALTH_LABEL[active.r.summary.health]} · {formatRupiah(active.r.summary.contractValue, true)}
+                  {active.r.location?.province ?? "Koordinat project"}, {HEALTH_LABEL[active.r.summary.health]}, {formatRupiah(active.r.summary.contractValue, true)}
                 </p>
               </div>
             )}
@@ -180,15 +179,15 @@ export function ParetoCard({ cost, issues }: { cost: ParetoItem[]; issues: Paret
       </div>
       <CardContent>
         {data.length === 0 ? (
-          <p className="py-12 text-center text-sm text-slate-400">Tidak ada pembengkakan atau kendala yang tercatat.</p>
+          <p className="py-12 text-center text-sm text-slate-500">Tidak ada pembengkakan atau kendala yang tercatat.</p>
         ) : (
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={data} margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
-                <CartesianGrid stroke="#E9EDF2" vertical={false} />
-                <XAxis dataKey="label" interval={0} height={40} tick={<WrapTick />} axisLine={{ stroke: "#E3E8EF" }} tickLine={false} />
-                <YAxis yAxisId="v" tickFormatter={(v: number) => (mode === "cost" ? juta(v) : String(v))} tick={{ fontSize: 10, fill: "#5B6B7F" }} axisLine={false} tickLine={false} />
-                <YAxis yAxisId="c" orientation="right" domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 10, fill: "#5B6B7F" }} axisLine={false} tickLine={false} />
+                <CartesianGrid stroke="#E6EBF1" vertical={false} />
+                <XAxis dataKey="label" interval={0} height={40} tick={<WrapTick />} axisLine={{ stroke: "#E6EBF1" }} tickLine={false} />
+                <YAxis yAxisId="v" tickFormatter={(v: number) => (mode === "cost" ? juta(v) : String(v))} tick={{ fontSize: 10, fill: "#64748B" }} axisLine={false} tickLine={false} />
+                <YAxis yAxisId="c" orientation="right" domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 10, fill: "#64748B" }} axisLine={false} tickLine={false} />
                 <Tooltip
                   contentStyle={tooltipStyle}
                   formatter={(v, name, item) =>
@@ -200,7 +199,7 @@ export function ParetoCard({ cost, issues }: { cost: ParetoItem[]; issues: Paret
                 <ReferenceLine yAxisId="c" y={80} stroke="#94A3B8" strokeDasharray="4 4" label={{ value: "80%", position: "insideTopRight", fontSize: 10, fill: "#64748B" }} />
                 <Bar yAxisId="v" dataKey="value" name="Nilai" maxBarSize={40} radius={[3, 3, 0, 0]} isAnimationActive={false}>
                   {data.map((d, i) => (
-                    <Cell key={d.label} fill={i < vitalCount ? (mode === "cost" ? "#C2362F" : "#D97706") : "#CBD5E1"} />
+                    <Cell key={d.label} fill={i < vitalCount ? (mode === "cost" ? "#C2362F" : "#D69E2E") : "#CBD5E1"} />
                   ))}
                 </Bar>
                 <Line yAxisId="c" dataKey="cum" name="Kumulatif" stroke="#123F6B" strokeWidth={2} dot={{ r: 3, fill: "#123F6B" }} isAnimationActive={false} />
@@ -214,7 +213,7 @@ export function ParetoCard({ cost, issues }: { cost: ParetoItem[]; issues: Paret
 }
 
 /** Axis label broken over two lines so long cause names stay readable without rotating. */
-function WrapTick(props: { x?: number; y?: number; payload?: { value: string } }) {
+export function WrapTick(props: { x?: number; y?: number; payload?: { value: string } }) {
   const words = (props.payload?.value ?? "").split(" ");
   const lines: string[] = [""];
   for (const w of words) {
@@ -222,7 +221,7 @@ function WrapTick(props: { x?: number; y?: number; payload?: { value: string } }
     else lines[lines.length - 1] = (lines[lines.length - 1] + " " + w).trim();
   }
   return (
-    <text x={props.x} y={(props.y ?? 0) + 12} textAnchor="middle" fontSize={10.5} fill="#5B6B7F">
+    <text x={props.x} y={(props.y ?? 0) + 12} textAnchor="middle" fontSize={10.5} fill="#64748B">
       {lines.map((l, i) => (
         <tspan key={i} x={props.x} dy={i ? 12 : 0}>
           {l.length > 22 ? `${l.slice(0, 21)}…` : l}
@@ -251,7 +250,7 @@ export function CashflowCard({ months }: { months: CashflowMonth[] }) {
           Arus kas project
           <InfoTip label="Keterangan arus kas">
             Enam bulan terakhir: pembayaran termin yang diterima dan biaya yang keluar. Bulan ini dan enam bulan ke depan (batang bergaris tipis): invoice diharapkan dibayar
-            pada jatuh tempo (yang sudah lewat dihitung bulan ini), termin yang belum ditagih pada rencana tanggal tagih, dan sisa biaya (prakiraan biaya akhir dikurangi
+            pada jatuh tempo (yang sudah lewat dihitung bulan ini), termin yang belum ditagih pada rencana tanggal tagih, dan sisa biaya (proyeksi biaya akhir dikurangi
             biaya keluar) disebar mengikuti rencana progres. Garis = saldo kumulatif.
           </InfoTip>
         </CardTitle>
@@ -275,9 +274,9 @@ export function CashflowCard({ months }: { months: CashflowMonth[] }) {
                   <line x1="0" y1="0" x2="0" y2="6" stroke="#C2362F" strokeWidth="3" />
                 </pattern>
               </defs>
-              <CartesianGrid stroke="#E9EDF2" vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 10.5, fill: "#5B6B7F" }} axisLine={{ stroke: "#E3E8EF" }} tickLine={false} interval={0} />
-              <YAxis tickFormatter={juta} tick={{ fontSize: 10, fill: "#5B6B7F" }} axisLine={false} tickLine={false} />
+              <CartesianGrid stroke="#E6EBF1" vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 10.5, fill: "#64748B" }} axisLine={{ stroke: "#E6EBF1" }} tickLine={false} interval={0} />
+              <YAxis tickFormatter={juta} tick={{ fontSize: 10, fill: "#64748B" }} axisLine={false} tickLine={false} />
               <Tooltip
                 contentStyle={tooltipStyle}
                 formatter={(v, name) => [formatRupiah(Math.abs(Number(v)), true), name]}
@@ -302,7 +301,7 @@ export function CashflowCard({ months }: { months: CashflowMonth[] }) {
         <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[11.5px] text-slate-600 dark:text-slate-300">
           <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-[#2F855A]" />Kas masuk</span>
           <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-[#C2362F]" />Kas keluar</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm border border-slate-400 bg-[repeating-linear-gradient(45deg,#cbd5e1_0_2px,transparent_2px_4px)]" />Proyeksi</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm border border-slate-400 bg-[repeating-linear-gradient(45deg,#CBD5E1_0_2px,transparent_2px_4px)]" />Proyeksi</span>
           <span className="inline-flex items-center gap-1.5"><span className="w-4 border-t-2 border-[#123F6B]" />Saldo kumulatif (Rp juta)</span>
         </div>
       </CardContent>
@@ -319,8 +318,8 @@ const KIND: Record<CalendarEvent["kind"], { label: string; color: string }> = {
   TERM: { label: "Rencana tagih", color: "#2F855A" },
   MILESTONE: { label: "Milestone", color: "#1671B8" },
   END: { label: "Target selesai", color: "#123F6B" },
-  ISSUE: { label: "Tindak lanjut kendala", color: "#D97706" },
-  CERT: { label: "Sertifikat berakhir", color: "#7C3AED" },
+  ISSUE: { label: "Tindak lanjut kendala", color: "#D69E2E" },
+  CERT: { label: "Sertifikat berakhir", color: "#64748B" },
   HSE: { label: "Laporan HSE", color: "#0E7490" },
 };
 const DAYS = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
@@ -356,8 +355,7 @@ export function CalendarCard({ events, today }: { events: CalendarEvent[]; today
           <CardTitle className="flex items-center gap-1.5">
             Kalender kegiatan
             <InfoTip label="Keterangan kalender">
-              Tanggal penting seluruh project berjalan: rencana tagih termin, jatuh tempo invoice, milestone, target tindak lanjut kendala, target selesai project, sertifikat
-              personil yang berakhir saat bertugas, dan batas laporan HSE (tanggal 5). Klik tanggal untuk melihat rinciannya.
+              Tanggal penting project berjalan: penagihan termin, jatuh tempo invoice, milestone, tindak lanjut kendala, target selesai, sertifikasi personil yang berakhir, dan batas laporan HSE. Klik tanggal untuk melihat rincian.
             </InfoTip>
           </CardTitle>
           <p className={cn("mt-0.5 text-[12.5px]", lateCount ? "text-signal-expired" : "text-slate-500")}>{lateCount ? `${lateCount} kegiatan sudah lewat tanggalnya dan belum selesai` : "Tidak ada kegiatan yang terlewat"}</p>
@@ -433,7 +431,7 @@ export function CalendarCard({ events, today }: { events: CalendarEvent[]; today
           <div className="min-w-0">
             <p className="mb-1.5 text-[12.5px] font-semibold text-ink dark:text-slate-100">{selected ? shortDate(Date.parse(selected)) : `Agenda ${MONTHS[cursor.m]} ${cursor.y}`}</p>
             {agenda.length === 0 ? (
-              <p className="py-6 text-center text-sm text-slate-400">Tidak ada kegiatan.</p>
+              <p className="py-6 text-center text-sm text-slate-500">Tidak ada kegiatan.</p>
             ) : (
               <ul className="max-h-80 divide-y divide-line overflow-y-auto pr-1 dark:divide-slate-800">
                 {agenda.map((e, i) => (
@@ -490,19 +488,19 @@ export function PerformanceTrendCard({ weeks }: { weeks: import("@/lib/portfolio
         <div className="h-40">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-              <CartesianGrid stroke="#E9EDF2" vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#5B6B7F" }} axisLine={{ stroke: "#E3E8EF" }} tickLine={false} minTickGap={10} />
-              <YAxis domain={["dataMin - 0.05", "dataMax + 0.05"]} tickFormatter={(v: number) => v.toLocaleString("id-ID", { maximumFractionDigits: 2 })} tick={{ fontSize: 10, fill: "#5B6B7F" }} axisLine={false} tickLine={false} />
+              <CartesianGrid stroke="#E6EBF1" vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#64748B" }} axisLine={{ stroke: "#E6EBF1" }} tickLine={false} minTickGap={10} />
+              <YAxis domain={["dataMin - 0.05", "dataMax + 0.05"]} tickFormatter={(v: number) => v.toLocaleString("id-ID", { maximumFractionDigits: 2 })} tick={{ fontSize: 10, fill: "#64748B" }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={tooltipStyle} formatter={(v, n) => [Number(v).toLocaleString("id-ID", { minimumFractionDigits: 2 }), n]} />
               <ReferenceLine y={1} stroke="#94A3B8" strokeDasharray="4 4" />
               <Line dataKey="spi" name="Kinerja waktu" stroke="#1671B8" strokeWidth={2.5} dot={{ r: 2.5 }} connectNulls isAnimationActive={false} />
-              <Line dataKey="cpi" name="Kinerja biaya" stroke="#D97706" strokeWidth={2.5} dot={{ r: 2.5 }} connectNulls isAnimationActive={false} />
+              <Line dataKey="cpi" name="Kinerja biaya" stroke="#123F6B" strokeWidth={2.5} dot={{ r: 2.5 }} connectNulls isAnimationActive={false} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
         <div className="mt-1 flex gap-3 text-[11.5px] text-slate-600 dark:text-slate-300">
           <span className="inline-flex items-center gap-1.5"><span className="w-4 border-t-2 border-[#1671B8]" />Waktu</span>
-          <span className="inline-flex items-center gap-1.5"><span className="w-4 border-t-2 border-[#D97706]" />Biaya</span>
+          <span className="inline-flex items-center gap-1.5"><span className="w-4 border-t-2 border-[#123F6B]" />Biaya</span>
           <span className="inline-flex items-center gap-1.5"><span className="w-4 border-t border-dashed border-slate-400" />1 = sesuai</span>
         </div>
       </CardContent>

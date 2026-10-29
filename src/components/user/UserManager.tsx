@@ -11,6 +11,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { createUserSchema, updateUserSchema, type CreateUserInput, type UpdateUserInput } from "@/lib/validations";
 import { formatDate } from "@/lib/utils";
+import { Notice } from "@/components/ui/Notice";
 
 type UserItem = {
   id: string;
@@ -118,7 +119,7 @@ export function UserManager({
         <p className="text-sm text-slate-500">{users.length} pengguna terdaftar</p>
         <Button onClick={openAdd}>
           <Plus className="h-4 w-4" />
-          Tambah Pengguna
+          Tambah pengguna
         </Button>
       </div>
 
@@ -127,7 +128,7 @@ export function UserManager({
           {users.map((user) => (
             <div key={user.id} className="flex items-center justify-between px-5 py-3.5 gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="h-9 w-9 rounded-full bg-ink text-white flex items-center justify-center text-xs font-semibold font-mono shrink-0">
+                <div className="h-9 w-9 rounded-full bg-brand-blueDark text-white flex items-center justify-center text-xs font-semibold font-mono shrink-0">
                   {user.name
                     .split(" ")
                     .map((w) => w[0])
@@ -159,12 +160,12 @@ export function UserManager({
                   }`}
                 >
                   {user.role === "ADMIN" ? <ShieldCheck className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                  {user.role === "ADMIN" ? "Administrator" : user.role === "PIC" ? "PIC Project" : "Viewer"}
+                  {user.role === "ADMIN" ? "Administrator" : user.role === "PIC" ? "PIC project" : "Viewer"}
                 </span>
                 <button
                   onClick={() => openEdit(user)}
                   className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
-                  aria-label="Edit pengguna"
+                  aria-label="Ubah pengguna"
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
@@ -187,11 +188,11 @@ export function UserManager({
 
       <p className="text-xs text-slate-400 flex items-center gap-1.5">
         <UserCircle2 className="h-3.5 w-3.5" />
-        Administrator memiliki akses penuh. Viewer hanya dapat melihat data, mengunduh dokumen, dan melihat histori — tidak dapat menambah, mengubah, atau menghapus data.
+        Administrator dapat mengelola seluruh data. Viewer hanya dapat melihat dan mengunduh.
       </p>
 
       {/* Add User Modal */}
-      <Modal isOpen={addOpen} onClose={() => setAddOpen(false)} title="Tambah Pengguna">
+      <Modal isOpen={addOpen} onClose={() => setAddOpen(false)} title="Tambah pengguna">
         <form onSubmit={addForm.handleSubmit(onAdd)} className="space-y-4" noValidate>
           <div>
             <Label htmlFor="add-name">Nama</Label>
@@ -207,7 +208,7 @@ export function UserManager({
             />
           </div>
           <div>
-            <Label htmlFor="add-password">Password</Label>
+            <Label htmlFor="add-password">Kata sandi</Label>
             <Input
               id="add-password"
               type="password"
@@ -216,17 +217,17 @@ export function UserManager({
             />
           </div>
           <div>
-            <Label htmlFor="add-role">Role</Label>
+            <Label htmlFor="add-role">Peran</Label>
             <Select id="add-role" error={addForm.formState.errors.role?.message} {...addForm.register("role")}>
               <option value="VIEWER">Viewer</option>
               <option value="ADMIN">Administrator</option>
-              <option value="PIC">PIC Project (hanya update progres project miliknya)</option>
+              <option value="PIC">PIC Project (hanya pembaruan progres project miliknya)</option>
             </Select>
           </div>
           {serverError && (
-            <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+            <Notice tone="danger">
               {serverError}
-            </div>
+            </Notice>
           )}
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>
@@ -240,7 +241,7 @@ export function UserManager({
       </Modal>
 
       {/* Edit User Modal */}
-      <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} title="Edit Pengguna">
+      <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} title="Ubah pengguna">
         <form onSubmit={editForm.handleSubmit(onEdit)} className="space-y-4" noValidate>
           <div>
             <Label htmlFor="edit-name">Nama</Label>
@@ -251,7 +252,7 @@ export function UserManager({
             <Input value={editTarget?.email || ""} disabled className="bg-slate-50 text-slate-400" />
           </div>
           <div>
-            <Label htmlFor="edit-password">Password Baru (opsional)</Label>
+            <Label htmlFor="edit-password">Kata sandi baru (opsional)</Label>
             <Input
               id="edit-password"
               type="password"
@@ -261,7 +262,7 @@ export function UserManager({
             />
           </div>
           <div>
-            <Label htmlFor="edit-role">Role</Label>
+            <Label htmlFor="edit-role">Peran</Label>
             <Select
               id="edit-role"
               disabled={editTarget?.id === currentUserId}
@@ -270,7 +271,7 @@ export function UserManager({
             >
               <option value="VIEWER">Viewer</option>
               <option value="ADMIN">Administrator</option>
-              <option value="PIC">PIC Project (hanya update progres project miliknya)</option>
+              <option value="PIC">PIC Project (hanya pembaruan progres project miliknya)</option>
             </Select>
           </div>
           <label className="flex items-center gap-2 text-sm text-slate-600">
@@ -286,9 +287,9 @@ export function UserManager({
             <p className="text-xs text-slate-400">Bergabung sejak {formatDate(editTarget.createdAt)}</p>
           )}
           {serverError && (
-            <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+            <Notice tone="danger">
               {serverError}
-            </div>
+            </Notice>
           )}
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="outline" onClick={() => setEditTarget(null)}>
@@ -302,14 +303,14 @@ export function UserManager({
       </Modal>
 
       {/* Delete Confirmation */}
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus Pengguna">
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus pengguna">
         <p className="text-sm text-slate-600">
           Apakah Anda yakin ingin menghapus pengguna <strong className="text-ink">{deleteTarget?.name}</strong>?
         </p>
         {deleteError && (
-          <div className="mt-3 rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+          <Notice tone="danger" className="mt-3">
             {deleteError}
-          </div>
+          </Notice>
         )}
         <div className="flex justify-end gap-2 mt-5">
           <Button variant="outline" onClick={() => setDeleteTarget(null)}>

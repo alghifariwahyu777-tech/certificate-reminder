@@ -222,7 +222,7 @@ export async function importCertificatesFromExcel(buffer: Buffer): Promise<Impor
           status: "SKIPPED",
           message: existing.deletedAt
             ? "Nomor sertifikat sudah dipakai oleh sertifikat di Trash."
-            : "Nomor sertifikat sudah ada — dilewati.",
+            : "Nomor sertifikat sudah ada, dilewati.",
         });
         continue;
       }

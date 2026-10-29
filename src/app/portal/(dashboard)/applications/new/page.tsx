@@ -12,7 +12,7 @@ export default async function NewApplicationPage() {
     <div className="p-5 md:p-8 max-w-xl space-y-4">
       <div>
         <h1 className="font-display text-xl font-semibold text-ink dark:text-slate-100">
-          Ajukan Sertifikasi Baru
+          Ajukan sertifikasi baru
         </h1>
         <p className="text-sm text-slate-500 mt-0.5">
           Pilih layanan dan isi data kontak. Anda bisa mengunggah dokumen di langkah berikutnya.

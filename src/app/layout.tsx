@@ -7,7 +7,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Reminder System | PT Sucofindo (Persero)",
   description:
-    "Ensuring Quality, Protecting Trust — sistem internal untuk mengelola dan memantau masa berlaku sertifikat klien PT Sucofindo (Persero).",
+    "Ensuring Quality, Protecting Trust, sistem internal untuk mengelola dan memantau masa berlaku sertifikat klien PT Sucofindo (Persero).",
   icons: { icon: "/brand/logo-sucofindo-icon.png" },
 };
 

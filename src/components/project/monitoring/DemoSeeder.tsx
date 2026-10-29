@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { Notice } from "@/components/ui/Notice";
 
 /** Fills the remaining demo projects in short API steps, then reloads the page data. */
 export function DemoSeeder({ present, total }: { present: number; total: number }) {
@@ -29,7 +30,7 @@ export function DemoSeeder({ present, total }: { present: number; total: number 
     })();
   }, [router]);
 
-  if (error) return <div className="rounded-lg border border-signal-expiredBorder bg-signal-expiredBg px-4 py-2.5 text-[13px] text-signal-expired">{error}</div>;
+  if (error) return <Notice tone="danger">{error}</Notice>;
   return (
     <div className="flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2.5 text-[13px] text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
       <Loader2 className="h-4 w-4 animate-spin text-accent" />

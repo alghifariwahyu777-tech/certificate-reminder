@@ -5,6 +5,7 @@ import { SettingsForm } from "@/components/settings/SettingsForm";
 import { ProjectMonitoringSettingsForm } from "@/components/settings/ProjectMonitoringSettingsForm";
 import { getMonitoringThresholds } from "@/lib/project-monitoring";
 import { WeeklyReportSettingsForm } from "@/components/settings/WeeklyReportSettingsForm";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function SettingsPage() {
   const session = await getSession();
@@ -15,11 +16,11 @@ export default async function SettingsPage() {
     <>
       <Navbar
         title="Pengaturan"
-        subtitle="Pengaturan umum aplikasi"
+        subtitle="Pengaturan umum sistem"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}
       />
-      <div className="p-5 md:p-8 max-w-2xl space-y-6">
+      <PageBody width="form">
         <SettingsForm
           canManage={session?.role === "ADMIN"}
           initialWhatsappNumber={settings?.adminWhatsappNumber || ""}
@@ -35,7 +36,7 @@ export default async function SettingsPage() {
             picUpdateRequestDay: settings?.picUpdateRequestDay ?? 1,
           }}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

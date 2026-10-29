@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { STAGE_TYPES } from "@/lib/validations";
+import { Notice } from "@/components/ui/Notice";
 
 type DocumentTypeOption = { id: string; name: string };
 
@@ -35,13 +36,13 @@ type StageItem = {
 
 const STAGE_TYPE_LABELS: Record<string, string> = {
   APPLICATION: "Permohonan",
-  DOCUMENT_REVIEW: "Review Dokumen",
+  DOCUMENT_REVIEW: "Review dokumen",
   PREPARATION: "Persiapan",
   AUDIT: "Audit",
   ASSESSMENT: "Assessment",
-  CERTIFICATION_DECISION: "Keputusan Sertifikasi",
-  CERTIFICATE_ISSUANCE: "Penerbitan Sertifikat",
-  SURVEILLANCE: "Surveillance",
+  CERTIFICATION_DECISION: "Keputusan sertifikasi",
+  CERTIFICATE_ISSUANCE: "Penerbitan sertifikat",
+  SURVEILLANCE: "Surveilans",
   COMPLETED: "Selesai",
   CUSTOM: "Kustom",
 };
@@ -270,8 +271,7 @@ export function ServiceDetailManager({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-slate-400" />
-            <CardTitle>Persyaratan Dokumen</CardTitle>
+            <CardTitle>Persyaratan dokumen</CardTitle>
           </div>
           {canManage && (
             <Button size="sm" onClick={openAddReq} disabled={documentTypeOptions.length === 0}>
@@ -285,13 +285,13 @@ export function ServiceDetailManager({
             <p className="px-5 py-4 text-xs text-signal-soon bg-signal-soonBg">
               Belum ada Jenis Dokumen di master data. Tambahkan dulu di halaman{" "}
               <a href="/document-types" className="underline font-medium">
-                Document Types
+                Jenis dokumen
               </a>
               .
             </p>
           )}
           {requirements.length === 0 ? (
-            <p className="px-5 py-8 text-center text-sm text-slate-400">Belum ada persyaratan dokumen.</p>
+            <p className="px-5 py-8 text-center text-sm text-slate-500">Belum ada persyaratan dokumen.</p>
           ) : (
             <div className="divide-y divide-slate-100">
               {requirements.map((r) => (
@@ -310,7 +310,7 @@ export function ServiceDetailManager({
                       </span>
                     </div>
                     <p className="text-xs text-slate-400 font-mono mt-0.5">
-                      {r.allowedFileTypes} · maks {r.maxFileSizeMB}MB
+                      {r.allowedFileTypes}, maks {r.maxFileSizeMB}MB
                     </p>
                   </div>
                   {canManage && (
@@ -318,7 +318,7 @@ export function ServiceDetailManager({
                       <button
                         onClick={() => openEditReq(r)}
                         className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
-                        aria-label="Edit persyaratan"
+                        aria-label="Ubah persyaratan"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
@@ -341,8 +341,7 @@ export function ServiceDetailManager({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
-            <Workflow className="h-4 w-4 text-slate-400" />
-            <CardTitle>Tahap Workflow</CardTitle>
+            <CardTitle>Tahap workflow</CardTitle>
           </div>
           {canManage && (
             <Button size="sm" onClick={openAddStage}>
@@ -353,13 +352,13 @@ export function ServiceDetailManager({
         </CardHeader>
         <CardContent className="p-0">
           {stages.length === 0 ? (
-            <p className="px-5 py-8 text-center text-sm text-slate-400">Belum ada tahap workflow.</p>
+            <p className="px-5 py-8 text-center text-sm text-slate-500">Belum ada tahap workflow.</p>
           ) : (
             <div className="divide-y divide-slate-100">
               {stages.map((s) => (
                 <div key={s.id} className="flex items-center justify-between px-5 py-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="h-6 w-6 rounded-full bg-ink text-white text-xs font-mono flex items-center justify-center shrink-0">
+                    <span className="h-6 w-6 rounded-full bg-brand-blueDark text-white text-xs flex items-center justify-center shrink-0">
                       {s.sequence}
                     </span>
                     <div className="min-w-0">
@@ -373,8 +372,8 @@ export function ServiceDetailManager({
                       </div>
                       <p className="text-xs text-slate-400 font-mono mt-0.5">
                         {STAGE_TYPE_LABELS[s.stageType] || s.stageType}
-                        {s.slaDays ? ` · SLA ${s.slaDays} hari` : ""}
-                        {s.picRole ? ` · ${s.picRole}` : ""}
+                        {s.slaDays ? `, SLA ${s.slaDays} hari` : ""}
+                        {s.picRole ? `, ${s.picRole}` : ""}
                       </p>
                     </div>
                   </div>
@@ -383,7 +382,7 @@ export function ServiceDetailManager({
                       <button
                         onClick={() => openEditStage(s)}
                         className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
-                        aria-label="Edit tahap"
+                        aria-label="Ubah tahap"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
@@ -406,11 +405,11 @@ export function ServiceDetailManager({
       <Modal
         isOpen={reqFormOpen}
         onClose={() => setReqFormOpen(false)}
-        title={reqEditTarget ? "Edit Persyaratan" : "Tambah Persyaratan"}
+        title={reqEditTarget ? "Ubah persyaratan" : "Tambah persyaratan"}
       >
         <div className="space-y-4">
           <div>
-            <Label htmlFor="req-doctype">Jenis Dokumen</Label>
+            <Label htmlFor="req-doctype">Jenis dokumen</Label>
             <Select
               id="req-doctype"
               value={reqDocumentTypeId}
@@ -435,11 +434,11 @@ export function ServiceDetailManager({
           </label>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="req-filetypes">Tipe File (pisah koma)</Label>
+              <Label htmlFor="req-filetypes">Tipe file (pisah koma)</Label>
               <Input id="req-filetypes" value={reqFileTypes} onChange={(e) => setReqFileTypes(e.target.value)} />
             </div>
             <div>
-              <Label htmlFor="req-maxsize">Maks Ukuran (MB)</Label>
+              <Label htmlFor="req-maxsize">Maks ukuran (MB)</Label>
               <Input
                 id="req-maxsize"
                 type="number"
@@ -450,7 +449,7 @@ export function ServiceDetailManager({
             </div>
           </div>
           <div>
-            <Label htmlFor="req-order">Urutan Tampil</Label>
+            <Label htmlFor="req-order">Urutan tampil</Label>
             <Input
               id="req-order"
               type="number"
@@ -460,9 +459,9 @@ export function ServiceDetailManager({
             />
           </div>
           {reqError && (
-            <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+            <Notice tone="danger">
               {reqError}
-            </div>
+            </Notice>
           )}
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="outline" onClick={() => setReqFormOpen(false)}>
@@ -475,7 +474,7 @@ export function ServiceDetailManager({
         </div>
       </Modal>
 
-      <Modal isOpen={!!reqDeleteTarget} onClose={() => setReqDeleteTarget(null)} title="Hapus Persyaratan">
+      <Modal isOpen={!!reqDeleteTarget} onClose={() => setReqDeleteTarget(null)} title="Hapus persyaratan">
         <p className="text-sm text-slate-600">
           Hapus persyaratan dokumen <strong>{reqDeleteTarget?.documentTypeName}</strong>?
         </p>
@@ -492,13 +491,13 @@ export function ServiceDetailManager({
       <Modal
         isOpen={stageFormOpen}
         onClose={() => setStageFormOpen(false)}
-        title={stageEditTarget ? "Edit Tahap Workflow" : "Tambah Tahap Workflow"}
+        title={stageEditTarget ? "Ubah tahap workflow" : "Tambah tahap workflow"}
         maxWidth="max-w-lg"
       >
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="stage-name">Nama Tahap</Label>
+              <Label htmlFor="stage-name">Nama tahap</Label>
               <Input id="stage-name" value={stageName} onChange={(e) => setStageName(e.target.value)} />
             </div>
             <div>
@@ -513,7 +512,7 @@ export function ServiceDetailManager({
             </div>
           </div>
           <div>
-            <Label htmlFor="stage-type">Tipe Tahap</Label>
+            <Label htmlFor="stage-type">Tipe tahap</Label>
             <Select id="stage-type" value={stageType} onChange={(e) => setStageType(e.target.value)}>
               {STAGE_TYPES.map((t) => (
                 <option key={t} value={t}>
@@ -528,7 +527,7 @@ export function ServiceDetailManager({
               <Input id="stage-sla" type="number" min={0} value={stageSla} onChange={(e) => setStageSla(e.target.value)} />
             </div>
             <div>
-              <Label htmlFor="stage-pic">PIC Role (opsional)</Label>
+              <Label htmlFor="stage-pic">Peran PIC (opsional)</Label>
               <Input id="stage-pic" value={stagePicRole} onChange={(e) => setStagePicRole(e.target.value)} />
             </div>
           </div>
@@ -554,9 +553,9 @@ export function ServiceDetailManager({
             </div>
           )}
           {stageError && (
-            <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+            <Notice tone="danger">
               {stageError}
-            </div>
+            </Notice>
           )}
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="outline" onClick={() => setStageFormOpen(false)}>
@@ -569,7 +568,7 @@ export function ServiceDetailManager({
         </div>
       </Modal>
 
-      <Modal isOpen={!!stageDeleteTarget} onClose={() => setStageDeleteTarget(null)} title="Hapus Tahap Workflow">
+      <Modal isOpen={!!stageDeleteTarget} onClose={() => setStageDeleteTarget(null)} title="Hapus tahap workflow">
         <p className="text-sm text-slate-600">
           Hapus tahap <strong>{stageDeleteTarget?.name}</strong>?
         </p>

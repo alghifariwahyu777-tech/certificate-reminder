@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { NotificationList } from "@/components/notification/NotificationList";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function NotificationsPage() {
   const session = await getSession();
@@ -9,13 +10,13 @@ export default async function NotificationsPage() {
     <>
       <Navbar
         title="Notifikasi"
-        subtitle="Sertifikat yang mendekati atau telah melewati masa berlaku"
+        subtitle="Data yang mendekati atau melewati tanggal berakhir"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}
       />
-      <div className="p-5 md:p-8 max-w-3xl">
+      <PageBody>
         <NotificationList />
-      </div>
+      </PageBody>
     </>
   );
 }

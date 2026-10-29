@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { EquipmentCategoryManager } from "@/components/equipment/EquipmentCategoryManager";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function EquipmentCategoriesPage() {
   const session = await getSession();
@@ -17,16 +18,16 @@ export default async function EquipmentCategoriesPage() {
     <>
       <Navbar
         title="Kategori Alat"
-        subtitle="Kelompok jenis alat (mis. Alat Ukur Listrik, Alat Ukur Dimensi)"
+        subtitle="Kelompok jenis alat"
         adminName={session.name}
         role={session.role}
       />
-      <div className="p-5 md:p-8">
+      <PageBody>
         <EquipmentCategoryManager
           initialCategories={categories.map((c) => ({ id: c.id, name: c.name, equipmentCount: c._count.equipment }))}
           canManage={session.role === "ADMIN"}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

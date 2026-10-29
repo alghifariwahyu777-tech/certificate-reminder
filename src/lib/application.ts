@@ -12,8 +12,8 @@ export async function generateApplicationNumber(): Promise<string> {
 export const APPLICATION_STATUS_LABELS: Record<string, string> = {
   DRAFT: "Draft",
   SUBMITTED: "Diajukan",
-  DOCUMENT_REVIEW: "Review Dokumen",
-  REVISION_REQUIRED: "Perlu Revisi",
+  DOCUMENT_REVIEW: "Pemeriksaan dokumen",
+  REVISION_REQUIRED: "Perlu revisi",
   APPROVED: "Disetujui",
   REJECTED: "Ditolak",
   CANCELLED: "Dibatalkan",
@@ -34,8 +34,8 @@ export const APPLICATION_STATUS_COLORS: Record<string, string> = {
 // --- Phase 6: Tracking ---
 
 export const STAGE_STATUS_LABELS: Record<string, string> = {
-  PENDING: "Belum Dimulai",
-  IN_PROGRESS: "Sedang Berjalan",
+  PENDING: "Belum dimulai",
+  IN_PROGRESS: "Sedang berjalan",
   COMPLETED: "Selesai",
 };
 

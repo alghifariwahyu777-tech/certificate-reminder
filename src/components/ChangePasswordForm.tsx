@@ -8,6 +8,7 @@ import { changePasswordSchema, type ChangePasswordInput } from "@/lib/validation
 import { Input, Label } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
+import { Notice } from "@/components/ui/Notice";
 
 export function ChangePasswordForm() {
   const { showToast } = useToast();
@@ -29,17 +30,17 @@ export function ChangePasswordForm() {
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setServerError(body.message || "Gagal mengubah password.");
+      setServerError(body.message || "Gagal mengubah kata sandi.");
       return;
     }
-    showToast("Password berhasil diubah.");
+    showToast("Kata sandi berhasil diubah.");
     reset();
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
       <div>
-        <Label htmlFor="currentPassword">Password Saat Ini</Label>
+        <Label htmlFor="currentPassword">Kata sandi saat ini</Label>
         <Input
           id="currentPassword"
           type="password"
@@ -49,7 +50,7 @@ export function ChangePasswordForm() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="newPassword">Password Baru</Label>
+          <Label htmlFor="newPassword">Kata sandi baru</Label>
           <Input
             id="newPassword"
             type="password"
@@ -58,7 +59,7 @@ export function ChangePasswordForm() {
           />
         </div>
         <div>
-          <Label htmlFor="confirmPassword">Konfirmasi Password Baru</Label>
+          <Label htmlFor="confirmPassword">Konfirmasi kata sandi baru</Label>
           <Input
             id="confirmPassword"
             type="password"
@@ -69,14 +70,14 @@ export function ChangePasswordForm() {
       </div>
 
       {serverError && (
-        <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+        <Notice tone="danger">
           {serverError}
-        </div>
+        </Notice>
       )}
 
       <Button type="submit" isLoading={isSubmitting}>
         <KeyRound className="h-4 w-4" />
-        Ubah Password
+        Ubah kata sandi
       </Button>
     </form>
   );

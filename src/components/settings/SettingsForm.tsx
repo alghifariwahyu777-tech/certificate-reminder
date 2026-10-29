@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input, Label } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
+import { Notice } from "@/components/ui/Notice";
 
 export function SettingsForm({
   initialWhatsappNumber,
@@ -59,23 +60,23 @@ export function SettingsForm({
             />
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Format internasional tanpa tanda "+" atau spasi (contoh: kode negara Indonesia 62,
-            lalu nomor tanpa angka 0 di depan — 081234567890 ditulis 6281234567890). Nomor ini
-            ditampilkan sebagai tombol "Hubungi Admin" di Client Portal.
+            Tulis dengan kode negara, tanpa "+" dan spasi. Contoh: 081234567890 ditulis 6281234567890. Nomor ini dipakai tombol "Hubungi admin" di Portal Klien.
           </p>
         </div>
 
         {error && (
-          <div className="rounded border border-signal-expiredBorder bg-signal-expiredBg px-3 py-2 text-sm text-signal-expired">
+          <Notice tone="danger">
             {error}
-          </div>
+          </Notice>
         )}
 
         {canManage && (
-          <Button onClick={handleSave} isLoading={saving}>
-            <Save className="h-4 w-4" />
-            Simpan
-          </Button>
+          <div className="flex justify-end">
+            <Button onClick={handleSave} isLoading={saving}>
+              <Save className="h-4 w-4" />
+              Simpan
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>

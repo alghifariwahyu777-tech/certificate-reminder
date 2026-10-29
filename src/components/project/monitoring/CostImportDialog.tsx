@@ -11,7 +11,7 @@ import type { ImportPreview } from "@/lib/project-cost-import";
 import { FormError, fmtDate } from "./shared";
 
 /** Upload → preview (what will be added / skipped / is wrong) → confirm. */
-export function CostImportDialog({ projectId, label = "Import Excel Biaya & RAB" }: { projectId?: string; label?: string }) {
+export function CostImportDialog({ projectId, label = "Impor Excel biaya dan RAB", size = "sm" }: { projectId?: string; label?: string; size?: "sm" | "md" }) {
   const router = useRouter();
   const { showToast } = useToast();
   const [open, setOpen] = useState(false);
@@ -56,7 +56,7 @@ export function CostImportDialog({ projectId, label = "Import Excel Biaya & RAB"
 
   return (
     <>
-      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+      <Button size={size} variant="outline" className="w-full" onClick={() => setOpen(true)}>
         <FileSpreadsheet className="h-4 w-4" />
         {label}
       </Button>
@@ -78,7 +78,7 @@ export function CostImportDialog({ projectId, label = "Import Excel Biaya & RAB"
               </p>
               <a href="/api/projects/cost-import/template" className="inline-flex items-center gap-1.5 text-accent hover:underline">
                 <Download className="h-4 w-4" />
-                Unduh template Excel (berisi petunjuk & daftar no. project)
+                Unduh template Excel (berisi petunjuk dan daftar nomor project)
               </a>
               <label className="flex items-center gap-2 rounded border border-dashed border-slate-300 dark:border-slate-600 px-3 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
                 <Upload className="h-4 w-4 text-slate-400" />
@@ -88,7 +88,7 @@ export function CostImportDialog({ projectId, label = "Import Excel Biaya & RAB"
               <FormError message={error} />
               <div className="flex justify-end">
                 <Button disabled={!file} isLoading={busy} onClick={() => file && send(file, false)}>
-                  Periksa File
+                  Periksa file
                 </Button>
               </div>
             </>
@@ -105,7 +105,7 @@ export function CostImportDialog({ projectId, label = "Import Excel Biaya & RAB"
                 <div className="rounded border border-slate-200 dark:border-slate-700 px-3 py-2">
                   <p className="text-xs text-slate-500">Biaya baru</p>
                   <p className="font-semibold text-ink dark:text-slate-100">
-                    {costNew.length} baris · {formatRupiah(costNew.reduce((s, c) => s + c.amount, 0), true)}
+                    {costNew.length} baris, {formatRupiah(costNew.reduce((s, c) => s + c.amount, 0), true)}
                   </p>
                 </div>
                 <div className="rounded border border-slate-200 dark:border-slate-700 px-3 py-2">
@@ -125,8 +125,8 @@ export function CostImportDialog({ projectId, label = "Import Excel Biaya & RAB"
                     {preview.budgetProjects.map((b) => (
                       <li key={b.projectNumber} className="text-slate-600 dark:text-slate-300">
                         {b.projectName} ({b.projectNumber}): {formatRupiah(b.total)}
-                        {b.replaces ? ` — menggantikan ${b.replaces} baris RAB lama` : ""}
-                        {b.locksBaseline && <span className="ml-1 text-accent">· dijadikan baseline (rencana awal)</span>}
+                        {b.replaces ? `, menggantikan ${b.replaces} baris RAB lama` : ""}
+                        {b.locksBaseline && <span className="ml-1 text-accent">(dijadikan baseline atau rencana awal)</span>}
                       </li>
                     ))}
                   </ul>

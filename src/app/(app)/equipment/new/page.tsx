@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { EquipmentForm } from "@/components/equipment/EquipmentForm";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function NewEquipmentPage() {
   const session = await getSession();
@@ -16,13 +17,13 @@ export default async function NewEquipmentPage() {
 
   return (
     <>
-      <Navbar title="Tambah Alat" subtitle="Daftarkan alat baru untuk dimonitor kalibrasinya" adminName={session.name} role={session.role} />
-      <div className="p-5 md:p-8">
+      <Navbar title="Tambah Alat" subtitle="Daftarkan alat untuk dipantau jadwal kalibrasinya" adminName={session.name} role={session.role} />
+      <PageBody width="form">
         <EquipmentForm
           employees={employees.map((e) => ({ id: e.id, name: e.name, employeeId: e.employeeId }))}
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

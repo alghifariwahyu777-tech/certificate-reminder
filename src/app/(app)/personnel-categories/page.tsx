@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { PersonnelCategoryManager } from "@/components/personnel/PersonnelCategoryManager";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function PersonnelCategoriesPage() {
   const session = await getSession();
@@ -14,11 +15,11 @@ export default async function PersonnelCategoriesPage() {
     <>
       <Navbar
         title="Kategori Sertifikasi"
-        subtitle="Kelola daftar kategori kompetensi/sertifikasi internal"
+        subtitle="Kelompok sertifikasi personil"
         adminName={session?.name || "Admin"}
         role={session?.role || "ADMIN"}
       />
-      <div className="p-5 md:p-8 max-w-3xl">
+      <PageBody>
         <PersonnelCategoryManager
           canManage={session?.role === "ADMIN"}
           initialCategories={categories.map((c) => ({
@@ -27,7 +28,7 @@ export default async function PersonnelCategoriesPage() {
             certificationCount: c._count.certifications,
           }))}
         />
-      </div>
+      </PageBody>
     </>
   );
 }

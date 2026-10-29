@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus, Eye, Pencil, Trash2, FileSpreadsheet, X, ArrowUpDown } from "lucide-react";
 import { SearchPopoverButton } from "@/components/ui/SearchPopoverButton";
+import { filterGroupClass, toolbarActionsClass, toolbarClass } from "@/components/ui/Toolbar";
 import { Input, Select } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -153,18 +154,18 @@ export function PersonnelCertificationListClient({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col lg:flex-row lg:items-center gap-3 justify-between">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
-          <div className="col-span-2 sm:col-span-1">
+      <div className={toolbarClass}>
+        <div className={filterGroupClass}>
+          <div>
             <SearchPopoverButton
               value={search}
               onChange={setSearch}
-              label="Cari Sertifikasi"
+              label="Cari sertifikasi"
               placeholder="Nama, nomor, atau personil..."
             />
           </div>
           <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-            <option value="">Semua Kategori</option>
+            <option value="">Semua kategori</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -172,13 +173,13 @@ export function PersonnelCertificationListClient({
             ))}
           </Select>
           <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="">Semua Status</option>
+            <option value="">Semua status</option>
             <option value="ACTIVE">Aktif</option>
             <option value="EXPIRING_SOON">Segera berakhir</option>
             <option value="EXPIRED">Berakhir</option>
           </Select>
           <Select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
-            <option value="">Semua Tahun</option>
+            <option value="">Semua tahun</option>
             {years.map((y) => (
               <option key={y} value={y}>
                 {y}
@@ -187,17 +188,17 @@ export function PersonnelCertificationListClient({
           </Select>
         </div>
         {canManage && (
-          <div className="flex gap-2 w-full lg:w-auto">
+          <div className={toolbarActionsClass}>
             <Link href="/personnel-certifications/import" className="flex-1 lg:flex-none">
               <Button variant="outline" className="whitespace-nowrap w-full">
                 <FileSpreadsheet className="h-4 w-4" />
-                Import Excel
+                Impor Excel
               </Button>
             </Link>
             <Link href="/personnel-certifications/new" className="flex-1 lg:flex-none">
               <Button className="whitespace-nowrap w-full">
                 <Plus className="h-4 w-4" />
-                Tambah Sertifikasi
+                Tambah sertifikasi
               </Button>
             </Link>
           </div>
@@ -216,7 +217,7 @@ export function PersonnelCertificationListClient({
             </Button>
             <Button variant="danger" size="sm" onClick={() => setBulkDeleteOpen(true)}>
               <Trash2 className="h-3.5 w-3.5" />
-              Hapus Terpilih
+              Hapus terpilih
             </Button>
           </div>
         </div>
@@ -226,7 +227,7 @@ export function PersonnelCertificationListClient({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-slate-500 border-b border-slate-100 bg-slate-50/60">
+              <tr className="th-row">
                 {canManage && (
                   <th className="px-4 py-3 font-medium w-10">
                     <input
@@ -256,7 +257,7 @@ export function PersonnelCertificationListClient({
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={canManage ? 7 : 6} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={canManage ? 7 : 6} className="px-4 py-10 text-center text-slate-500">
                     Belum ada sertifikasi personil yang cocok.
                   </td>
                 </tr>
@@ -284,7 +285,7 @@ export function PersonnelCertificationListClient({
                       </td>
                       <td className="px-4 py-3 text-slate-600">
                         {c.employeeName}
-                        {c.departmentName && <span className="text-xs text-slate-400"> · {c.departmentName}</span>}
+                        {c.departmentName && <span className="text-xs text-slate-400">, {c.departmentName}</span>}
                       </td>
                       <td className="px-4 py-3 text-slate-600">{c.categoryName}</td>
                       <td className="px-4 py-3 text-slate-600">
@@ -310,7 +311,7 @@ export function PersonnelCertificationListClient({
                               <Link
                                 href={`/personnel-certifications/${c.id}/edit`}
                                 className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-accent"
-                                aria-label="Edit"
+                                aria-label="Ubah"
                               >
                                 <Pencil className="h-4 w-4" />
                               </Link>
@@ -334,12 +335,12 @@ export function PersonnelCertificationListClient({
         </div>
       </Card>
 
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus Sertifikasi">
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus sertifikasi">
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Apakah Anda yakin ingin menghapus sertifikasi{" "}
           <strong className="text-ink dark:text-slate-100">{deleteTarget?.certificationName}</strong> milik{" "}
           <strong className="text-ink dark:text-slate-100">{deleteTarget?.employeeName}</strong>? Data akan
-          dipindahkan ke Trash dan bisa dipulihkan.
+          dipindahkan ke Sampah dan bisa dipulihkan.
         </p>
         <div className="flex justify-end gap-2 mt-5">
           <Button variant="outline" onClick={() => setDeleteTarget(null)}>
@@ -351,10 +352,10 @@ export function PersonnelCertificationListClient({
         </div>
       </Modal>
 
-      <Modal isOpen={bulkDeleteOpen} onClose={() => setBulkDeleteOpen(false)} title="Hapus Sertifikasi Terpilih">
+      <Modal isOpen={bulkDeleteOpen} onClose={() => setBulkDeleteOpen(false)} title="Hapus sertifikasi terpilih">
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          Akan memindahkan <strong>{selectedIds.size}</strong> sertifikasi ke Trash. Data bisa dipulihkan
-          nanti dari halaman Trash. Lanjutkan?
+          Akan memindahkan <strong>{selectedIds.size}</strong> sertifikasi ke Sampah. Data bisa dipulihkan
+          nanti dari halaman Sampah. Lanjutkan?
         </p>
         <div className="flex justify-end gap-2 mt-5">
           <Button variant="outline" onClick={() => setBulkDeleteOpen(false)}>

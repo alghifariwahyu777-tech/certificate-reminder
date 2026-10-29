@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/layout/Navbar";
 import { getPersonnelMapping } from "@/lib/personnel-mapping";
 import { PersonnelMapping } from "@/components/project/monitoring/PersonnelMapping";
+import { PageBody } from "@/components/layout/PageBody";
 
 export default async function PersonnelMappingPage() {
   const session = await getSession();
@@ -14,10 +15,10 @@ export default async function PersonnelMappingPage() {
   ]);
   return (
     <>
-      <Navbar title="Mapping Personil" subtitle="Beban kerja dan sertifikasi personil" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
-      <div className="p-5 md:p-8">
+      <Navbar title="Penugasan Personil" subtitle="Beban kerja dan sertifikasi personil" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
+      <PageBody>
         <PersonnelMapping rows={rows} projects={projects.map((p) => ({ id: p.id, name: p.projectName, number: p.projectNumber }))} canManage={session?.role === "ADMIN"} />
-      </div>
+      </PageBody>
     </>
   );
 }

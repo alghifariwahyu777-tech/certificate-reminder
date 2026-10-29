@@ -26,7 +26,7 @@ export function SCurveChart({ input, today, height = 300 }: { input: MonitoringI
               <stop offset="100%" stopColor="#1671B8" stopOpacity={0.02} />
             </linearGradient>
           </defs>
-          <CartesianGrid stroke="#E9EDF2" vertical={false} />
+          <CartesianGrid stroke="#E6EBF1" vertical={false} />
           <XAxis
             dataKey="t"
             type="number"
@@ -35,7 +35,7 @@ export function SCurveChart({ input, today, height = 300 }: { input: MonitoringI
             ticks={ticks}
             tickFormatter={(t: number) => shortDate(t)}
             tick={{ fontSize: 11, fill: "#64748B" }}
-            axisLine={{ stroke: "#E2E8F0" }}
+            axisLine={{ stroke: "#E6EBF1" }}
             tickLine={false}
             minTickGap={20}
           />
@@ -43,7 +43,7 @@ export function SCurveChart({ input, today, height = 300 }: { input: MonitoringI
           <Tooltip
             labelFormatter={(t) => shortDate(Number(t))}
             formatter={(v, name) => [`${Number(v).toLocaleString("id-ID")}%`, name]}
-            contentStyle={{ borderRadius: 8, border: "1px solid #E2E8F0", fontSize: 12, fontFamily: "var(--font-body)" }}
+            contentStyle={{ borderRadius: 8, border: "1px solid #E6EBF1", fontSize: 12, fontFamily: "var(--font-body)" }}
           />
           {showToday && <ReferenceLine x={today} stroke="#94A3B8" strokeDasharray="3 3" label={{ value: "Hari ini", fontSize: 10, fill: "#64748B", position: "top" }} />}
           <Line type="monotone" dataKey="planned" name="Rencana" stroke="#94A3B8" strokeWidth={2} strokeDasharray="6 4" dot={false} activeDot={{ r: 3 }} isAnimationActive={false} />
