@@ -110,12 +110,14 @@ export function toMonitoringInput(p: ProjectWithMonitoring): MonitoringInput {
 
 /** Detail-page loader: monitoring data plus addenda (history shown on the contract tab). */
 export async function getProjectWithMonitoring(id: string) {
-  const project = await prisma.project.findFirst({
-    where: { id, deletedAt: null },
-    include: { ...MONITORING_INCLUDE, addenda: { orderBy: { createdAt: "desc" } } },
-  });
+  const [project, thresholds] = await Promise.all([
+    prisma.project.findFirst({
+      where: { id, deletedAt: null },
+      include: { ...MONITORING_INCLUDE, addenda: { orderBy: { createdAt: "desc" } } },
+    }),
+    getMonitoringThresholds(),
+  ]);
   if (!project) return null;
-  const thresholds = await getMonitoringThresholds();
   const today = getJakartaToday().getTime();
   const input = toMonitoringInput(project);
   const summary = computeMonitoring(input, today, thresholds);

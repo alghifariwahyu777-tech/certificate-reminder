@@ -153,102 +153,41 @@ export default async function DashboardPage() {
   let recentActivity: { id: string; userName: string; description: string; createdAt: string }[] = [];
 
   if (can(session?.role, "system")) {
-    // Certificates sitting exactly on a reminder milestone today — a small,
-    // targeted query rather than scanning every certificate in JS.
-    const milestoneMatches = await prisma.certificate.findMany({
-      where: {
-        ...notDeleted,
-        OR: (REMINDER_MILESTONES as readonly number[]).map((days) => {
-          const target = new Date(today);
-          target.setDate(target.getDate() + days);
-          return { expiryDate: { gte: target, lt: new Date(target.getTime() + 24 * 60 * 60 * 1000) } };
-        }),
-      },
-      select: { id: true, expiryDate: true },
-    });
-
-    const alreadyLogged = await prisma.emailLog.findMany({
-      where: { certificateId: { in: milestoneMatches.map((c) => c.id) } },
-      select: { certificateId: true, milestoneDays: true },
-    });
-    const loggedSet = new Set(alreadyLogged.map((l) => `${l.certificateId}:${l.milestoneDays}`));
-    const pendingCertificates = milestoneMatches.filter(
-      (c) => !loggedSet.has(`${c.id}:${getDaysRemaining(c.expiryDate)}`)
-    ).length;
-
-    // Same check for personnel certifications — this dashboard widget was
-    // originally certificate-only and missed this when that feature was
-    // added, so "0 pending" could be wrong whenever the only thing due was
-    // a personnel certification, not a client certificate.
-    const personnelMilestoneMatches = await prisma.personnelCertification.findMany({
-      where: {
-        deletedAt: null,
-        OR: (REMINDER_MILESTONES as readonly number[]).map((days) => {
-          const target = new Date(today);
-          target.setDate(target.getDate() + days);
-          return { expiryDate: { gte: target, lt: new Date(target.getTime() + 24 * 60 * 60 * 1000) } };
-        }),
-      },
-      select: { id: true, expiryDate: true },
-    });
-
-    const personnelAlreadyLogged = await prisma.emailLog.findMany({
-      where: { personnelCertificationId: { in: personnelMilestoneMatches.map((c) => c.id) } },
-      select: { personnelCertificationId: true, milestoneDays: true },
-    });
-    const personnelLoggedSet = new Set(
-      personnelAlreadyLogged.map((l) => `${l.personnelCertificationId}:${l.milestoneDays}`)
-    );
-    const pendingPersonnel = personnelMilestoneMatches.filter(
-      (c) => !personnelLoggedSet.has(`${c.id}:${getDaysRemaining(c.expiryDate)}`)
-    ).length;
-
-    pendingReminderCount = pendingCertificates + pendingPersonnel;
-
-    // Same check for ongoing projects (target end date) and equipment
-    // (next calibration date) — the two newest reminder domains.
-    const projectMilestoneMatches = await prisma.project.findMany({
-      where: {
-        deletedAt: null,
-        status: "ONGOING",
-        OR: (REMINDER_MILESTONES as readonly number[]).map((days) => {
-          const target = new Date(today);
-          target.setDate(target.getDate() + days);
-          return { targetEndDate: { gte: target, lt: new Date(target.getTime() + 24 * 60 * 60 * 1000) } };
-        }),
-      },
-      select: { id: true, targetEndDate: true },
-    });
-
-    const projectAlreadyLogged = await prisma.emailLog.findMany({
-      where: { projectId: { in: projectMilestoneMatches.map((p) => p.id) } },
-      select: { projectId: true, milestoneDays: true },
-    });
-    const projectLoggedSet = new Set(projectAlreadyLogged.map((l) => `${l.projectId}:${l.milestoneDays}`));
-    const pendingProjects = projectMilestoneMatches.filter(
-      (p) => !projectLoggedSet.has(`${p.id}:${getDaysRemaining(p.targetEndDate)}`)
-    ).length;
-
-    const equipmentMilestoneMatches = await prisma.equipment.findMany({
-      where: {
-        deletedAt: null,
-        OR: (REMINDER_MILESTONES as readonly number[]).map((days) => {
-          const target = new Date(today);
-          target.setDate(target.getDate() + days);
-          return { nextCalibrationDate: { gte: target, lt: new Date(target.getTime() + 24 * 60 * 60 * 1000) } };
-        }),
-      },
-      select: { id: true, nextCalibrationDate: true },
-    });
-
-    const equipmentAlreadyLogged = await prisma.emailLog.findMany({
-      where: { equipmentId: { in: equipmentMilestoneMatches.map((e) => e.id) } },
-      select: { equipmentId: true, milestoneDays: true },
-    });
-    const equipmentLoggedSet = new Set(equipmentAlreadyLogged.map((l) => `${l.equipmentId}:${l.milestoneDays}`));
-    const pendingEquipment = equipmentMilestoneMatches.filter(
-      (e) => !equipmentLoggedSet.has(`${e.id}:${getDaysRemaining(e.nextCalibrationDate)}`)
-    ).length;
+    // Reminders due today but not sent yet, per data type. Each type is two
+    // small queries (matches, then already-sent logs); the four types run in
+    // parallel so the page waits for one round trip pair, not four.
+    const milestoneWindow = (field: string) =>
+      (REMINDER_MILESTONES as readonly number[]).map((days) => {
+        const target = new Date(today);
+        target.setDate(target.getDate() + days);
+        return { [field]: { gte: target, lt: new Date(target.getTime() + 24 * 60 * 60 * 1000) } };
+      });
+    const pending = <T extends { id: string }>(rows: T[], logged: { id: string | null; milestoneDays: number }[], dateOf: (r: T) => Date) => {
+      const set = new Set(logged.map((l) => `${l.id}:${l.milestoneDays}`));
+      return rows.filter((r) => !set.has(`${r.id}:${getDaysRemaining(dateOf(r))}`)).length;
+    };
+    const [pendingCertificates, pendingPersonnel, pendingProjects, pendingEquipment] = await Promise.all([
+      (async () => {
+        const rows = await prisma.certificate.findMany({ where: { ...notDeleted, OR: milestoneWindow("expiryDate") }, select: { id: true, expiryDate: true } });
+        const logs = await prisma.emailLog.findMany({ where: { certificateId: { in: rows.map((c) => c.id) } }, select: { certificateId: true, milestoneDays: true } });
+        return pending(rows, logs.map((l) => ({ id: l.certificateId, milestoneDays: l.milestoneDays })), (r) => r.expiryDate);
+      })(),
+      (async () => {
+        const rows = await prisma.personnelCertification.findMany({ where: { deletedAt: null, OR: milestoneWindow("expiryDate") }, select: { id: true, expiryDate: true } });
+        const logs = await prisma.emailLog.findMany({ where: { personnelCertificationId: { in: rows.map((c) => c.id) } }, select: { personnelCertificationId: true, milestoneDays: true } });
+        return pending(rows, logs.map((l) => ({ id: l.personnelCertificationId, milestoneDays: l.milestoneDays })), (r) => r.expiryDate);
+      })(),
+      (async () => {
+        const rows = await prisma.project.findMany({ where: { deletedAt: null, status: "ONGOING", OR: milestoneWindow("targetEndDate") }, select: { id: true, targetEndDate: true } });
+        const logs = await prisma.emailLog.findMany({ where: { projectId: { in: rows.map((p) => p.id) } }, select: { projectId: true, milestoneDays: true } });
+        return pending(rows, logs.map((l) => ({ id: l.projectId, milestoneDays: l.milestoneDays })), (r) => r.targetEndDate);
+      })(),
+      (async () => {
+        const rows = await prisma.equipment.findMany({ where: { deletedAt: null, OR: milestoneWindow("nextCalibrationDate") }, select: { id: true, nextCalibrationDate: true } });
+        const logs = await prisma.emailLog.findMany({ where: { equipmentId: { in: rows.map((e) => e.id) } }, select: { equipmentId: true, milestoneDays: true } });
+        return pending(rows, logs.map((l) => ({ id: l.equipmentId, milestoneDays: l.milestoneDays })), (r) => r.nextCalibrationDate);
+      })(),
+    ]);
 
     pendingReminderCount = pendingCertificates + pendingPersonnel + pendingProjects + pendingEquipment;
 

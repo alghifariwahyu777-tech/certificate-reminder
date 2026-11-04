@@ -61,7 +61,8 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
 
   // Team: certifications + SDB load (running projects per person) for everyone on this project.
   const memberIds = [...new Set(project.assignments.map((a) => a.employeeId))];
-  const [memberDetails, employees] = await Promise.all([
+  // everything below needs only the project, so it is fetched in one parallel round
+  const [memberDetails, employees, usedCategories, latestRab] = await Promise.all([
     prisma.employee.findMany({
       where: { id: { in: memberIds } },
       select: {
@@ -73,15 +74,13 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
     rights.projectTeam
       ? prisma.employee.findMany({ where: { isActive: true }, select: { id: true, name: true, employeeId: true, position: true }, orderBy: { name: "asc" } })
       : Promise.resolve([]),
+    // category names already used anywhere, so every project's list grows with the organisation's own vocabulary
+    prisma.$queryRaw<{ category: string }[]>`
+    SELECT DISTINCT category FROM "ProjectExpense" UNION SELECT DISTINCT category FROM "ProjectBudgetItem" LIMIT 300`,
+    project.rabRevisions[0] ? prisma.projectRabRevision.findUnique({ where: { id: project.rabRevisions[0].id }, select: { dataJson: true } }) : Promise.resolve(null),
   ]);
   const detailById = new Map(memberDetails.map((e) => [e.id, e]));
-  // category names already used anywhere, so every project's list grows with the organisation's own vocabulary
-  const usedCategories = await prisma.$queryRaw<{ category: string }[]>`
-    SELECT DISTINCT category FROM "ProjectExpense" UNION SELECT DISTINCT category FROM "ProjectBudgetItem" LIMIT 300`;
   const todayDate = new Date(loaded.today);
-  const latestRab = project.rabRevisions[0]
-    ? await prisma.projectRabRevision.findUnique({ where: { id: project.rabRevisions[0].id }, select: { dataJson: true } })
-    : null;
   const parsedRab = (() => {
     try {
       return latestRab ? (JSON.parse(latestRab.dataJson) as RabData) : null;

@@ -2,9 +2,10 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { PageBody } from "@/components/layout/PageBody";
-import { Card, CardContent } from "@/components/ui/Card";
 import { getMonitoringThresholds } from "@/lib/project-monitoring";
-import { FlowDiagram, GanttDiagram, MarginDiagram, MatrixDiagram, ParetoDiagram, RiskGridDiagram, SCurveDiagram } from "@/components/guide/GuideDiagrams";
+import { GanttDiagram, MatrixDiagram } from "@/components/guide/GuideDiagrams";
+import { ConditionScale, CpiPlay, FlowPlay, ForecastPlay, HsePlay, MarginPlay, ParetoPlay, RiskPlay, SCurvePlay, SpiPlay } from "@/components/guide/GuidePlayground";
+import { GuideShell, type GuideGroup } from "@/components/guide/GuideShell";
 import { QuickStart, type QuickRole } from "@/components/guide/QuickStart";
 import { ALL_AREAS, AREA_LABEL, ASSIGNABLE_ROLES, ROLE_DUTY, ROLE_LABEL, rolesFor } from "@/lib/permissions";
 
@@ -15,7 +16,7 @@ import { ALL_AREAS, AREA_LABEL, ASSIGNABLE_ROLES, ROLE_DUTY, ROLE_LABEL, rolesFo
  */
 
 /** lead: one or two plain sentences everyone reads; figure: the picture; more: the details, folded. */
-type Section = { id: string; title: string; lead: React.ReactNode; figure?: React.ReactNode; more?: React.ReactNode; moreLabel?: string;  };
+type Section = { id: string; title: string; tags: string; lead: React.ReactNode; figure?: React.ReactNode; more?: React.ReactNode; moreLabel?: string; interactive?: boolean };
 
 function More({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -58,12 +59,23 @@ export default async function GuidePage() {
   const session = await getSession();
   const th = await getMonitoringThresholds();
 
+  const quickRole: QuickRole = (["PM", "FINANCE", "QHSE", "HC", "MANAGEMENT", "ADMIN"] as const).find((r) => r === session?.role) ?? "PM";
+
   const groups: { title: string; sections: Section[] }[] = [
     {
       title: "Memulai",
       sections: [
         {
+          id: "mulai-cepat",
+          tags: "mulai cepat langkah pertama peran tugas",
+          title: "Mulai cepat",
+          lead: <p className="mb-2 text-[13px] text-slate-500">Pilih peran Anda. Inilah hal yang perlu dikerjakan, lengkap dengan tombol menuju halamannya.</p>,
+          figure: <QuickStart initial={quickRole} />,
+          interactive: true,
+        },
+        {
           id: "tentang",
+          tags: "sistem fungsi sertifikat personil alat kalibrasi project",
           title: "Apa yang dilakukan sistem ini",
           lead: (
             <>
@@ -77,6 +89,7 @@ export default async function GuidePage() {
         },
         {
           id: "peran",
+          tags: "role akses hak pm keuangan finance qhse hc human capital manajemen admin pic ubah lihat",
           title: "Peran dan hak akses",
           lead: <p>Semua peran bisa melihat seluruh data. Yang berbeda hanya data yang boleh diubah. Akun dan peran dibuat Administrator di menu Pengguna.</p>,
           moreLabel: "Lihat tabel hak akses",
@@ -120,6 +133,7 @@ export default async function GuidePage() {
         },
         {
           id: "tugas",
+          tags: "tugas saya task tindak lanjut bagian",
           title: "Tugas Saya",
           lead: (
             <p>
@@ -155,9 +169,11 @@ export default async function GuidePage() {
       sections: [
         {
           id: "alur-project",
+          tags: "alur langkah mulai rab milestone termin progres biaya penutupan bast bapp",
           title: "Dari kontrak sampai serah terima",
           lead: <p>Project berjalan dalam tiga tahap. Setiap langkah diisi oleh satu bagian, dan hasilnya langsung terlihat oleh bagian lain.</p>,
-          figure: <FlowDiagram />,
+          figure: <FlowPlay />,
+          interactive: true,
           moreLabel: "Lihat langkah lengkap dan letak menunya",
           more: (
             <Steps
@@ -180,6 +196,7 @@ export default async function GuidePage() {
         },
         {
           id: "rutinitas",
+          tags: "rutin harian mingguan bulanan jadwal",
           title: "Rutinitas per bagian",
           lead: (
             <ul className="list-disc space-y-1.5 pl-5">
@@ -208,6 +225,7 @@ export default async function GuidePage() {
       sections: [
         {
           id: "progres",
+          tags: "progres kurva s deviasi rencana realisasi",
           title: "Progres dan deviasi",
           lead: (
             <p>
@@ -215,7 +233,8 @@ export default async function GuidePage() {
               Selisih keduanya disebut <strong>deviasi</strong>. Deviasi negatif berarti terlambat.
             </p>
           ),
-          figure: <SCurveDiagram />,
+          figure: <SCurvePlay warn={th.deviationWarning} crit={th.deviationCritical} />,
+          interactive: true,
           moreLabel: "Lihat asal angka progres",
           more: (
             <>
@@ -234,6 +253,7 @@ export default async function GuidePage() {
         },
         {
           id: "kondisi",
+          tags: "kondisi status kritis waspada sesuai rencana batas",
           title: "Kondisi project",
           lead: (
             <ul className="space-y-1.5">
@@ -249,16 +269,19 @@ export default async function GuidePage() {
               <li className="text-slate-500">Batas ini dapat diubah Administrator di menu Pengaturan.</li>
             </ul>
           ),
+          figure: <ConditionScale warn={th.deviationWarning} crit={th.deviationCritical} />,
         },
         {
           id: "kinerja-waktu",
+          tags: "spi kinerja waktu jadwal terlambat",
           title: "Kinerja waktu (SPI)",
           lead: (
             <p>
               Menjawab pertanyaan: <strong>apakah pekerjaan secepat rencana?</strong> Nilai 1,00 berarti tepat jadwal, di bawah 1 terlambat, di atas 1 lebih cepat.
             </p>
           ),
-          figure: <MatrixDiagram />,
+          figure: <SpiPlay />,
+          interactive: true,
           moreLabel: "Lihat cara menghitung",
           more: (
             <>
@@ -270,6 +293,7 @@ export default async function GuidePage() {
         },
         {
           id: "kinerja-biaya",
+          tags: "cpi kinerja biaya rab boros hemat",
           title: "Kinerja biaya (CPI)",
           lead: (
             <p>
@@ -277,9 +301,12 @@ export default async function GuidePage() {
               hemat. Perlu RAB dan realisasi biaya.
             </p>
           ),
-          moreLabel: "Lihat cara menghitung",
+          figure: <CpiPlay />,
+          interactive: true,
+          moreLabel: "Lihat cara menghitung dan matriks waktu dan biaya",
           more: (
             <>
+              <MatrixDiagram />
               <Formula>Kinerja biaya = (progres realisasi × total RAB) ÷ biaya yang sudah keluar</Formula>
               <Example>
                 total RAB Rp1 miliar, progres 40%, jadi pekerjaan selesai bernilai Rp400 juta menurut RAB. Biaya keluar Rp500 juta. Kinerja biaya = 400 ÷ 500 = 0,80, artinya
@@ -290,8 +317,11 @@ export default async function GuidePage() {
         },
         {
           id: "proyeksi-selesai",
+          tags: "proyeksi tanggal selesai forecast terlambat durasi",
           title: "Proyeksi tanggal selesai",
           lead: <p>Perkiraan tanggal selesai bila laju pekerjaan saat ini berlanjut. Bila lewat dari target, project diperkirakan terlambat.</p>,
+          figure: <ForecastPlay />,
+          interactive: true,
           moreLabel: "Lihat cara menghitung",
           more: (
             <>
@@ -303,6 +333,7 @@ export default async function GuidePage() {
         },
         {
           id: "proyeksi-margin",
+          tags: "margin keuntungan rugi proyeksi realisasi rencana target",
           title: "Margin rencana, realisasi, dan proyeksi",
           lead: (
             <ul className="space-y-1.5">
@@ -317,7 +348,8 @@ export default async function GuidePage() {
               </li>
             </ul>
           ),
-          figure: <MarginDiagram />,
+          figure: <MarginPlay />,
+          interactive: true,
           moreLabel: "Lihat cara menghitung",
           more: (
             <>
@@ -339,6 +371,7 @@ export default async function GuidePage() {
         },
         {
           id: "keuangan",
+          tags: "pad piutang arus kas cashflow invoice termin pembayaran tagih",
           title: "PAD, piutang, dan arus kas",
           lead: (
             <ul className="space-y-1.5">
@@ -369,6 +402,7 @@ export default async function GuidePage() {
         },
         {
           id: "pareto",
+          tags: "pareto penyebab biaya pembengkakan kendala bobot kategori",
           title: "Pareto penyebab masalah",
           lead: (
             <p>
@@ -376,7 +410,8 @@ export default async function GuidePage() {
               batang untuk melihat project penyumbangnya.
             </p>
           ),
-          figure: <ParetoDiagram />,
+          figure: <ParetoPlay />,
+          interactive: true,
           moreLabel: "Lihat asal data dan cara menghitung",
           more: (
             <>
@@ -401,6 +436,7 @@ export default async function GuidePage() {
         },
         {
           id: "peta-risiko",
+          tags: "risiko kendala peta heatmap kemungkinan dampak",
           title: "Peta risiko dan kendala",
           lead: (
             <p>
@@ -408,7 +444,8 @@ export default async function GuidePage() {
               <strong>Kendala</strong> (sudah terjadi) dan isi dampaknya. Makin ke kanan atas, makin perlu ditangani.
             </p>
           ),
-          figure: <RiskGridDiagram />,
+          figure: <RiskPlay />,
+          interactive: true,
           moreLabel: "Lihat cara menghitung",
           more: (
             <>
@@ -420,6 +457,7 @@ export default async function GuidePage() {
         },
         {
           id: "hse",
+          tags: "hse ltifr trir kecelakaan cedera jam kerja aman",
           title: "HSE: LTIFR, TRIR, dan jam kerja aman",
           lead: (
             <ul className="space-y-1.5">
@@ -434,6 +472,8 @@ export default async function GuidePage() {
               </li>
             </ul>
           ),
+          figure: <HsePlay />,
+          interactive: true,
           moreLabel: "Lihat cara menghitung",
           more: (
             <>
@@ -447,6 +487,7 @@ export default async function GuidePage() {
         },
         {
           id: "gantt",
+          tags: "gantt jadwal milestone kurva s",
           title: "Gantt chart",
           lead: (
             <p>
@@ -465,6 +506,7 @@ export default async function GuidePage() {
         },
         {
           id: "portofolio",
+          tags: "portofolio monitoring project dashboard filter gabungan",
           title: "Membaca Monitoring Project",
           lead: (
             <p>
@@ -487,6 +529,7 @@ export default async function GuidePage() {
       sections: [
         {
           id: "pengingat",
+          tags: "pengingat email reminder template",
           title: "Pengingat email",
           lead: (
             <p>
@@ -497,6 +540,7 @@ export default async function GuidePage() {
         },
         {
           id: "istilah",
+          tags: "istilah singkatan rab baseline addendum termin bapp bast spi cpi",
           title: "Daftar istilah",
           lead: (
             <dl className="grid gap-x-4 gap-y-2 sm:grid-cols-[10rem_1fr]">
@@ -526,58 +570,29 @@ export default async function GuidePage() {
     },
   ];
 
-  const quickRole: QuickRole = (["PM", "FINANCE", "QHSE", "HC", "MANAGEMENT", "ADMIN"] as const).find((r) => r === session?.role) ?? "PM";
+
+  const shellGroups: GuideGroup[] = groups.map((g) => ({
+    title: g.title,
+    sections: g.sections.map((sec) => ({
+      id: sec.id,
+      title: sec.title,
+      tags: sec.tags,
+      interactive: sec.interactive,
+      content: (
+        <>
+          {sec.lead}
+          {sec.figure}
+          {sec.more && <More label={sec.moreLabel ?? "Lihat rincian"}>{sec.more}</More>}
+        </>
+      ),
+    })),
+  }));
 
   return (
     <>
       <Navbar title="Panduan" subtitle="Cara memakai sistem dan cara membaca setiap angka" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
       <PageBody>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[15rem_1fr]">
-          <nav aria-label="Isi panduan" className="hidden lg:sticky lg:top-24 lg:block lg:self-start">
-            <Card>
-              <CardContent className="space-y-3 text-[13px]">
-                <a href="#mulai-cepat" className="block font-semibold text-ink hover:text-accent dark:text-slate-200">
-                  Mulai cepat
-                </a>
-                {groups.map((g) => (
-                  <div key={g.title}>
-                    <p className="mb-1 text-[12px] font-semibold text-slate-500">{g.title}</p>
-                    <ul className="space-y-1">
-                      {g.sections.map((s) => (
-                        <li key={s.id}>
-                          <a href={`#${s.id}`} className="text-ink hover:text-accent dark:text-slate-200">
-                            {s.title}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </nav>
-          <div className="min-w-0 space-y-4">
-            <Card id="mulai-cepat" className="scroll-mt-24">
-              <CardContent className="text-[14px] text-slate-700 dark:text-slate-300">
-                <h2 className="text-[16px] font-bold text-ink dark:text-slate-100">Mulai cepat</h2>
-                <p className="mb-2 mt-1 text-[13px] text-slate-500">Pilih peran Anda. Inilah hal yang perlu dikerjakan, lengkap dengan tombol menuju halamannya.</p>
-                <QuickStart initial={quickRole} />
-              </CardContent>
-            </Card>
-            {groups.flatMap((g) =>
-              g.sections.map((s) => (
-                <Card key={s.id} id={s.id} className="scroll-mt-24">
-                  <CardContent className="max-w-[78ch] text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
-                    <h2 className="mb-2 text-[16px] font-bold text-ink dark:text-slate-100">{s.title}</h2>
-                    {s.lead}
-                    {s.figure}
-                    {s.more && <More label={s.moreLabel ?? "Lihat rincian"}>{s.more}</More>}
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
-        </div>
+        <GuideShell groups={shellGroups} />
       </PageBody>
     </>
   );
