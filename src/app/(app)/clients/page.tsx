@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { ClientManager } from "@/components/client/ClientManager";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function ClientsPage() {
   const session = await getSession();
@@ -16,7 +17,7 @@ export default async function ClientsPage() {
       <Navbar title="Klien" subtitle="Daftar klien pengguna jasa" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
       <PageBody>
         <ClientManager
-          canManage={session?.role === "ADMIN"}
+          canManage={can(session?.role, "client")}
           initialClients={clients.map((c) => ({
             id: c.id,
             name: c.name,

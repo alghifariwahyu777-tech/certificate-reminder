@@ -67,7 +67,7 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-1.5">
             Margin project
-            <InfoTip label="Keterangan margin project">
+            <InfoTip label="Keterangan margin project" guide="proyeksi-margin">
               Target margin ditetapkan dalam RAB setiap project. Posisi kas saat ini (uang diterima dikurangi biaya keluar) {formatRupiah(m.cashPosition, true)}; angka kas
               dipengaruhi waktu penagihan sehingga tidak dipakai sebagai ukuran margin.
             </InfoTip>
@@ -171,7 +171,7 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
           <CardHeader>
             <CardTitle className="flex items-center gap-1.5">
               Biaya dibanding nilai pekerjaan
-              <InfoTip label="Keterangan biaya dibanding nilai pekerjaan">
+              <InfoTip label="Keterangan biaya dibanding nilai pekerjaan" guide="kinerja-biaya">
                 Garis biru adalah nilai pekerjaan yang sudah dikerjakan menurut RAB; garis merah adalah biaya yang benar-benar keluar. Bila garis merah berada di atas garis biru,
                 project lebih boros dari anggaran. Garis abu-abu putus-putus adalah rencana biaya sesuai jadwal; garis merah titik-titik adalah proyeksi biaya sampai selesai.
               </InfoTip>
@@ -217,7 +217,7 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
           <CardHeader>
             <CardTitle className="flex items-center gap-1.5">
               Penyebab perubahan margin
-              <InfoTip label="Keterangan penyebab perubahan margin">
+              <InfoTip label="Keterangan penyebab perubahan margin" guide="proyeksi-margin">
                 Dimulai dari margin awal (baseline, batang biru tua), lalu setiap faktor yang mengurangi (merah) atau menambah (hijau) margin, sampai proyeksi margin akhir.
               </InfoTip>
             </CardTitle>
@@ -279,7 +279,7 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-1.5">
             Perkembangan proyeksi margin
-            <InfoTip label="Keterangan perkembangan proyeksi margin">
+            <InfoTip label="Keterangan perkembangan proyeksi margin" guide="proyeksi-margin">
               Setiap titik adalah proyeksi margin akhir menurut biaya dan progres yang tercatat sampai tanggal itu. Garis yang turun menunjukkan sejak kapan margin mulai tergerus.
             </InfoTip>
           </CardTitle>

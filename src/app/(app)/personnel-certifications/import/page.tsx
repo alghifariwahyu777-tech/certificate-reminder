@@ -3,11 +3,12 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { PersonnelImportForm } from "@/components/personnel/PersonnelImportForm";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function PersonnelImportPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.role !== "ADMIN") redirect("/personnel-certifications");
+  if (!can(session.role, "personnel")) redirect("/personnel-certifications");
 
   return (
     <>

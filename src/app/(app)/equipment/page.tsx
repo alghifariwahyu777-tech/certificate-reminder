@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { EquipmentListClient } from "@/components/equipment/EquipmentListClient";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function EquipmentPage() {
   const session = await getSession();
@@ -25,7 +26,7 @@ export default async function EquipmentPage() {
       />
       <PageBody>
         <EquipmentListClient
-          canManage={session?.role === "ADMIN"}
+          canManage={can(session?.role, "equipment")}
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
           initialEquipment={equipment.map((e) => ({
             id: e.id,

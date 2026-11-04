@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { ProjectCategoryManager } from "@/components/project/ProjectCategoryManager";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function ProjectCategoriesPage() {
   const session = await getSession();
@@ -25,7 +26,7 @@ export default async function ProjectCategoriesPage() {
       <PageBody>
         <ProjectCategoryManager
           initialCategories={categories.map((c) => ({ id: c.id, name: c.name, projectCount: c._count.projects }))}
-          canManage={session.role === "ADMIN"}
+          canManage={can(session.role, "system")}
         />
       </PageBody>
     </>

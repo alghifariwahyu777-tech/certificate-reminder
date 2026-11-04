@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireArea } from "@/lib/auth";
 import { RabFormatError, parseRabWorkbook } from "@/lib/project-rab-import";
 
 export const runtime = "nodejs";
@@ -7,7 +7,7 @@ export const maxDuration = 60;
 
 /** Reads a RAB without saving anything — used to pre-fill the new-project form. */
 export async function POST(request: NextRequest) {
-  const auth = await requireAdmin();
+  const auth = await requireArea("project");
   if ("error" in auth) return auth.error;
   const form = await request.formData();
   const file = form.get("file") as File | null;

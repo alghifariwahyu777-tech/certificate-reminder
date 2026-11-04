@@ -4,12 +4,13 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { EquipmentForm } from "@/components/equipment/EquipmentForm";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function EditEquipmentPage(context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.role !== "ADMIN") redirect(`/equipment/${params.id}`);
+  if (!can(session.role, "equipment")) redirect(`/equipment/${params.id}`);
 
   const [equipment, employees, categories] = await Promise.all([
     prisma.equipment.findFirst({ where: { id: params.id, deletedAt: null } }),

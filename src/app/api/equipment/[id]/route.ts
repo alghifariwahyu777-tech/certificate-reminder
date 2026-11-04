@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession, requireAdmin } from "@/lib/auth";
+import { getSession, requireArea } from "@/lib/auth";
 import { equipmentSchema } from "@/lib/validations";
 import { logAudit } from "@/lib/audit";
 
@@ -20,7 +20,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
 
 export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
-  const auth = await requireAdmin();
+  const auth = await requireArea("equipment");
   if ("error" in auth) return auth.error;
 
   const equipment = await prisma.equipment.findFirst({ where: { id: params.id, deletedAt: null } });
@@ -83,7 +83,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
 export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
-  const auth = await requireAdmin();
+  const auth = await requireArea("equipment");
   if ("error" in auth) return auth.error;
 
   const equipment = await prisma.equipment.findFirst({ where: { id: params.id, deletedAt: null } });

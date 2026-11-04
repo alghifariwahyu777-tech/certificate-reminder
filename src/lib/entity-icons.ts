@@ -1,5 +1,7 @@
 import {
   Award,
+  BookOpen,
+  ListChecks,
   Bell,
   Building,
   Building2,
@@ -58,11 +60,15 @@ export const ENTITY_ICON = {
   dashboard: LayoutDashboard,
   applicationMonitoring: Gauge,
   projectMonitoring: TrendingUp,
+  tasks: ListChecks,
+  guide: BookOpen,
 } satisfies Record<string, LucideIcon>;
 
 /** Icon of each page, by its menu address. The page title shows the same icon as its menu item. */
 export const PAGE_ICON: Record<string, LucideIcon> = {
   "/dashboard": ENTITY_ICON.dashboard,
+  "/tasks": ENTITY_ICON.tasks,
+  "/guide": ENTITY_ICON.guide,
   "/applications": ENTITY_ICON.application,
   "/departments": ENTITY_ICON.department,
   "/employees": ENTITY_ICON.employee,

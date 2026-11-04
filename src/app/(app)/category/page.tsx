@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { CategoryManager } from "@/components/category/CategoryManager";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function CategoryPage() {
   const session = await getSession();
@@ -16,7 +17,7 @@ export default async function CategoryPage() {
       <Navbar title="Kategori Sertifikat" subtitle="Kelompok sertifikat klien" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
       <PageBody>
         <CategoryManager
-          canManage={session?.role === "ADMIN"}
+          canManage={can(session?.role, "client")}
           initialCategories={categories.map((c) => ({
             id: c.id,
             name: c.name,

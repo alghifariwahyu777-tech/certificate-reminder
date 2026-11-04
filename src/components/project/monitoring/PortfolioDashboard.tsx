@@ -20,8 +20,17 @@ import { AgingCard, HealthTrendCard, MarginGapCard, ScheduleTimeline } from "./P
 import { AttentionCard, PadCard, PositionTableCard, TimeCostMatrixCard, buildAttention } from "./PortfolioPriority";
 import { SCurveGridCard } from "./PortfolioSCurves";
 import { ProjectTable } from "./ProjectTable";
+import { filterPareto, sumCashflow } from "@/lib/portfolio-shared";
 
-export type DashboardExtra = { cashflow: CashflowMonth[]; paretoCost: ParetoItem[]; paretoIssues: ParetoItem[]; perfTrend: PerformanceWeek[]; calendar: CalendarEvent[] };
+export type DashboardExtra = {
+  cashflow: CashflowMonth[];
+  cashflowByProject?: Record<string, CashflowMonth[]>;
+  paretoCost: ParetoItem[];
+  paretoIssues: ParetoItem[];
+  perfTrend: PerformanceWeek[];
+  perfTrendByPortfolio?: Record<string, PerformanceWeek[]>;
+  calendar: CalendarEvent[];
+};
 const EMPTY_EXTRA: DashboardExtra = { cashflow: [], paretoCost: [], paretoIssues: [], perfTrend: [], calendar: [] };
 
 const TABS = [
@@ -101,6 +110,18 @@ export function PortfolioDashboard({
   const urgent = useMemo(() => buildAttention(base).filter((a) => a.tone === "bad").length, [base]);
   const exportHref = `/api/projects/portfolio/export?${new URLSearchParams({ status, categoryId, pic, health, q }).toString()}`;
   const filtersActive = !!(categoryId || pic || q || status !== "ONGOING");
+  // every card follows the filter bar: figures that are summed across projects are rebuilt from the projects shown
+  const filtered = useMemo(() => {
+    const byProject = extra.cashflowByProject;
+    const cashflow = byProject && filtersActive ? sumCashflow(base.map((r) => byProject[r.id]).filter(Boolean)) : extra.cashflow;
+    const keep = (id: string) => ids.has(id);
+    return {
+      cashflow,
+      paretoCost: filterPareto(extra.paretoCost, keep),
+      paretoIssues: filterPareto(extra.paretoIssues, keep),
+    };
+  }, [extra, base, ids, filtersActive]);
+  const categoryName = categories.find((c) => c.id === categoryId)?.name ?? "";
 
   return (
     <div className="space-y-5">
@@ -160,7 +181,13 @@ export function PortfolioDashboard({
         </p>
       )}
 
-      <Headlines rows={base} />
+      <Headlines
+        rows={base}
+        onPick={(h) => {
+          setHealth(h);
+          go("daftar");
+        }}
+      />
 
       <TabNav label="Bagian monitoring project" tabs={TABS.map((t) => ({ ...t, badge: t.key === "ringkasan" ? urgent : 0 }))} value={tab} onChange={go} />
 
@@ -171,9 +198,10 @@ export function PortfolioDashboard({
             <AttentionCard rows={base} />
           </div>
           <PositionTableCard rows={base} />
+          <PortfolioPerformanceCard rows={base} />
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <HealthTrendCard trend={healthTrend} />
-            <PerformanceTrendCard weeks={extra.perfTrend} />
+            <PerformanceTrendCard weeks={extra.perfTrend} byPortfolio={extra.perfTrendByPortfolio ?? {}} initialPortfolio={categoryName} />
           </div>
         </div>
       )}
@@ -189,7 +217,7 @@ export function PortfolioDashboard({
       {tab === "keuangan" && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.6fr_1fr]">
-            <CashflowCard months={extra.cashflow} />
+            <CashflowCard months={filtered.cashflow} />
             <MarginGapCard rows={base} />
           </div>
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -203,13 +231,12 @@ export function PortfolioDashboard({
         <div className="space-y-4">
           <RiskHeatmapCard risks={risks.filter((r) => ids.has(r.projectId))} today={today} />
           <HsePortfolioCard rows={base} today={today} />
-          <ParetoCard cost={extra.paretoCost} issues={extra.paretoIssues} />
+          <ParetoCard cost={filtered.paretoCost} issues={filtered.paretoIssues} />
         </div>
       )}
 
       {tab === "sumber-daya" && (
         <div className="space-y-4">
-          <PortfolioPerformanceCard rows={base} />
           <PersonnelRiskCard people={people} rows={rows} today={today} />
           <ProjectMapCard rows={base} />
         </div>
@@ -221,7 +248,7 @@ export function PortfolioDashboard({
 }
 
 /** Four figures a manager reads first: how many projects need attention, overall progress, projected margin, overdue receivables. */
-function Headlines({ rows }: { rows: PortfolioRow[] }) {
+function Headlines({ rows, onPick }: { rows: PortfolioRow[]; onPick: (health: string) => void }) {
   const k = useMemo(() => {
     const ongoing = rows.filter((r) => r.status === "ONGOING");
     const value = ongoing.reduce((s, r) => s + r.summary.contractValue, 0);
@@ -256,8 +283,17 @@ function Headlines({ rows }: { rows: PortfolioRow[] }) {
           <span className="bg-signal-activeBar" style={{ width: `${(k.onTrack / total) * 100}%` }} />
         </div>
         <p className="mt-1.5 text-[12px] text-slate-500">
-          <span className="font-semibold text-signal-expired">{k.kritis} kritis</span>, <span className="font-semibold text-signal-soon">{k.waspada} waspada</span>, {k.onTrack} sesuai
-          rencana
+          <button type="button" onClick={() => onPick("KRITIS")} className="font-semibold text-signal-expired underline-offset-2 hover:underline">
+            {k.kritis} kritis
+          </button>
+          ,{" "}
+          <button type="button" onClick={() => onPick("WASPADA")} className="font-semibold text-signal-soon underline-offset-2 hover:underline">
+            {k.waspada} waspada
+          </button>
+          ,{" "}
+          <button type="button" onClick={() => onPick("ON_TRACK")} className="underline-offset-2 hover:underline">
+            {k.onTrack} sesuai rencana
+          </button>
         </p>
       </StatCard>
       <StatCard

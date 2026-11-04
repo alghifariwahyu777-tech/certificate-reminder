@@ -9,7 +9,7 @@ type ProjectLike = {
   status: string;
   terms: { amount: unknown; status: string; plannedDate: Date | null; dueDate: Date | null; invoiceDate: Date | null; paidDate: Date | null; paidAmount: unknown }[];
   expenses: { amount: unknown; expenseDate: Date; category: string; cause: string }[];
-  issues: { type: string; impact: string; likelihood: string; category: string | null; createdAt: Date }[];
+  issues: { title: string; type: string; impact: string; likelihood: string; category: string | null; createdAt: Date }[];
 };
 const n = (v: unknown) => (v === null || v === undefined ? 0 : Number(v));
 const monthKey = (t: number) => {
@@ -104,47 +104,70 @@ export function cashflowForecast(
 // Pareto: what costs the most money, and what causes the most problems
 // ---------------------------------------------------------------------------
 
-export type ParetoItem = { label: string; value: number; projects: number };
+/** One cause: total, number of projects, and each contributing project (for the drill-down list). */
+export type ParetoItem = { label: string; value: number; projects: number; items: { id: string; name: string; value: number; detail?: string }[] };
 
+type Acc = Map<string, { value: number; per: Map<string, { name: string; value: number; detail: string[] }> }>;
+function accBump(acc: Acc, label: string, v: number, id: string, name: string, detail?: string) {
+  if (v <= 0) return;
+  const r = acc.get(label) ?? { value: 0, per: new Map() };
+  r.value += v;
+  const p = r.per.get(id) ?? { name, value: 0, detail: [] };
+  p.value += v;
+  if (detail) p.detail.push(detail);
+  r.per.set(id, p);
+  acc.set(label, r);
+}
+function accList(acc: Acc, round: (v: number) => number): ParetoItem[] {
+  return [...acc.entries()]
+    .map(([label, r]) => ({
+      label,
+      value: round(r.value),
+      projects: r.per.size,
+      items: [...r.per.entries()].map(([id, p]) => ({ id, name: p.name, value: round(p.value), detail: p.detail.length ? p.detail.slice(0, 3).join("; ") + (p.detail.length > 3 ? `; dan ${p.detail.length - 3} lainnya` : "") : undefined })).sort((a, b) => b.value - a.value),
+    }))
+    .sort((a, b) => b.value - a.value);
+}
+
+/**
+ * Where the money above plan went, across running projects that have a RAB:
+ *  - "Keterlambatan", "Kerja tambahan" and "Pekerjaan ulang": costs the user tagged with that cause when recording them
+ *    (field "Penyebab" on each cost line); extra work counts only the part not yet covered by an addendum
+ *  - "<bagian> di atas RAB": ordinary costs per RAB section above the RAB share for the progress reached
+ *    (RAB of the section × progress %), i.e. spending ahead of the work done
+ */
 export function costOverrunPareto(items: { p: ProjectLike; input: MonitoringInput; summary: MonitoringSummary; margin: MarginAnalysis }[]): ParetoItem[] {
-  const acc = new Map<string, { value: number; projects: Set<string> }>();
-  const bump = (label: string, v: number, id: string) => {
-    if (v <= 0) return;
-    const r = acc.get(label) ?? { value: 0, projects: new Set<string>() };
-    r.value += v;
-    r.projects.add(id);
-    acc.set(label, r);
-  };
+  const acc: Acc = new Map();
+  const bump = (label: string, v: number, id: string, name: string, detail?: string) => accBump(acc, label, v, id, name, detail);
   for (const { p, input, summary, margin } of items) {
     if (p.status !== "ONGOING" || !margin.hasBudget) continue;
-    bump("Keterlambatan", margin.delayCost, p.id);
-    bump("Kerja tambahan tanpa addendum", margin.unbilledExtraScope, p.id);
+    bump("Keterlambatan", margin.delayCost, p.id, p.projectName);
+    bump("Kerja tambahan tanpa addendum", margin.unbilledExtraScope, p.id, p.projectName);
+    bump("Pekerjaan ulang", margin.reworkCost, p.id, p.projectName);
     // routine costs above the RAB share for the work done, per cost section
     const progress = Math.min(1, summary.actualPercent / 100);
     const budget = new Map<string, number>();
     for (const b of input.budgetItems) budget.set(b.category || "Lainnya", (budget.get(b.category || "Lainnya") ?? 0) + b.amount);
     const actual = new Map<string, number>();
     for (const e of input.expenses) if (!e.cause || e.cause === "NORMAL") actual.set(e.category || "Lainnya", (actual.get(e.category || "Lainnya") ?? 0) + e.amount);
-    for (const [cat, a] of actual) bump(`${cat.split(" /")[0]} di atas RAB`, a - (budget.get(cat) ?? 0) * progress, p.id);
+    for (const [cat, a] of actual) bump(`${cat.split(" /")[0]} di atas RAB`, a - (budget.get(cat) ?? 0) * progress, p.id, p.projectName);
   }
-  return [...acc.entries()].map(([label, r]) => ({ label, value: Math.round(r.value), projects: r.projects.size })).sort((a, b) => b.value - a.value);
+  return accList(acc, Math.round);
 }
 
 /** Issues and risks of the last 12 months by category, weighted by their level (rendah 1 … ekstrem 4). */
+export const ISSUE_WEIGHT = { Rendah: 1, Sedang: 2, Tinggi: 3, Ekstrem: 4 } as const;
 export function issueCausePareto(projects: ProjectLike[], today: number): ParetoItem[] {
-  const weight = { Rendah: 1, Sedang: 2, Tinggi: 3, Ekstrem: 4 } as const;
-  const acc = new Map<string, { value: number; projects: Set<string> }>();
+  const acc: Acc = new Map();
   for (const p of projects) {
     for (const i of p.issues) {
       if (i.createdAt.getTime() < today - 365 * DAY_MS) continue;
       const label = ISSUE_CATEGORY_LABEL[i.category ?? "LAINNYA"] ?? "Lainnya";
-      const r = acc.get(label) ?? { value: 0, projects: new Set<string>() };
-      r.value += weight[riskLevel(i.type, i.likelihood, i.impact).label];
-      r.projects.add(p.id);
-      acc.set(label, r);
+      const level = riskLevel(i.type, i.likelihood, i.impact).label;
+      accBump(acc, label, ISSUE_WEIGHT[level], p.id, p.projectName, `${i.title} (${level.toLowerCase()})`);
     }
   }
-  return [...acc.entries()].map(([label, r]) => ({ label, value: r.value, projects: r.projects.size })).sort((a, b) => b.value - a.value);
+  return accList(acc, (v) => v);
 }
 
 // ---------------------------------------------------------------------------

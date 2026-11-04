@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/layout/Navbar";
 import { DocumentTypeManager } from "@/components/documenttype/DocumentTypeManager";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function DocumentTypesPage() {
   const session = await getSession();
@@ -21,7 +22,7 @@ export default async function DocumentTypesPage() {
       />
       <PageBody>
         <DocumentTypeManager
-          canManage={session?.role === "ADMIN"}
+          canManage={can(session?.role, "client")}
           initialDocumentTypes={documentTypes.map((d) => ({
             id: d.id,
             name: d.name,

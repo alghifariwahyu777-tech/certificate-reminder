@@ -6,6 +6,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { ApplicationReviewDetail } from "@/components/application/ApplicationReviewDetail";
 import { ArrowLeft } from "lucide-react";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function ApplicationDetailPage(context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -51,7 +52,7 @@ export default async function ApplicationDetailPage(context: { params: Promise<{
         </Link>
 
         <ApplicationReviewDetail
-          canManage={session?.role === "ADMIN"}
+          canManage={can(session?.role, "client")}
           application={{
             id: application.id,
             applicationNumber: application.applicationNumber,

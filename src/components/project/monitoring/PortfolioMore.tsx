@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -12,6 +12,7 @@ import { INDONESIA_PATHS, MAP_BOUNDS } from "@/lib/indonesia-map";
 import type { PortfolioRow } from "@/lib/project-monitoring";
 import type { CalendarEvent, CashflowMonth, ParetoItem } from "@/lib/portfolio-insights";
 import { cn } from "@/lib/utils";
+import { Segmented } from "@/components/ui/Segmented";
 
 const HEALTH_DOT: Record<string, string> = { KRITIS: "#C2362F", WASPADA: "#D69E2E", ON_TRACK: "#2F855A", SELESAI: "#1671B8", BATAL: "#94A3B8" };
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
@@ -88,8 +89,13 @@ export function ProjectMapCard({ rows }: { rows: PortfolioRow[] }) {
             </svg>
             {active && (
               <div
-                className="pointer-events-none absolute z-10 max-w-[16rem] -translate-x-1/2 -translate-y-full rounded-lg border border-line bg-white px-3 py-2 text-[12px] shadow-panel dark:border-slate-700 dark:bg-slate-900"
-                style={{ left: `${(active.x / width) * 100}%`, top: `calc(${(active.y / height) * 100}% - 12px)` }}
+                className={cn(
+                  "pointer-events-none absolute z-10 w-max max-w-[15rem] rounded-lg border border-line bg-white px-3 py-2 text-[12px] shadow-panel dark:border-slate-700 dark:bg-slate-900",
+                  // keep the label inside the map: flip sideways near the edges, below the dot near the top
+                  active.x / width < 0.3 ? "translate-x-[-12px]" : active.x / width > 0.7 ? "-translate-x-[calc(100%-12px)]" : "-translate-x-1/2",
+                  active.y / height < 0.35 ? "translate-y-4" : "-translate-y-[calc(100%+12px)]"
+                )}
+                style={{ left: `${(active.x / width) * 100}%`, top: `${(active.y / height) * 100}%` }}
               >
                 <p className="font-semibold text-ink dark:text-slate-100">{active.r.projectName}</p>
                 <p className="text-slate-500">
@@ -135,6 +141,7 @@ export function ProjectMapCard({ rows }: { rows: PortfolioRow[] }) {
 
 export function ParetoCard({ cost, issues }: { cost: ParetoItem[]; issues: ParetoItem[] }) {
   const [mode, setMode] = useState<"cost" | "issues">(cost.length ? "cost" : "issues");
+  const [sel, setSel] = useState<string | null>(null);
   const items = (mode === "cost" ? cost : issues).slice(0, 8);
   const total = (mode === "cost" ? cost : issues).reduce((s, x) => s + x.value, 0);
   let run = 0;
@@ -144,6 +151,8 @@ export function ParetoCard({ cost, issues }: { cost: ParetoItem[]; issues: Paret
   });
   const vital = data.findIndex((d) => d.cum >= 80);
   const vitalCount = vital === -1 ? data.length : vital + 1;
+  const picked = data.find((d) => d.label === sel) ?? data[0];
+  const fmt = (v: number) => (mode === "cost" ? formatRupiah(v, true) : `bobot ${v}`);
 
   return (
     <Card>
@@ -151,11 +160,11 @@ export function ParetoCard({ cost, issues }: { cost: ParetoItem[]; issues: Paret
         <div>
           <CardTitle className="flex items-center gap-1.5">
             Pareto penyebab masalah
-            <InfoTip label="Keterangan pareto">
-              Penyebab diurutkan dari yang terbesar (batang), dengan persentase kumulatif (garis). Umumnya sebagian kecil penyebab menimbulkan sebagian besar masalah
-              (prinsip 80/20); perbaikan sebaiknya dimulai dari penyebab di kiri. <strong>Biaya</strong>: rupiah biaya akibat keterlambatan, pekerjaan tambahan yang belum
-              tertutup addendum, dan biaya rutin per bagian yang melebihi porsi RAB untuk pekerjaan yang sudah selesai. <strong>Kendala</strong>: risiko dan kendala 12 bulan
-              terakhir per kategori, dibobot tingkatnya (rendah 1 sampai ekstrem 4).
+            <InfoTip label="Keterangan pareto" guide="pareto">
+              Penyebab diurutkan dari yang terbesar (batang), dengan persentase kumulatif (garis). Sebagian kecil penyebab biasanya menimbulkan sebagian besar masalah
+              (prinsip 80/20), jadi perbaikan dimulai dari kiri. <strong>Biaya</strong>: rupiah dari baris biaya yang diberi penyebab &quot;Akibat keterlambatan&quot; atau
+              &quot;Pekerjaan tambahan&quot; saat dicatat, ditambah biaya rutin per bagian RAB yang melebihi porsi RAB untuk progres yang sudah dicapai. <strong>Kendala</strong>:
+              jumlah kendala dan risiko 12 bulan terakhir per kategori, dibobot tingkatnya: rendah 1, sedang 2, tinggi 3, ekstrem 4. Klik batang untuk melihat projectnya.
             </InfoTip>
           </CardTitle>
           <p className="mt-0.5 text-[12.5px] text-slate-500">
@@ -164,47 +173,69 @@ export function ParetoCard({ cost, issues }: { cost: ParetoItem[]; issues: Paret
               : "Belum ada data"}
           </p>
         </div>
-        <div className="inline-flex rounded-lg bg-paper p-0.5 text-[12.5px] font-semibold dark:bg-slate-800">
-          {(
-            [
-              ["cost", "Biaya"],
-              ["issues", "Kendala"],
-            ] as const
-          ).map(([k, l]) => (
-            <button key={k} type="button" onClick={() => setMode(k)} className={cn("rounded-md px-3 py-1.5", mode === k ? "bg-white text-ink shadow-card dark:bg-slate-900 dark:text-slate-100" : "text-slate-500 hover:text-ink")}>
-              {l}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          value={mode}
+          onChange={(k) => {
+            setMode(k);
+            setSel(null);
+          }}
+          options={[
+            ["cost", "Biaya"],
+            ["issues", "Kendala"],
+          ]}
+        />
       </div>
       <CardContent>
         {data.length === 0 ? (
           <p className="py-12 text-center text-sm text-slate-500">Tidak ada pembengkakan atau kendala yang tercatat.</p>
         ) : (
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={data} margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
-                <CartesianGrid stroke="#E6EBF1" vertical={false} />
-                <XAxis dataKey="label" interval={0} height={40} tick={<WrapTick />} axisLine={{ stroke: "#E6EBF1" }} tickLine={false} />
-                <YAxis yAxisId="v" tickFormatter={(v: number) => (mode === "cost" ? juta(v) : String(v))} tick={{ fontSize: 10, fill: "#64748B" }} axisLine={false} tickLine={false} />
-                <YAxis yAxisId="c" orientation="right" domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 10, fill: "#64748B" }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={tooltipStyle}
-                  formatter={(v, name, item) =>
-                    name === "Kumulatif"
-                      ? [`${Number(v).toLocaleString("id-ID")}%`, name]
-                      : [mode === "cost" ? `${formatRupiah(Number(v), true)} (${(item?.payload as ParetoItem).projects} project)` : `${v} (${(item?.payload as ParetoItem).projects} project)`, mode === "cost" ? "Biaya" : "Bobot"]
-                  }
-                />
-                <ReferenceLine yAxisId="c" y={80} stroke="#94A3B8" strokeDasharray="4 4" label={{ value: "80%", position: "insideTopRight", fontSize: 10, fill: "#64748B" }} />
-                <Bar yAxisId="v" dataKey="value" name="Nilai" maxBarSize={40} radius={[3, 3, 0, 0]} isAnimationActive={false}>
-                  {data.map((d, i) => (
-                    <Cell key={d.label} fill={i < vitalCount ? (mode === "cost" ? "#C2362F" : "#D69E2E") : "#CBD5E1"} />
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.4fr_1fr]">
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={data} margin={{ top: 8, right: 4, left: -8, bottom: 0 }} onClick={(e) => e?.activeLabel && setSel(String(e.activeLabel))}>
+                  <CartesianGrid stroke="#E6EBF1" vertical={false} />
+                  <XAxis dataKey="label" interval={0} height={40} tick={<WrapTick />} axisLine={{ stroke: "#E6EBF1" }} tickLine={false} />
+                  <YAxis yAxisId="v" tickFormatter={(v: number) => (mode === "cost" ? juta(v) : String(v))} tick={{ fontSize: 10, fill: "#64748B" }} axisLine={false} tickLine={false} />
+                  <YAxis yAxisId="c" orientation="right" domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 10, fill: "#64748B" }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    formatter={(v, name, item) =>
+                      name === "Kumulatif" ? [`${Number(v).toLocaleString("id-ID")}%`, name] : [`${fmt(Number(v))} di ${(item?.payload as ParetoItem).projects} project`, mode === "cost" ? "Biaya" : "Bobot"]
+                    }
+                  />
+                  <ReferenceLine yAxisId="c" y={80} stroke="#94A3B8" strokeDasharray="4 4" label={{ value: "80%", position: "insideTopRight", fontSize: 10, fill: "#64748B" }} />
+                  <Bar yAxisId="v" dataKey="value" name="Nilai" maxBarSize={40} radius={[3, 3, 0, 0]} isAnimationActive={false} className="cursor-pointer">
+                    {data.map((d, i) => (
+                      <Cell key={d.label} fill={i < vitalCount ? (mode === "cost" ? "#C2362F" : "#D69E2E") : "#CBD5E1"} stroke={picked?.label === d.label ? "#123F6B" : undefined} strokeWidth={2} />
+                    ))}
+                  </Bar>
+                  <Line yAxisId="c" dataKey="cum" name="Kumulatif" stroke="#123F6B" strokeWidth={2} dot={{ r: 3, fill: "#123F6B" }} isAnimationActive={false} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+            {picked && (
+              <div className="min-w-0 rounded-lg border border-line dark:border-slate-700">
+                <div className="border-b border-line px-4 py-2.5 dark:border-slate-700">
+                  <p className="text-[13px] font-semibold text-ink dark:text-slate-100">{picked.label}</p>
+                  <p className="text-[12px] text-slate-500">
+                    {fmt(picked.value)} di {picked.projects} project. Klik batang lain untuk berganti.
+                  </p>
+                </div>
+                <ul className="max-h-60 divide-y divide-line overflow-y-auto dark:divide-slate-800">
+                  {picked.items.map((p) => (
+                    <li key={p.id} className="px-4 py-2">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <Link href={`/projects/${p.id}#${mode === "cost" ? "keuangan/biaya" : "tim/kendala"}`} className="min-w-0 truncate text-[12.5px] font-medium text-ink hover:text-accent dark:text-slate-100" title={p.name}>
+                          {p.name}
+                        </Link>
+                        <span className="shrink-0 text-[12px] tabular-nums text-slate-600 dark:text-slate-300">{fmt(p.value)}</span>
+                      </div>
+                      {p.detail && <p className="mt-0.5 text-[11.5px] leading-snug text-slate-500">{p.detail}</p>}
+                    </li>
                   ))}
-                </Bar>
-                <Line yAxisId="c" dataKey="cum" name="Kumulatif" stroke="#123F6B" strokeWidth={2} dot={{ r: 3, fill: "#123F6B" }} isAnimationActive={false} />
-              </ComposedChart>
-            </ResponsiveContainer>
+                </ul>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
@@ -248,7 +279,7 @@ export function CashflowCard({ months }: { months: CashflowMonth[] }) {
       <div className="px-5 pt-4">
         <CardTitle className="flex items-center gap-1.5">
           Arus kas project
-          <InfoTip label="Keterangan arus kas">
+          <InfoTip label="Keterangan arus kas" guide="keuangan">
             Enam bulan terakhir: pembayaran termin yang diterima dan biaya yang keluar. Bulan ini dan enam bulan ke depan (batang bergaris tipis): invoice diharapkan dibayar
             pada jatuh tempo (yang sudah lewat dihitung bulan ini), termin yang belum ditagih pada rencana tanggal tagih, dan sisa biaya (proyeksi biaya akhir dikurangi
             biaya keluar) disebar mengikuti rencana progres. Garis = saldo kumulatif.
@@ -464,7 +495,19 @@ export function CalendarCard({ events, today }: { events: CalendarEvent[]; today
 // Tren kinerja waktu & biaya portofolio
 // ---------------------------------------------------------------------------
 
-export function PerformanceTrendCard({ weeks }: { weeks: import("@/lib/portfolio-insights").PerformanceWeek[] }) {
+export function PerformanceTrendCard({
+  weeks: allWeeks,
+  byPortfolio = {},
+  initialPortfolio = "",
+}: {
+  weeks: import("@/lib/portfolio-insights").PerformanceWeek[];
+  byPortfolio?: Record<string, import("@/lib/portfolio-insights").PerformanceWeek[]>;
+  initialPortfolio?: string;
+}) {
+  const [portfolio, setPortfolio] = useState(initialPortfolio);
+  useEffect(() => setPortfolio(initialPortfolio), [initialPortfolio]);
+  const names = Object.keys(byPortfolio).sort();
+  const weeks = portfolio && byPortfolio[portfolio] ? byPortfolio[portfolio] : allWeeks;
   const data = weeks.map((w) => ({ ...w, label: shortDate(w.date) }));
   const first = weeks.find((w) => w.spi !== null);
   const last = [...weeks].reverse().find((w) => w.spi !== null);
@@ -477,12 +520,29 @@ export function PerformanceTrendCard({ weeks }: { weeks: import("@/lib/portfolio
       <div className="px-5 pt-4">
         <CardTitle className="flex items-center gap-1.5">
           Tren kinerja waktu dan biaya
-          <InfoTip label="Keterangan tren kinerja" align="right">
-            Rata-rata kinerja waktu (SPI) dan kinerja biaya (CPI) seluruh project berjalan setiap minggu, dibobot nilai kontrak. Di atas 1 lebih baik dari rencana, di bawah 1
-            terlambat atau boros.
+          <InfoTip label="Keterangan tren kinerja" guide="portofolio" align="right">
+            Rata-rata kinerja waktu (SPI) dan kinerja biaya (CPI) project berjalan setiap minggu, dibobot nilai kontrak. Pilih portofolio untuk melihat trennya sendiri. Di
+            atas 1 lebih baik dari rencana, di bawah 1 terlambat atau boros.
           </InfoTip>
         </CardTitle>
-        <p className="mt-0.5 text-[12.5px] text-slate-500">{weeks.length < 2 ? "Riwayat terbentuk setiap minggu" : `Waktu ${word(dSpi)}, biaya ${word(dCpi)} sejak ${shortDate(weeks[0].date)}`}</p>
+        <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[12.5px] text-slate-500">{weeks.length < 2 ? "Riwayat terbentuk setiap minggu" : `Waktu ${word(dSpi)}, biaya ${word(dCpi)} sejak ${shortDate(weeks[0].date)}`}</p>
+          {names.length > 1 && (
+            <select
+              value={portfolio}
+              onChange={(e) => setPortfolio(e.target.value)}
+              aria-label="Portofolio"
+              className="rounded-md border border-slate-300 bg-white px-2 py-1 text-[12.5px] text-ink dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+            >
+              <option value="">Semua portofolio</option>
+              {names.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
       </div>
       <CardContent>
         <div className="h-40">

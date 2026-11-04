@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { CertificateListClient } from "@/components/certificate/CertificateListClient";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function CertificatePage() {
   const session = await getSession();
@@ -25,7 +26,7 @@ export default async function CertificatePage() {
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
           clients={clients.map((c) => ({ id: c.id, name: c.name }))}
           departments={departments.map((d) => ({ id: d.id, name: d.name }))}
-          canManage={session?.role === "ADMIN"}
+          canManage={can(session?.role, "client")}
         />
       </PageBody>
     </>

@@ -1,10 +1,11 @@
 "use client";
 
+import { ASSIGNABLE_ROLES, ROLE_DUTY, ROLE_LABEL, type Role } from "@/lib/permissions";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Pencil, Trash2, ShieldCheck, Eye, UserCircle2 } from "lucide-react";
-import { Card } from "@/components/ui/Card";
+import { Card, CardHead } from "@/components/ui/Card";
 import { Input, Label, Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -12,6 +13,8 @@ import { useToast } from "@/components/ui/Toast";
 import { createUserSchema, updateUserSchema, type CreateUserInput, type UpdateUserInput } from "@/lib/validations";
 import { formatDate } from "@/lib/utils";
 import { Notice } from "@/components/ui/Notice";
+
+const ROLE_OPTIONS: Role[] = [...ASSIGNABLE_ROLES, "PIC"];
 
 type UserItem = {
   id: string;
@@ -45,6 +48,8 @@ export function UserManager({
   });
 
   const editForm = useForm<UpdateUserInput>({ resolver: zodResolver(updateUserSchema) });
+  const addRole = addForm.watch("role");
+  const editRole = editForm.watch("role");
 
   function openAdd() {
     setServerError(null);
@@ -71,7 +76,7 @@ export function UserManager({
 
   function openEdit(user: UserItem) {
     setServerError(null);
-    editForm.reset({ name: user.name, role: user.role as "ADMIN" | "VIEWER" | "PIC", isActive: user.isActive, password: "" });
+    editForm.reset({ name: user.name, role: user.role as Role, isActive: user.isActive, password: "" });
     setEditTarget(user);
   }
 
@@ -152,15 +157,8 @@ export function UserManager({
                 </div>
               </div>
               <div className="flex items-center gap-3 shrink-0">
-                <span
-                  className={`stamp-badge ${
-                    user.role === "ADMIN"
-                      ? "text-ink bg-ink/5 border-ink/10"
-                      : "text-accent bg-accent/5 border-accent/20"
-                  }`}
-                >
-                  {user.role === "ADMIN" ? <ShieldCheck className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                  {user.role === "ADMIN" ? "Administrator" : user.role === "PIC" ? "PIC project" : "Viewer"}
+                <span className="stamp-badge border-[#C9DDF0] bg-[#EEF5FB] text-brand-blueDark dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" title={ROLE_DUTY[user.role as Role]}>
+                  {ROLE_LABEL[user.role as Role] ?? user.role}
                 </span>
                 <button
                   onClick={() => openEdit(user)}
@@ -186,10 +184,21 @@ export function UserManager({
         </div>
       </Card>
 
-      <p className="text-xs text-slate-400 flex items-center gap-1.5">
-        <UserCircle2 className="h-3.5 w-3.5" />
-        Administrator dapat mengelola seluruh data. Viewer hanya dapat melihat dan mengunduh.
-      </p>
+      <Card>
+        <CardHead title="Hak akses per peran" description="Semua peran dapat melihat seluruh data. Perbedaannya ada pada data yang boleh diubah." />
+        <div className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">
+          {ROLE_OPTIONS.map((r) => (
+            <div key={r} className="grid gap-1 px-5 py-2.5 text-sm sm:grid-cols-[180px_1fr]">
+              <span className="font-semibold text-ink dark:text-slate-100">{ROLE_LABEL[r]}</span>
+              <span className="text-slate-600 dark:text-slate-300">{ROLE_DUTY[r]}</span>
+            </div>
+          ))}
+          <div className="grid gap-1 px-5 py-2.5 text-sm sm:grid-cols-[180px_1fr]">
+            <span className="font-semibold text-ink dark:text-slate-100">{ROLE_LABEL.PIC}</span>
+            <span className="text-slate-600 dark:text-slate-300">{ROLE_DUTY.PIC}</span>
+          </div>
+        </div>
+      </Card>
 
       {/* Add User Modal */}
       <Modal isOpen={addOpen} onClose={() => setAddOpen(false)} title="Tambah pengguna">
@@ -219,10 +228,13 @@ export function UserManager({
           <div>
             <Label htmlFor="add-role">Peran</Label>
             <Select id="add-role" error={addForm.formState.errors.role?.message} {...addForm.register("role")}>
-              <option value="VIEWER">Viewer</option>
-              <option value="ADMIN">Administrator</option>
-              <option value="PIC">PIC Project (hanya pembaruan progres project miliknya)</option>
+              {ROLE_OPTIONS.map((r) => (
+                <option key={r} value={r}>
+                  {ROLE_LABEL[r]}
+                </option>
+              ))}
             </Select>
+            <p className="mt-1 text-xs text-slate-500">{ROLE_DUTY[addRole as Role] ?? ""}</p>
           </div>
           {serverError && (
             <Notice tone="danger">
@@ -269,10 +281,13 @@ export function UserManager({
               error={editForm.formState.errors.role?.message}
               {...editForm.register("role")}
             >
-              <option value="VIEWER">Viewer</option>
-              <option value="ADMIN">Administrator</option>
-              <option value="PIC">PIC Project (hanya pembaruan progres project miliknya)</option>
+              {ROLE_OPTIONS.map((r) => (
+                <option key={r} value={r}>
+                  {ROLE_LABEL[r]}
+                </option>
+              ))}
             </Select>
+            <p className="mt-1 text-xs text-slate-500">{ROLE_DUTY[editRole as Role] ?? ""}</p>
           </div>
           <label className="flex items-center gap-2 text-sm text-slate-600">
             <input

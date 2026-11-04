@@ -39,7 +39,7 @@ export type CostRow = {
   category: string;
   description: string;
   amount: number;
-  cause: "NORMAL" | "DELAY" | "EXTRA_SCOPE";
+  cause: "NORMAL" | "DELAY" | "EXTRA_SCOPE" | "REWORK";
   referenceNo: string | null;
   status: "NEW" | "DUPLICATE" | "ERROR";
   message?: string;
@@ -111,6 +111,7 @@ function parseCause(v: string): CostRow["cause"] | null {
   if (!t || t === "normal" || t === "-" || t === "rutin") return "NORMAL";
   if (t.includes("lambat") || t === "delay") return "DELAY";
   if (t.includes("tambah") || t.includes("extra") || t.includes("lingkup")) return "EXTRA_SCOPE";
+  if (t.includes("ulang") || t.includes("rework") || t.includes("perbaikan")) return "REWORK";
   return null;
 }
 
@@ -141,14 +142,19 @@ export function importKeyFor(r: { projectNumber: string; date?: string; category
     .slice(0, 32);
 }
 
-export async function parseCostWorkbook(buffer: Buffer, opts: { restrictToProjectId?: string } = {}): Promise<ImportPreview> {
+export async function parseCostWorkbook(buffer: Buffer, opts: { restrictToProjectId?: string; onlyPicEmail?: string } = {}): Promise<ImportPreview> {
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.load(buffer as unknown as ArrayBuffer);
   const costSheet = findSheet(wb, ["biaya", "realisasi biaya", "realisasi", "costs"]) ?? (wb.worksheets.length === 1 ? wb.worksheets[0] : undefined);
   const budgetSheet = findSheet(wb, ["rab", "anggaran", "budget"]);
 
   const projects = await prisma.project.findMany({
-    where: { deletedAt: null, ...(opts.restrictToProjectId ? { id: opts.restrictToProjectId } : {}) },
+    where: {
+      deletedAt: null,
+      ...(opts.restrictToProjectId ? { id: opts.restrictToProjectId } : {}),
+      // a Project Manager may import only into the projects they lead
+      ...(opts.onlyPicEmail ? { picEmail: { equals: opts.onlyPicEmail, mode: "insensitive" as const } } : {}),
+    },
     select: {
       id: true,
       projectNumber: true,

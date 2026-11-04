@@ -6,6 +6,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { ServiceDetailManager } from "@/components/service/ServiceDetailManager";
 import { ArrowLeft } from "lucide-react";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function ServiceDetailPage(context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -40,7 +41,7 @@ export default async function ServiceDetailPage(context: { params: Promise<{ id:
 
         <ServiceDetailManager
           serviceId={service.id}
-          canManage={session?.role === "ADMIN"}
+          canManage={can(session?.role, "client")}
           documentTypeOptions={documentTypes.map((d) => ({ id: d.id, name: d.name }))}
           initialRequirements={service.requirements.map((r) => ({
             id: r.id,

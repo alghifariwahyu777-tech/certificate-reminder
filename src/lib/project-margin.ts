@@ -37,6 +37,7 @@ export const BRIDGE_SHORT: Record<string, string> = {
   rab: "Revisi RAB",
   delay: "Keterlambatan",
   extra: "Kerja tambahan",
+  rework: "Kerja ulang",
   overrun: "Biaya rutin",
   forecast: "Proyeksi",
 };
@@ -85,6 +86,7 @@ export type MarginAnalysis = {
   scopeValueChange: number; // contract − baseline contract (addenda)
   scopeChangePct: number | null;
   extraScopeCost: number; // expenses tagged EXTRA_SCOPE
+  reworkCost: number; // expenses tagged REWORK
   delayCost: number; // expenses tagged DELAY
   unbilledExtraScope: number; // extra-scope cost not covered by a contract value increase
 
@@ -110,6 +112,7 @@ export function analyzeMargin(input: MonitoringInput, summary: MonitoringSummary
 
   const delayCost = input.expenses.filter((e) => e.cause === "DELAY").reduce((s, e) => s + e.amount, 0);
   const extraScopeCost = input.expenses.filter((e) => e.cause === "EXTRA_SCOPE").reduce((s, e) => s + e.amount, 0);
+  const reworkCost = input.expenses.filter((e) => e.cause === "REWORK").reduce((s, e) => s + e.amount, 0);
   const normalCost = actualCost - delayCost - extraScopeCost;
   const earnedValueCost = progress * budget;
   const earnedRevenue = progress * contract;
@@ -147,12 +150,13 @@ export function analyzeMargin(input: MonitoringInput, summary: MonitoringSummary
     .sort((a, b) => b.over - a.over);
 
   // margin bridge: planned → forecast, every step sums exactly
-  const otherOverrun = eac - budget - delayCost - extraScopeCost;
+  const otherOverrun = eac - budget - delayCost - extraScopeCost - reworkCost;
   const bridge: BridgeStep[] = [{ key: "planned", label: "Margin awal (baseline)", amount: plannedMargin, kind: "start" }];
   if (Math.round(scopeValueChange)) bridge.push({ key: "addendum", label: "Perubahan nilai kontrak (addendum)", amount: scopeValueChange, kind: "delta" });
   if (Math.round(budget - baselineBudget)) bridge.push({ key: "rab", label: budget > baselineBudget ? "Revisi RAB (naik)" : "Revisi RAB (turun)", amount: -(budget - baselineBudget), kind: "delta" });
   if (Math.round(delayCost)) bridge.push({ key: "delay", label: "Biaya akibat keterlambatan", amount: -delayCost, kind: "delta" });
   if (Math.round(extraScopeCost)) bridge.push({ key: "extra", label: "Biaya pekerjaan tambahan", amount: -extraScopeCost, kind: "delta" });
+  if (Math.round(reworkCost)) bridge.push({ key: "rework", label: "Biaya pekerjaan ulang", amount: -reworkCost, kind: "delta" });
   if (Math.round(otherOverrun))
     bridge.push({
       key: "overrun",
@@ -234,6 +238,7 @@ export function analyzeMargin(input: MonitoringInput, summary: MonitoringSummary
     scopeValueChange,
     scopeChangePct: baselineContract > 0 ? round1((scopeValueChange / baselineContract) * 100) : null,
     extraScopeCost,
+    reworkCost,
     delayCost,
     unbilledExtraScope,
     overBudgetCategories,
@@ -346,7 +351,7 @@ export function marginTimeline(input: MonitoringInput, today: number): MarginTim
 }
 
 export const SIGNAL_LABEL: Record<Signal, string> = { good: "Baik", warn: "Waspada", bad: "Kritis", none: "Belum ada data" };
-export const CAUSE_LABEL: Record<string, string> = { NORMAL: "Normal", DELAY: "Akibat keterlambatan", EXTRA_SCOPE: "Pekerjaan tambahan" };
+export const CAUSE_LABEL: Record<string, string> = { NORMAL: "Normal", DELAY: "Akibat keterlambatan", EXTRA_SCOPE: "Pekerjaan tambahan", REWORK: "Pekerjaan ulang" };
 
 // ---------------------------------------------------------------------------
 // Pendapatan, biaya, laba: RAB vs realisasi vs proyeksi (the finance view)

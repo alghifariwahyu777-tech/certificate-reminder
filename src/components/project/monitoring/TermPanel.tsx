@@ -96,7 +96,7 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
   }
 
   useOpenFromHash("termin", () => {
-    if (data.canManage) openForm(null);
+    if (data.rights.projectBilling) openForm(null);
   });
 
 
@@ -144,10 +144,10 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
           <div>
             <CardTitle className="flex items-center gap-1.5">
             Termin dan penagihan
-            <InfoTip label="Keterangan termin dan penagihan">Alur: belum ditagih, lalu sudah ditagih (invoice terbit), lalu dibayar.</InfoTip>
+            <InfoTip label="Keterangan termin dan penagihan" guide="keuangan">Alur: belum ditagih, lalu sudah ditagih (invoice terbit), lalu dibayar.</InfoTip>
           </CardTitle>
           </div>
-          {data.canManage && (
+          {data.rights.projectBilling && (
             <Button size="sm" onClick={() => openForm(null)}>
               <Plus className="h-4 w-4" />
               Tambah termin
@@ -156,7 +156,7 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
         </CardHeader>
         <CardContent className="p-0">
           {data.terms.length === 0 ? (
-            <EmptyState icon={Receipt} text="Belum ada termin pembayaran. Tambahkan sesuai pasal pembayaran di kontrak, misalnya Uang muka 20%, Termin 1 40%, Termin 2 40%." action={data.canManage ? { label: "Tambah termin", onClick: () => openForm(null) } : undefined} />
+            <EmptyState icon={Receipt} text="Belum ada termin pembayaran. Tambahkan sesuai pasal pembayaran di kontrak, misalnya Uang muka 20%, Termin 1 40%, Termin 2 40%." action={data.rights.projectBilling ? { label: "Tambah termin", onClick: () => openForm(null) } : undefined} />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -168,7 +168,7 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
                     <th className="px-3 py-2.5 font-medium">Invoice</th>
                     <th className="px-3 py-2.5 font-medium">Pembayaran</th>
                     <th className="px-3 py-2.5 font-medium">Status</th>
-                    {data.canManage && <th className="px-5 py-2.5" />}
+                    {data.rights.projectBilling && <th className="px-5 py-2.5" />}
                   </tr>
                 </thead>
                 <tbody>
@@ -218,7 +218,7 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
                             {overdue ? "Lewat jatuh tempo" : TERM_STATUS_LABEL[t.status]}
                           </span>
                         </td>
-                        {data.canManage && (
+                        {data.rights.projectBilling && (
                           <td className="px-5 py-3">
                             <div className="flex items-center justify-end gap-1">
                               <button

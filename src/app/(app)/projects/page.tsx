@@ -14,6 +14,7 @@ import { CostImportDialog } from "@/components/project/monitoring/CostImportDial
 import { DemoSeeder } from "@/components/project/monitoring/DemoSeeder";
 import { PageBody } from "@/components/layout/PageBody";
 import { StatCard, StatGrid } from "@/components/ui/Stat";
+import { can } from "@/lib/permissions";
 
 function formatRupiah(value: number): string {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(
@@ -65,10 +66,11 @@ export default async function ProjectsPage() {
         </StatGrid>
 
         <ProjectListClient
-          canManage={session?.role === "ADMIN"}
+          canManage={can(session?.role, "project")}
+          canDelete={can(session?.role, "system")}
           extraActions={
             <>
-              {session?.role === "ADMIN" && (
+              {can(session?.role, "projectCost") && (
                 <div>
                   <CostImportDialog label="Impor biaya (Excel)" size="md" />
                 </div>

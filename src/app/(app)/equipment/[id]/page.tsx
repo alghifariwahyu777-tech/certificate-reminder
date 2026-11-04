@@ -10,6 +10,7 @@ import { formatDate } from "@/lib/utils";
 import { getDaysRemaining } from "@/lib/status";
 import { Pencil, Download, ArrowLeft, FileWarning } from "lucide-react";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function EquipmentDetailPage(context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -62,7 +63,7 @@ export default async function EquipmentDetailPage(context: { params: Promise<{ i
             <ArrowLeft className="h-4 w-4" />
             Kembali ke kalibrasi alat
           </Link>
-          {session?.role === "ADMIN" && (
+          {can(session?.role, "equipment") && (
             <Link href={`/equipment/${equipment.id}/edit`}>
               <Button variant="outline" size="sm">
                 <Pencil className="h-4 w-4" />

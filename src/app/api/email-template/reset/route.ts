@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireArea } from "@/lib/auth";
 import { DEFAULT_SUBJECT, DEFAULT_BODY_HTML, DEFAULT_SIMPLE_FIELDS } from "@/lib/email-template";
 import { logAudit } from "@/lib/audit";
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAdmin();
+  const auth = await requireArea("client");
   if ("error" in auth) return auth.error;
 
   const body = await request.json().catch(() => ({}));

@@ -258,6 +258,10 @@ export async function getProjectPortfolio(): Promise<{
   paretoCost: ParetoItem[];
   paretoIssues: ParetoItem[];
   perfTrend: PerformanceWeek[];
+  /** Cash flow of each project (same months as `cashflow`), so a filtered view can add up its own projects. */
+  cashflowByProject: Record<string, CashflowMonth[]>;
+  /** The same weekly trend per portfolio (category name). */
+  perfTrendByPortfolio: Record<string, PerformanceWeek[]>;
 }> {
   const [projects, thresholds] = await Promise.all([
     prisma.project.findMany({ where: { deletedAt: null }, include: MONITORING_INCLUDE, orderBy: { targetEndDate: "asc" } }),
@@ -338,13 +342,17 @@ export async function getProjectPortfolio(): Promise<{
   );
   const items = projects.map((p, i) => ({ p, input: inputs[i], summary: rows[i].summary, margin: rows[i].margin }));
   const cashflow = cashflowForecast(items, today);
+  const cashflowByProject = Object.fromEntries(items.map((it) => [it.p.id, cashflowForecast([it], today)]));
   const paretoCost = costOverrunPareto(items);
   const ongoingProjects = projects.filter((p) => p.status === "ONGOING");
   const paretoIssues = issueCausePareto(ongoingProjects, today);
-  const perfTrend = performanceTrend(ongoingProjects, {
-    week: thisWeek,
-    date: today,
-    items: rows.filter((r) => r.status === "ONGOING").map((r) => ({ value: r.summary.contractValue, spi: r.summary.spi, cpi: r.margin.cpi })),
-  });
-  return { rows, thresholds, today, curve: portfolioSCurve(inputs, today), curves, healthTrend, aging, risks, cashflow, paretoCost, paretoIssues, perfTrend };
+  const ongoingRows = rows.filter((r) => r.status === "ONGOING");
+  const trendFor = (keep: (categoryName: string) => boolean) =>
+    performanceTrend(
+      ongoingProjects.filter((p) => keep(rows[projects.indexOf(p)].categoryName)),
+      { week: thisWeek, date: today, items: ongoingRows.filter((r) => keep(r.categoryName)).map((r) => ({ value: r.summary.contractValue, spi: r.summary.spi, cpi: r.margin.cpi })) }
+    );
+  const perfTrend = trendFor(() => true);
+  const perfTrendByPortfolio = Object.fromEntries([...new Set(ongoingRows.map((r) => r.categoryName))].map((c) => [c, trendFor((x) => x === c)]));
+  return { rows, thresholds, today, curve: portfolioSCurve(inputs, today), curves, healthTrend, aging, risks, cashflow, cashflowByProject, paretoCost, paretoIssues, perfTrend, perfTrendByPortfolio };
 }

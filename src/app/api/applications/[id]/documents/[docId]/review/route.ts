@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireArea } from "@/lib/auth";
 import { documentReviewSchema } from "@/lib/validations";
 import { logAudit } from "@/lib/audit";
 import { notifyDocumentRevisionRequested } from "@/lib/notifications";
@@ -10,7 +10,7 @@ export async function PUT(
   context: { params: Promise<{ id: string; docId: string }> }
 ) {
   const params = await context.params;
-  const auth = await requireAdmin();
+  const auth = await requireArea("client");
   if ("error" in auth) return auth.error;
 
   const document = await prisma.applicationDocument.findFirst({

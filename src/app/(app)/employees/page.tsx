@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { EmployeeManager } from "@/components/personnel/EmployeeManager";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function EmployeesPage() {
   const session = await getSession();
@@ -24,7 +25,7 @@ export default async function EmployeesPage() {
       />
       <PageBody>
         <EmployeeManager
-          canManage={session?.role === "ADMIN"}
+          canManage={can(session?.role, "personnel")}
           departments={departments.map((d) => ({ id: d.id, name: d.name }))}
           initialEmployees={employees.map((e) => ({
             id: e.id,

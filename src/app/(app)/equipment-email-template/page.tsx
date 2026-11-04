@@ -5,11 +5,12 @@ import { DEFAULT_EQUIPMENT_SIMPLE_FIELDS, DEFAULT_EQUIPMENT_BODY_HTML } from "@/
 import { Navbar } from "@/components/layout/Navbar";
 import { EquipmentEmailTemplateEditor } from "@/components/EquipmentEmailTemplateEditor";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function EquipmentEmailTemplatePage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.role !== "ADMIN") redirect("/dashboard");
+  if (!can(session.role, "equipment")) redirect("/dashboard");
 
   const template = await getEquipmentEmailTemplate();
 

@@ -6,6 +6,7 @@ import { ChangePasswordForm } from "@/components/ChangePasswordForm";
 import { formatDate } from "@/lib/utils";
 import { UserCircle, Mail, CalendarDays } from "lucide-react";
 import { PageBody } from "@/components/layout/PageBody";
+import { ROLE_LABEL, type Role } from "@/lib/permissions";
 
 export default async function ProfilePage() {
   const session = await getSession();
@@ -28,7 +29,7 @@ export default async function ProfilePage() {
             <div>
               <CardTitle className="text-lg">{user?.name || "Admin"}</CardTitle>
               <p className="stamp-badge text-ink bg-ink/5 border-ink/10 mt-1.5">
-                {user?.role === "ADMIN" ? "Administrator" : "Viewer"}
+                {ROLE_LABEL[(user?.role ?? "VIEWER") as Role] ?? user?.role}
               </p>
             </div>
           </CardHeader>
@@ -44,7 +45,7 @@ export default async function ProfilePage() {
               <UserCircle className="h-4 w-4 text-slate-400" />
               <div>
                 <p className="text-xs text-slate-500">Peran</p>
-                <p className="text-ink font-medium">{user?.role === "ADMIN" ? "Administrator" : "Viewer"}</p>
+                <p className="text-ink font-medium">{ROLE_LABEL[(user?.role ?? "VIEWER") as Role] ?? user?.role}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 text-sm">

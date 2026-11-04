@@ -1,3 +1,4 @@
+import type { ProjectRights } from "@/lib/permissions";
 import type { HseRecord, HseSummary } from "@/lib/project-hse";
 import type { RabData, RabRevisionSummary } from "@/lib/project-rab-import";
 import type { MonitoringInput, MonitoringSummary, MonitoringThresholds, PadBucket } from "@/lib/project-monitoring-shared";
@@ -11,7 +12,9 @@ export type MilestoneDTO = {
   name: string;
   description: string | null;
   weight: number;
+  plannedStartDate: string | null;
   plannedDate: string | null;
+  actualStartDate: string | null;
   actualDate: string | null;
   status: string;
   notes: string | null;
@@ -96,6 +99,8 @@ export type ProjectMonitoringDTO = {
   startDate: string | null;
   targetEndDate: string;
   canManage: boolean;
+  /** What this user may change on this project, per area (lib/permissions.ts). */
+  rights: ProjectRights;
   today: number;
   input: MonitoringInput;
   summary: MonitoringSummary;
@@ -108,6 +113,10 @@ export type ProjectMonitoringDTO = {
   expenses: ExpenseDTO[];
   issues: IssueDTO[];
   hse: { records: HseRecordDTO[]; summary: HseSummary };
+  /** This project's own cash flow, cost causes and open risks (same calculations as the portfolio dashboard). */
+  cashflow: import("@/lib/portfolio-insights").CashflowMonth[];
+  costCauses: import("@/lib/portfolio-insights").ParetoItem[];
+  risks: import("@/lib/project-monitoring").PortfolioRisk[];
   // batch 2
   trend: number | null;
   padSchedule: PadBucket[];

@@ -1,4 +1,5 @@
 import { MobileNav } from "./MobileNav";
+import { ROLE_LABEL, type Role } from "@/lib/permissions";
 import { NotificationBell } from "./NotificationBell";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { PageIcon } from "./PageIcon";
@@ -12,7 +13,7 @@ export function Navbar({
   title: string;
   subtitle?: string;
   adminName: string;
-  role?: "ADMIN" | "VIEWER" | "PIC";
+  role?: Role;
 }) {
   const initials = adminName
     .split(" ")
@@ -36,8 +37,8 @@ export function Navbar({
         <NotificationBell />
         <div className="hidden sm:block text-right">
           <p className="text-sm font-medium text-ink dark:text-slate-100 leading-tight">{adminName}</p>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight font-mono">
-            {role === "ADMIN" ? "Admin" : role === "PIC" ? "PIC" : "Viewer"}
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
+            {ROLE_LABEL[role] ?? role}
           </p>
         </div>
         <div className="h-9 w-9 rounded-full bg-brand-blueDark text-white flex items-center justify-center text-xs font-semibold">

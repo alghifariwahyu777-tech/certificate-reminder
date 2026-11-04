@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireArea } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 
 const bulkDeleteSchema = z.object({
@@ -10,7 +10,7 @@ const bulkDeleteSchema = z.object({
 
 /** Bulk soft-delete — moves the selected equipment to Trash rather than removing them. */
 export async function POST(request: NextRequest) {
-  const auth = await requireAdmin();
+  const auth = await requireArea("equipment");
   if ("error" in auth) return auth.error;
 
   const body = await request.json().catch(() => null);

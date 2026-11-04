@@ -5,11 +5,12 @@ import { DEFAULT_PERSONNEL_SIMPLE_FIELDS, DEFAULT_PERSONNEL_BODY_HTML } from "@/
 import { Navbar } from "@/components/layout/Navbar";
 import { PersonnelEmailTemplateEditor } from "@/components/PersonnelEmailTemplateEditor";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function PersonnelEmailTemplatePage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.role !== "ADMIN") redirect("/dashboard");
+  if (!can(session.role, "personnel")) redirect("/dashboard");
 
   const template = await getPersonnelEmailTemplate();
 

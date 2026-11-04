@@ -5,6 +5,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { getPersonnelMapping } from "@/lib/personnel-mapping";
 import { PersonnelMapping } from "@/components/project/monitoring/PersonnelMapping";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function PersonnelMappingPage() {
   const session = await getSession();
@@ -17,7 +18,7 @@ export default async function PersonnelMappingPage() {
     <>
       <Navbar title="Penugasan Personil" subtitle="Beban kerja dan sertifikasi personil" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
       <PageBody>
-        <PersonnelMapping rows={rows} projects={projects.map((p) => ({ id: p.id, name: p.projectName, number: p.projectNumber }))} canManage={session?.role === "ADMIN"} />
+        <PersonnelMapping rows={rows} projects={projects.map((p) => ({ id: p.id, name: p.projectName, number: p.projectNumber }))} canManage={can(session?.role, "projectTeam")} />
       </PageBody>
     </>
   );

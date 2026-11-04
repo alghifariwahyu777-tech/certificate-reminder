@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { DepartmentManager } from "@/components/department/DepartmentManager";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function DepartmentsPage() {
   const session = await getSession();
@@ -16,7 +17,7 @@ export default async function DepartmentsPage() {
       <Navbar title="Divisi" subtitle="Daftar divisi internal" adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
       <PageBody>
         <DepartmentManager
-          canManage={session?.role === "ADMIN"}
+          canManage={can(session?.role, "system")}
           initialDepartments={departments.map((d) => ({
             id: d.id,
             name: d.name,

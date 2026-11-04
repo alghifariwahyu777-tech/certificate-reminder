@@ -55,7 +55,7 @@ export function TeamPanel({ data }: { data: ProjectMonitoringDTO }) {
   }
 
   useOpenFromHash("personil", () => {
-    if (data.canManage) openForm(null);
+    if (data.rights.projectTeam) openForm(null);
   });
 
 
@@ -83,7 +83,7 @@ export function TeamPanel({ data }: { data: ProjectMonitoringDTO }) {
             .</InfoTip>
           </CardTitle>
         </div>
-        {data.canManage && (
+        {data.rights.projectTeam && (
           <Button size="sm" onClick={() => openForm(null)}>
             <Plus className="h-4 w-4" />
             Tugaskan personil
@@ -97,7 +97,7 @@ export function TeamPanel({ data }: { data: ProjectMonitoringDTO }) {
           </Notice>
         )}
         {data.team.length === 0 ? (
-          <EmptyState icon={Users} text="Belum ada personil yang ditugaskan ke project ini." action={data.canManage ? { label: "Tugaskan personil", onClick: () => openForm(null) } : undefined} />
+          <EmptyState icon={Users} text="Belum ada personil yang ditugaskan ke project ini." action={data.rights.projectTeam ? { label: "Tugaskan personil", onClick: () => openForm(null) } : undefined} />
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {data.team.map((m) => (
@@ -120,7 +120,7 @@ export function TeamPanel({ data }: { data: ProjectMonitoringDTO }) {
                     </p>
                   ))}
                 </div>
-                {data.canManage && (
+                {data.rights.projectTeam && (
                   <div className="flex gap-1 shrink-0">
                     <button type="button" aria-label="Ubah penugasan" onClick={() => openForm(m)} className="p-1.5 rounded text-slate-400 hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800">
                       <Pencil className="h-4 w-4" />

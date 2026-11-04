@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireArea } from "@/lib/auth";
 import { importCertificatesFromExcel } from "@/lib/excel-import";
 import { logAudit } from "@/lib/audit";
 
@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 const MAX_IMPORT_FILE_SIZE = 5 * 1024 * 1024; // 5 MB — spreadsheet, not a document scan
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAdmin();
+  const auth = await requireArea("client");
   if ("error" in auth) return auth.error;
 
   const formData = await request.formData();

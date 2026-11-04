@@ -4,12 +4,13 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { ProjectForm } from "@/components/project/ProjectForm";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function EditProjectPage(context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.role !== "ADMIN") redirect(`/projects/${params.id}`);
+  if (!can(session.role, "project")) redirect(`/projects/${params.id}`);
 
   const [project, categories] = await Promise.all([
     prisma.project.findFirst({ where: { id: params.id, deletedAt: null } }),

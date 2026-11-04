@@ -6,6 +6,7 @@ import { ProjectMonitoringSettingsForm } from "@/components/settings/ProjectMoni
 import { getMonitoringThresholds } from "@/lib/project-monitoring";
 import { WeeklyReportSettingsForm } from "@/components/settings/WeeklyReportSettingsForm";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function SettingsPage() {
   const session = await getSession();
@@ -22,12 +23,12 @@ export default async function SettingsPage() {
       />
       <PageBody width="form">
         <SettingsForm
-          canManage={session?.role === "ADMIN"}
+          canManage={can(session?.role, "system")}
           initialWhatsappNumber={settings?.adminWhatsappNumber || ""}
         />
-        <ProjectMonitoringSettingsForm canManage={session?.role === "ADMIN"} initial={thresholds} />
+        <ProjectMonitoringSettingsForm canManage={can(session?.role, "system")} initial={thresholds} />
         <WeeklyReportSettingsForm
-          canManage={session?.role === "ADMIN"}
+          canManage={can(session?.role, "system")}
           initial={{
             weeklyReportEnabled: settings?.weeklyReportEnabled ?? false,
             weeklyReportRecipients: (settings?.weeklyReportRecipients || "").split(", ").filter(Boolean).join("\n"),

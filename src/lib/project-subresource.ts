@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { getSession, projectDenied } from "@/lib/auth";
+import type { Area } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
 import type { SessionPayload } from "@/lib/auth";
 
@@ -9,7 +10,7 @@ import type { SessionPayload } from "@/lib/auth";
  * Shared plumbing for the Project Monitoring sub-resources (milestones,
  * progress reports, terms, budget items, expenses, issues). Each one is a
  * child row of Project with the same rules:
- *   - writes are Admin-only (reads happen through the server-rendered page)
+ *   - writes follow the area rights in lib/permissions.ts (a PM only on own projects)
  *   - the parent project must exist and not be soft-deleted
  *   - an item can only be changed through its own project's URL
  *   - every change is written to the audit log
@@ -22,6 +23,8 @@ type Project = { id: string; projectName: string; projectNumber: string };
 export type SubresourceDef<S extends z.ZodTypeAny> = {
   /** Human label for messages/audit, e.g. "milestone", "termin". */
   label: string;
+  /** Which area of rights this sub-resource belongs to. */
+  area: Area;
   schema: S;
   /** Map validated input to Prisma column values (without projectId). */
   toData: (input: z.infer<S>, ctx: { session: SessionPayload; isCreate: boolean }) => Record<string, unknown>;
@@ -38,16 +41,18 @@ const isUniqueViolation = (err: unknown) => typeof err === "object" && err !== n
 export const toDate = (v: string | null | undefined): Date | null => (v ? new Date(v) : null);
 export const emptyToNull = (v: string | null | undefined): string | null => (v && v.trim() ? v.trim() : null);
 
-async function guard(context: Ctx) {
+async function guard(context: Ctx, area: Area = "project") {
   const params = await context.params;
-  const auth = await requireAdmin();
-  if ("error" in auth) return { error: auth.error } as const;
+  const session = await getSession();
+  if (!session) return { error: NextResponse.json({ message: "Unauthorized" }, { status: 401 }) } as const;
   const project = await prisma.project.findFirst({
     where: { id: params.id, deletedAt: null },
-    select: { id: true, projectName: true, projectNumber: true },
+    select: { id: true, projectName: true, projectNumber: true, picEmail: true },
   });
   if (!project) return { error: NextResponse.json({ message: "Project tidak ditemukan." }, { status: 404 }) } as const;
-  return { session: auth.session, project, itemId: params.itemId } as const;
+  const denied = projectDenied(session, project, area);
+  if (denied) return { error: denied } as const;
+  return { session, project, itemId: params.itemId } as const;
 }
 
 async function parse<S extends z.ZodTypeAny>(request: NextRequest, schema: S) {
@@ -75,7 +80,7 @@ function audit(session: SessionPayload, project: Project, action: "CREATE" | "UP
 export function collectionHandlers<S extends z.ZodTypeAny>(def: SubresourceDef<S>) {
   return {
     async POST(request: NextRequest, context: Ctx) {
-      const g = await guard(context);
+      const g = await guard(context, def.area);
       if ("error" in g) return g.error;
       const p = await parse(request, def.schema);
       if ("error" in p) return p.error;
@@ -102,7 +107,7 @@ export function itemHandlers<S extends z.ZodTypeAny>(def: SubresourceDef<S>) {
 
   return {
     async PATCH(request: NextRequest, context: Ctx) {
-      const g = await guard(context);
+      const g = await guard(context, def.area);
       if ("error" in g) return g.error;
       if (!(await owned(g))) return notFound();
       const p = await parse(request, def.schema);
@@ -118,7 +123,7 @@ export function itemHandlers<S extends z.ZodTypeAny>(def: SubresourceDef<S>) {
       return NextResponse.json({ item });
     },
     async DELETE(_request: NextRequest, context: Ctx) {
-      const g = await guard(context);
+      const g = await guard(context, def.area);
       if ("error" in g) return g.error;
       if (!(await owned(g))) return notFound();
       await def.remove(g.itemId as string);

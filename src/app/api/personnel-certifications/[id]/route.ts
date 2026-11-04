@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession, requireAdmin } from "@/lib/auth";
+import { getSession, requireArea } from "@/lib/auth";
 import { personnelCertificationSchema } from "@/lib/validations";
 import { logAudit } from "@/lib/audit";
 
@@ -20,7 +20,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
 
 export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
-  const auth = await requireAdmin();
+  const auth = await requireArea("personnel");
   if ("error" in auth) return auth.error;
 
   const body = await request.json().catch(() => null);
@@ -70,7 +70,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
 export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
-  const auth = await requireAdmin();
+  const auth = await requireArea("personnel");
   if ("error" in auth) return auth.error;
 
   const certification = await prisma.personnelCertification.findFirst({

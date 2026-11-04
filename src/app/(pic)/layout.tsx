@@ -8,6 +8,6 @@ export const metadata: Metadata = { title: "Update Progres | Reminder System" };
 export default async function PicLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session) redirect("/login?redirect=/pic");
-  if (session.role === "VIEWER") redirect("/dashboard");
+  if (session.role !== "PIC" && session.role !== "ADMIN") redirect("/dashboard");
   return <PicShell userName={session.name}>{children}</PicShell>;
 }

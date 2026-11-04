@@ -538,7 +538,7 @@ export function buildSCurve(input: MonitoringInput, today: number): SCurveRow[] 
 
 /** Evenly spaced plan rows (weekly/monthly) derived from the current plan — used by "Isi otomatis". */
 export type PlanShape = "S" | "MILESTONE" | "LINEAR";
-export function suggestPlanRows(input: MonitoringInput, interval: "WEEKLY" | "MONTHLY", shape: PlanShape = "S"): { periodDate: number; plannedPercent: number }[] {
+export function suggestPlanRows(input: MonitoringInput, interval: "DAILY" | "WEEKLY" | "MONTHLY", shape: PlanShape = "S"): { periodDate: number; plannedPercent: number }[] {
   const start = projectStart(input);
   const end = Math.max(start, input.targetEndDate);
   const base =
@@ -548,8 +548,9 @@ export function suggestPlanRows(input: MonitoringInput, interval: "WEEKLY" | "MO
         ? plannedPoints({ ...input, plans: [] }).points
         : standardSCurve(start, end, 200);
   const rows: { periodDate: number; plannedPercent: number }[] = [];
-  if (interval === "WEEKLY") {
-    for (let t = start + 7 * DAY_MS; t < end; t += 7 * DAY_MS) rows.push({ periodDate: t, plannedPercent: round1(interpolate(base, t)) });
+  if (interval === "DAILY" || interval === "WEEKLY") {
+    const step = (interval === "DAILY" ? 1 : 7) * DAY_MS;
+    for (let t = start + step; t < end; t += step) rows.push({ periodDate: t, plannedPercent: round1(interpolate(base, t)) });
   } else {
     const d = new Date(start);
     let y = d.getUTCFullYear();

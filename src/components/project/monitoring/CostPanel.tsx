@@ -63,7 +63,7 @@ function BudgetCard({ data }: { data: ProjectMonitoringDTO }) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-4">
         <CardTitle>Anggaran manual</CardTitle>
-        {data.canManage && (
+        {data.rights.projectCost && (
           <Button size="sm" variant="outline" onClick={() => openForm(null)}>
             <Plus className="h-4 w-4" />
             Tambah anggaran
@@ -72,7 +72,7 @@ function BudgetCard({ data }: { data: ProjectMonitoringDTO }) {
       </CardHeader>
       <CardContent className="p-0">
         {data.budgetItems.length === 0 ? (
-          <EmptyState icon={Wallet} text="Belum ada anggaran manual." action={data.canManage ? { label: "Tambah anggaran", onClick: () => openForm(null) } : undefined} />
+          <EmptyState icon={Wallet} text="Belum ada anggaran manual." action={data.rights.projectCost ? { label: "Tambah anggaran", onClick: () => openForm(null) } : undefined} />
         ) : (
           <table className="w-full text-sm">
             <tbody>
@@ -83,7 +83,7 @@ function BudgetCard({ data }: { data: ProjectMonitoringDTO }) {
                     {b.description && <p className="text-xs text-slate-500">{b.description}</p>}
                   </td>
                   <td className="px-5 py-2.5 text-right tabular-nums">{formatRupiah(b.amount)}</td>
-                  {data.canManage && (
+                  {data.rights.projectCost && (
                     <td className="px-3 py-2.5 w-20">
                       <div className="flex justify-end gap-1">
                         <button type="button" aria-label="Ubah anggaran" onClick={() => openForm(b)} className="p-1.5 rounded text-slate-400 hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800">
@@ -194,7 +194,7 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
               : "Catat satu per satu atau impor dari Excel keuangan (kolom Akun otomatis dicocokkan dengan RAB)."}
           </p>
         </div>
-        {data.canManage && (
+        {data.rights.projectCost && (
           <div className="flex flex-wrap justify-end gap-2">
             <CostImportDialog projectId={data.projectId} label="Impor Excel" />
             <Button size="sm" onClick={() => openForm(null)}>
@@ -206,18 +206,18 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
       </CardHeader>
       <CardContent className="p-0">
         {data.expenses.length === 0 ? (
-          <EmptyState icon={Wallet} text="Belum ada realisasi biaya. Catat satu per satu, atau impor dari Excel keuangan." action={data.canManage ? { label: "Catat biaya", onClick: () => openForm(null) } : undefined} />
+          <EmptyState icon={Wallet} text="Belum ada realisasi biaya. Catat satu per satu, atau impor dari Excel keuangan." action={data.rights.projectCost ? { label: "Catat biaya", onClick: () => openForm(null) } : undefined} />
         ) : (
           <>
-          <div className="overflow-x-auto">
+          <div className="max-h-[560px] overflow-auto">
             <table className="w-full text-sm">
-              <thead>
+              <thead className="sticky top-0 z-10 bg-white dark:bg-slate-900">
                 <tr className="th-row">
                   <th className="px-5 py-2.5 font-medium">Tanggal</th>
                   <th className="px-3 py-2.5 font-medium">Keterangan</th>
                   <th className="px-3 py-2.5 font-medium">Kategori</th>
                   <th className="px-3 py-2.5 font-medium text-right">Nominal</th>
-                  {data.canManage && <th className="px-5 py-2.5" />}
+                  {data.rights.projectCost && <th className="px-5 py-2.5" />}
                 </tr>
               </thead>
               <tbody>
@@ -239,7 +239,7 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
                       )}
                     </td>
                     <td className="px-3 py-2.5 text-right tabular-nums whitespace-nowrap">{formatRupiah(e.amount)}</td>
-                    {data.canManage && (
+                    {data.rights.projectCost && (
                       <td className="px-5 py-2.5">
                         <div className="flex justify-end gap-1">
                           <button type="button" aria-label="Ubah biaya" onClick={() => openForm(e)} className="p-1.5 rounded text-slate-400 hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800">
@@ -288,8 +288,9 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
                 <option value="NORMAL">Normal (sesuai rencana kerja)</option>
                 <option value="DELAY">Akibat keterlambatan</option>
                 <option value="EXTRA_SCOPE">Pekerjaan tambahan (di luar kontrak awal)</option>
+                <option value="REWORK">Pekerjaan ulang atau perbaikan hasil</option>
               </Select>
-              <p className="mt-1 text-xs text-slate-500">Dipakai untuk menjelaskan penyebab margin tergerus.</p>
+              <p className="mt-1 text-xs text-slate-500">Menentukan kelompok biaya ini pada Pareto penyebab dan penjelasan margin.</p>
             </div>
             <div>
               <Label htmlFor="ex-desc">Keterangan</Label>
@@ -336,10 +337,10 @@ function BaselineCard({ data }: { data: ProjectMonitoringDTO }) {
         <div>
           <CardTitle className="flex items-center gap-1.5">
             Baseline (rencana awal)
-            <InfoTip label="Keterangan baseline (rencana awal)">Nilai kontrak, RAB, dan target selesai awal yang dikunci sebagai pembanding margin dan triple constraint.</InfoTip>
+            <InfoTip label="Keterangan baseline (rencana awal)" guide="istilah">Nilai kontrak, RAB, dan target selesai awal yang dikunci sebagai pembanding margin dan triple constraint.</InfoTip>
           </CardTitle>
         </div>
-        {data.canManage && (
+        {data.rights.projectCost && (
           <Button size="sm" variant="outline" onClick={() => (b ? setConfirm(true) : lock(false))} isLoading={busy && !confirm}>
             <Lock className="h-4 w-4" />
             {b ? "Atur ulang" : "Kunci baseline"}

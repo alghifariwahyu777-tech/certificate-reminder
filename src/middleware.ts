@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { checkRequiredEnv } from "@/lib/env";
+import { can, type Area } from "@/lib/permissions";
 
 const SESSION_COOKIE = "cert_reminder_session";
 const PORTAL_SESSION_COOKIE = "cert_reminder_portal_session";
@@ -11,16 +12,23 @@ const PUBLIC_PATHS = ["/login", "/forgot-password", "/reset-password"];
 // session") — is closed to it here, in one place.
 const PIC_ALLOWED_PREFIXES = ["/pic", "/api/pic", "/api/auth", "/profile", "/api/profile"];
 
-// Pages that a Viewer is not allowed to open (create/manage-only screens).
+// Create/manage-only screens and the area of rights each needs (lib/permissions.ts).
 // Prefix-matched, so "/certificate/edit" also covers "/certificate/edit/abc123".
-const ADMIN_ONLY_PATH_PREFIXES = [
-  "/certificate/add",
-  "/certificate/edit",
-  "/certificate/import",
-  "/trash",
-  "/users",
-  "/audit-log",
-  "/email-template",
+const MANAGE_PATHS: [string, Area][] = [
+  ["/certificate/add", "client"],
+  ["/certificate/edit", "client"],
+  ["/certificate/import", "client"],
+  ["/email-template", "client"],
+  ["/personnel-email-template", "personnel"],
+  ["/personnel-certifications/new", "personnel"],
+  ["/personnel-certifications/import", "personnel"],
+  ["/equipment/new", "equipment"],
+  ["/equipment-email-template", "equipment"],
+  ["/projects/new", "project"],
+  ["/project-email-template", "system"],
+  ["/trash", "system"],
+  ["/users", "system"],
+  ["/audit-log", "system"],
 ];
 
 function getSecretKey() {
@@ -139,11 +147,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/pic", request.url));
   }
 
-  if (
-    isAuthenticated &&
-    role === "VIEWER" &&
-    ADMIN_ONLY_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))
-  ) {
+  if (isAuthenticated && MANAGE_PATHS.some(([prefix, area]) => pathname.startsWith(prefix) && !can(role, area))) {
     const redirectUrl = new URL("/dashboard", request.url);
     redirectUrl.searchParams.set("denied", "1");
     return NextResponse.redirect(redirectUrl);

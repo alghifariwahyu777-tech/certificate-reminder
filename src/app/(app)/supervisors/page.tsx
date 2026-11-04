@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { SupervisorManager } from "@/components/SupervisorManager";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function SupervisorsPage() {
   const session = await getSession();
@@ -23,7 +24,7 @@ export default async function SupervisorsPage() {
       />
       <PageBody>
         <SupervisorManager
-          canManage={session.role === "ADMIN"}
+          canManage={can(session.role, "system")}
           initialSupervisors={supervisors.map((s) => ({
             id: s.id,
             name: s.name,

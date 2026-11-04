@@ -38,7 +38,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
  * Stateless: the client sends the same file again to save what it previewed.
  */
 export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const g = await guardProjectWrite(context);
+  const g = await guardProjectWrite(context, "projectCost");
   if ("error" in g) return g.error;
   const form = await request.formData();
   const file = form.get("file") as File | null;

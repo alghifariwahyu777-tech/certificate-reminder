@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireArea } from "@/lib/auth";
 import { categorySchema } from "@/lib/validations";
 import { logAudit } from "@/lib/audit";
 
 export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
-  const auth = await requireAdmin();
+  const auth = await requireArea("client");
   if ("error" in auth) return auth.error;
 
   const body = await request.json().catch(() => null);
@@ -44,7 +44,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
 export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
-  const auth = await requireAdmin();
+  const auth = await requireArea("client");
   if ("error" in auth) return auth.error;
 
   const certCount = await prisma.certificate.count({ where: { categoryId: params.id, deletedAt: null } });

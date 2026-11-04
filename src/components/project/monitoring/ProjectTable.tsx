@@ -130,7 +130,7 @@ export function ProjectTable({ rows, allCount, health, onHealth }: { rows: Portf
                 <th className="px-4 py-2.5 font-semibold">
                   <span className="inline-flex items-center gap-1.5">
                     Kondisi
-                    <InfoTip label="Keterangan kondisi">
+                    <InfoTip label="Keterangan kondisi" guide="kondisi">
                       Empat penanda, dari kiri: <strong>Waktu</strong> (progres dibanding rencana), <strong>Biaya</strong> (biaya terpakai dibanding pekerjaan selesai),{" "}
                       <strong>Lingkup</strong> (pekerjaan tambahan yang belum tertutup addendum), dan <strong>Margin</strong> (proyeksi dibanding target). Hijau = baik, kuning =
                       waspada, merah = kritis, abu-abu = belum ada data.

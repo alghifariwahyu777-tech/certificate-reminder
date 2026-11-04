@@ -73,13 +73,13 @@ export const createUserSchema = z.object({
   name: z.string().min(1, "Nama wajib diisi"),
   email: z.string().min(1, "Email wajib diisi").email("Format email tidak valid"),
   password: z.string().min(6, "Password minimal 6 karakter"),
-  role: z.enum(["ADMIN", "VIEWER", "PIC"], { errorMap: () => ({ message: "Role tidak valid" }) }),
+  role: z.enum(["ADMIN", "MANAGEMENT", "PM", "QHSE", "HC", "FINANCE", "VIEWER", "PIC"], { errorMap: () => ({ message: "Peran tidak valid" }) }),
 });
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 
 export const updateUserSchema = z.object({
   name: z.string().min(1, "Nama wajib diisi"),
-  role: z.enum(["ADMIN", "VIEWER", "PIC"], { errorMap: () => ({ message: "Role tidak valid" }) }),
+  role: z.enum(["ADMIN", "MANAGEMENT", "PM", "QHSE", "HC", "FINANCE", "VIEWER", "PIC"], { errorMap: () => ({ message: "Peran tidak valid" }) }),
   isActive: z.boolean(),
   password: z.string().min(6, "Password minimal 6 karakter").optional().or(z.literal("")),
 });
@@ -456,7 +456,9 @@ export const projectMilestoneSchema = z.object({
   description: z.string().max(2000).optional().nullable(),
   sequence: z.coerce.number().int().min(0).default(0),
   weight: percent("Bobot harus berupa angka"),
+  plannedStartDate: optionalDate,
   plannedDate: optionalDate,
+  actualStartDate: optionalDate,
   actualDate: optionalDate,
   status: z.enum(["PENDING", "IN_PROGRESS", "DONE"]),
   notes: z.string().max(2000).optional().nullable(),
@@ -507,7 +509,7 @@ export const projectExpenseSchema = z.object({
   category: z.string().trim().min(1, "Kategori biaya wajib diisi").max(100),
   description: z.string().trim().min(1, "Keterangan wajib diisi").max(500),
   amount: money("Nominal biaya harus berupa angka"),
-  cause: z.enum(["NORMAL", "DELAY", "EXTRA_SCOPE"]).default("NORMAL"),
+  cause: z.enum(["NORMAL", "DELAY", "EXTRA_SCOPE", "REWORK"]).default("NORMAL"),
   referenceNo: z.string().max(100).optional().nullable(),
   ...fileFields,
 });

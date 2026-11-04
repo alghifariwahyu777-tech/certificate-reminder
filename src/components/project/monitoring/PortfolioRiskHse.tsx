@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardTitle } from "@/components/ui/Card";
 import { InfoTip } from "@/components/ui/InfoTip";
-import { ISSUE_CATEGORY_LABEL, formatPercent, formatRupiah, riskLevel, shortDate } from "@/lib/project-monitoring-shared";
+import { HEALTH_LABEL, ISSUE_CATEGORY_LABEL, formatPercent, formatRupiah, riskLevel, shortDate } from "@/lib/project-monitoring-shared";
 import { summarizeHse, type HseSummary } from "@/lib/project-hse";
 import type { PortfolioRisk, PortfolioRow } from "@/lib/project-monitoring";
 import type { MappingRow } from "@/lib/personnel-mapping";
@@ -60,7 +61,7 @@ export function RiskHeatmapCard({ risks, today }: { risks: PortfolioRisk[]; toda
       <div className="px-5 pt-4">
         <CardTitle className="flex items-center gap-1.5">
           Peta risiko dan kendala
-          <InfoTip label="Keterangan peta risiko">
+          <InfoTip label="Keterangan peta risiko" guide="peta-risiko">
             Risiko dan kendala terbuka, dipetakan menurut kemungkinan dan dampak. Kendala yang sudah terjadi ada di baris teratas. Hijau rendah, kuning sedang, merah muda tinggi, merah ekstrem. Klik kotak untuk melihat daftarnya.
           </InfoTip>
         </CardTitle>
@@ -134,7 +135,7 @@ export function RiskHeatmapCard({ risks, today }: { risks: PortfolioRisk[]; toda
               <p className="py-6 text-center text-sm text-slate-500">Tidak ada risiko atau kendala.</p>
             ) : (
               <ul className="max-h-72 divide-y divide-line overflow-y-auto pr-1 dark:divide-slate-800">
-                {list.slice(0, 30).map((r) => (
+                {list.map((r) => (
                   <li key={r.id} className="py-2">
                     <Link href={`/projects/${r.projectId}#tim/kendala`} className="group block">
                       <div className="flex items-start gap-2">
@@ -213,7 +214,7 @@ export function HsePortfolioCard({ rows, today }: { rows: PortfolioRow[]; today:
       <div className="px-5 pt-4">
         <CardTitle className="flex items-center gap-1.5">
           HSE (K3) portofolio
-          <InfoTip label="Keterangan HSE portofolio">
+          <InfoTip label="Keterangan HSE portofolio" guide="hse">
             Gabungan laporan HSE bulanan seluruh project. LTIFR dan TRIR dihitung per 1.000.000 jam kerja; target umumnya 0. Jam kerja aman = jam kerja setelah cedera hilang
             hari kerja terakhir di tiap project.
           </InfoTip>
@@ -228,14 +229,14 @@ export function HsePortfolioCard({ rows, today }: { rows: PortfolioRow[]; today:
             <div className="grid grid-cols-2 gap-2.5">
               <Fig label="Jam kerja" value={num(total.manHours)} />
               <Fig label="Jam kerja aman" value={num(total.safeHours)} tone="good" />
-              <Fig label="LTIFR" value={num(total.ltifr, 2)} tone={(total.ltifr ?? 0) > 0 ? "bad" : "good"} />
-              <Fig label="TRIR" value={num(total.trir, 2)} tone={total.lostTimeInjury + total.fatality > 0 ? "bad" : (total.trir ?? 0) > 0 ? "warn" : "good"} />
+              <Fig label="LTIFR (per 1 juta jam)" value={num(total.ltifr, 2)} tone={(total.ltifr ?? 0) > 0 ? "bad" : "good"} />
+              <Fig label="TRIR (per 1 juta jam)" value={num(total.trir, 2)} tone={total.lostTimeInjury + total.fatality > 0 ? "bad" : (total.trir ?? 0) > 0 ? "warn" : "good"} />
             </div>
             {incidents.length > 0 && (
               <div>
                 <p className="mb-1 text-[12.5px] font-semibold text-ink dark:text-slate-100">Project dengan kejadian</p>
-                <ul className="space-y-1 text-[12.5px]">
-                  {incidents.slice(0, 4).map((r) => (
+                <ul className="max-h-40 space-y-1 overflow-y-auto pr-1 text-[12.5px]">
+                  {incidents.map((r) => (
                     <li key={r.id} className="flex items-baseline justify-between gap-2">
                       <Link href={`/projects/${r.id}#tim/hse`} className="truncate font-medium text-ink hover:text-accent dark:text-slate-100" title={r.projectName}>
                         {r.projectName}
@@ -262,9 +263,9 @@ export function HsePortfolioCard({ rows, today }: { rows: PortfolioRow[]; today:
               </div>
             )}
             {missing.length > 0 && (
-              <p className="text-[12px] text-slate-500">
-                Belum lapor:{" "}
-                {missing.slice(0, 3).map((r, i) => (
+              <p className="max-h-24 overflow-y-auto text-[12px] text-slate-500">
+                Belum lapor ({missing.length}):{" "}
+                {missing.map((r, i) => (
                   <span key={r.id}>
                     {i > 0 && ", "}
                     <Link href={`/projects/${r.id}#tim/hse`} className="font-semibold text-accent hover:underline">
@@ -272,7 +273,6 @@ export function HsePortfolioCard({ rows, today }: { rows: PortfolioRow[]; today:
                     </Link>
                   </span>
                 ))}
-                {missing.length > 3 ? ` dan ${missing.length - 3} lainnya` : ""}
               </p>
             )}
           </div>
@@ -368,7 +368,7 @@ export function PersonnelRiskCard({ people, rows, today, overload = 3 }: { peopl
               <p className="py-6 text-center text-sm text-slate-500">Tidak ada personil yang perlu perhatian.</p>
             ) : (
               <ul className="max-h-60 divide-y divide-line overflow-y-auto pr-1 dark:divide-slate-800">
-                {atRisk.slice(0, 20).map(({ p, concurrent, flags }) => (
+                {atRisk.map(({ p, concurrent, flags }) => (
                   <li key={p.employeeId} className="flex items-start justify-between gap-3 py-2">
                     <div className="min-w-0">
                       <p className="text-[13px] font-semibold text-ink dark:text-slate-100">{p.name}</p>
@@ -400,6 +400,7 @@ export function PersonnelRiskCard({ people, rows, today, overload = 3 }: { peopl
 // ---------------------------------------------------------------------------
 
 export function PortfolioPerformanceCard({ rows }: { rows: PortfolioRow[] }) {
+  const [open, setOpen] = useState<string | null>(null);
   const groups = useMemo(() => {
     const map = new Map<string, PortfolioRow[]>();
     for (const r of rows.filter((x) => x.status === "ONGOING")) map.set(r.categoryName, [...(map.get(r.categoryName) ?? []), r]);
@@ -416,72 +417,120 @@ export function PortfolioPerformanceCard({ rows }: { rows: PortfolioRow[] }) {
         const contractM = withMargin.reduce((s, r) => s + r.margin.contract, 0);
         const forecastM = withMargin.reduce((s, r) => s + r.margin.forecastMargin, 0);
         const targetM = withMargin.reduce((s, r) => s + ((r.margin.targetMarginPct ?? 0) / 100) * r.margin.contract, 0);
+        const withActual = list.filter((r) => r.margin.actualMargin !== null && r.margin.earnedRevenue > 0);
+        const earned = withActual.reduce((s, r) => s + r.margin.earnedRevenue, 0);
         return {
           name,
+          actualMargin: earned ? (withActual.reduce((s, r) => s + (r.margin.actualMargin as number), 0) / earned) * 100 : null,
+          list: [...list].sort((a, b) => b.summary.contractValue - a.summary.contractValue),
           count: list.length,
           value,
+          actual: avg((r) => r.summary.actualPercent),
+          planned: avg((r) => r.summary.plannedPercent),
           spi: avg((r) => r.summary.spi),
           cpi: avg((r) => r.margin.cpi),
           margin: contractM ? (forecastM / contractM) * 100 : null,
           target: contractM ? (targetM / contractM) * 100 : null,
+          below: list.filter((r) => r.margin.belowTarget).length,
           critical: list.filter((r) => r.summary.health === "KRITIS").length,
-          outstanding: list.reduce((s, r) => s + r.summary.outstanding, 0),
         };
       })
       .sort((a, b) => b.value - a.value);
   }, [rows]);
   if (!groups.length) return null;
-  const maxValue = Math.max(...groups.map((g) => g.value));
+  const idx = (v: number | null) => (v === null ? "-" : v.toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
   const tone = (v: number | null) => (v === null ? "text-slate-400" : v < 0.9 ? "text-signal-expired font-semibold" : v < 1 ? "text-signal-soon font-semibold" : "text-signal-active");
+  const marginTone = (m: number | null, t: number | null) => (m !== null && t !== null && m < t - 1 ? "font-semibold text-signal-expired" : "text-ink dark:text-slate-100");
 
   return (
     <Card>
       <div className="px-5 pt-4">
         <CardTitle className="flex items-center gap-1.5">
           Kinerja per portofolio
-          <InfoTip label="Keterangan kinerja per portofolio">
-            Project berjalan dikelompokkan menurut portofolio (kategori project). Kinerja waktu dan biaya adalah rata-rata tertimbang nilai kontrak; 1 berarti sesuai rencana.
-            Margin = total proyeksi margin dibanding total nilai kontrak project yang sudah memiliki RAB.
+          <InfoTip label="Keterangan kinerja per portofolio" guide="portofolio">
+            Project berjalan dikelompokkan menurut portofolio (kategori project). Progres, kinerja waktu, dan kinerja biaya adalah rata-rata tertimbang nilai kontrak; 1
+            berarti sesuai rencana. Proyeksi margin = total proyeksi margin dibagi total nilai kontrak project yang memiliki RAB, dibandingkan dengan target gabungannya.
+            Klik baris untuk melihat setiap project di portofolio tersebut.
           </InfoTip>
         </CardTitle>
-        <p className="mt-0.5 text-[12.5px] text-slate-500">{groups.length} portofolio dengan project berjalan</p>
+        <p className="mt-0.5 text-[12.5px] text-slate-500">{groups.length} portofolio dengan project berjalan. Klik baris untuk melihat project di dalamnya.</p>
       </div>
       <CardContent className="px-0 pb-2">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-[13px]">
-            <thead>
+        <div className="max-h-[560px] overflow-auto">
+          <table className="w-full min-w-[820px] text-[13px]">
+            <thead className="sticky top-0 z-10 bg-white dark:bg-slate-900">
               <tr className="th-row">
-                <th className="px-5 py-2 font-medium">Portofolio</th>
-                <th className="px-3 py-2 font-medium">Nilai kontrak</th>
-                <th className="px-3 py-2 text-right font-medium">Kinerja waktu</th>
-                <th className="px-3 py-2 text-right font-medium">Kinerja biaya</th>
-                <th className="px-3 py-2 text-right font-medium">Proyeksi margin</th>
-                <th className="px-3 py-2 text-right font-medium">Piutang</th>
-                <th className="px-5 py-2 text-right font-medium">Kritis</th>
+                <th className="px-5 py-2">Portofolio</th>
+                <th className="px-3 py-2">Nilai kontrak</th>
+                <th className="px-3 py-2">Progres (rencana)</th>
+                <th className="px-3 py-2 text-right">Kinerja waktu</th>
+                <th className="px-3 py-2 text-right">Kinerja biaya</th>
+                <th className="px-3 py-2 text-right">Margin realisasi</th>
+                <th className="px-3 py-2 text-right">Proyeksi / target</th>
+                <th className="px-5 py-2 text-right">Kritis</th>
               </tr>
             </thead>
             <tbody>
               {groups.map((g) => (
-                <tr key={g.name} className="border-b border-line/70 last:border-0 dark:border-slate-800">
-                  <td className="px-5 py-2.5">
-                    <p className="font-semibold text-ink dark:text-slate-100">{g.name}</p>
-                    <p className="text-[11.5px] text-slate-500">{g.count} project</p>
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <p className="tabular-nums text-ink dark:text-slate-100">{formatRupiah(g.value, true)}</p>
-                    <div className="mt-1 h-1.5 w-28 rounded-full bg-slate-100 dark:bg-slate-800">
-                      <div className="h-full rounded-full bg-brand-blueDark dark:bg-slate-300" style={{ width: `${(g.value / maxValue) * 100}%` }} />
-                    </div>
-                  </td>
-                  <td className={cn("px-3 py-2.5 text-right tabular-nums", tone(g.spi))}>{g.spi === null ? "-" : g.spi.toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                  <td className={cn("px-3 py-2.5 text-right tabular-nums", tone(g.cpi))}>{g.cpi === null ? "-" : g.cpi.toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums">
-                    <span className={cn(g.margin !== null && g.target !== null && g.margin < g.target - 1 ? "font-semibold text-signal-expired" : "text-ink dark:text-slate-100")}>{formatPercent(g.margin)}</span>
-                    <span className="text-slate-500"> / {formatPercent(g.target)}</span>
-                  </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-ink dark:text-slate-100">{formatRupiah(g.outstanding, true)}</td>
-                  <td className={cn("px-5 py-2.5 text-right tabular-nums", g.critical ? "font-bold text-signal-expired" : "text-slate-400")}>{g.critical}</td>
-                </tr>
+                <Fragment key={g.name}>
+                  <tr
+                    className="cursor-pointer border-b border-line/70 hover:bg-slate-50/70 dark:border-slate-800 dark:hover:bg-slate-800/40"
+                    onClick={() => setOpen(open === g.name ? null : g.name)}
+                    aria-expanded={open === g.name}
+                  >
+                    <td className="px-5 py-2.5">
+                      <p className="flex items-center gap-1.5 font-semibold text-ink dark:text-slate-100">
+                        <ChevronRight className={cn("h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform", open === g.name && "rotate-90")} aria-hidden />
+                        {g.name}
+                      </p>
+                      <p className="pl-5 text-[11.5px] text-slate-500">
+                        {g.count} project{g.below ? `, ${g.below} di bawah target margin` : ""}
+                      </p>
+                    </td>
+                    <td className="px-3 py-2.5 tabular-nums text-ink dark:text-slate-100">{formatRupiah(g.value, true)}</td>
+                    <td className="px-3 py-2.5">
+                      <p className="tabular-nums text-ink dark:text-slate-100">
+                        {formatPercent(g.actual)} <span className="text-slate-500">({formatPercent(g.planned)})</span>
+                      </p>
+                      <div className="relative mt-1 h-1.5 w-28 rounded-full bg-slate-100 dark:bg-slate-800">
+                        <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(100, g.actual ?? 0)}%` }} />
+                        <span className="absolute -top-0.5 h-2.5 w-0.5 bg-slate-500" style={{ left: `${Math.min(100, g.planned ?? 0)}%` }} />
+                      </div>
+                    </td>
+                    <td className={cn("px-3 py-2.5 text-right tabular-nums", tone(g.spi))}>{idx(g.spi)}</td>
+                    <td className={cn("px-3 py-2.5 text-right tabular-nums", tone(g.cpi))}>{idx(g.cpi)}</td>
+                    <td className="px-3 py-2.5 text-right tabular-nums text-ink dark:text-slate-100">{formatPercent(g.actualMargin)}</td>
+                    <td className="px-3 py-2.5 text-right tabular-nums">
+                      <span className={marginTone(g.margin, g.target)}>{formatPercent(g.margin)}</span>
+                      <span className="text-slate-500"> / {formatPercent(g.target)}</span>
+                    </td>
+                    <td className={cn("px-5 py-2.5 text-right tabular-nums", g.critical ? "font-bold text-signal-expired" : "text-slate-400")}>{g.critical}</td>
+                  </tr>
+                  {open === g.name &&
+                    g.list.map((r) => (
+                      <tr key={r.id} className="border-b border-line/50 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-800/30">
+                        <td className="py-2 pl-10 pr-3">
+                          <Link href={`/projects/${r.id}`} className="flex items-center gap-1.5 font-medium text-ink hover:text-accent dark:text-slate-100">
+                            <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: HEALTH_DOT[r.summary.health] }} aria-hidden />
+                            {r.projectName}
+                          </Link>
+                          <p className="pl-3.5 text-[11.5px] text-slate-500">{r.projectNumber}</p>
+                        </td>
+                        <td className="px-3 py-2 tabular-nums text-slate-700 dark:text-slate-300">{formatRupiah(r.summary.contractValue, true)}</td>
+                        <td className="px-3 py-2 tabular-nums text-slate-700 dark:text-slate-300">
+                          {formatPercent(r.summary.actualPercent)} <span className="text-slate-500">({formatPercent(r.summary.plannedPercent)})</span>
+                        </td>
+                        <td className={cn("px-3 py-2 text-right tabular-nums", tone(r.summary.spi))}>{idx(r.summary.spi)}</td>
+                        <td className={cn("px-3 py-2 text-right tabular-nums", tone(r.margin.cpi))}>{idx(r.margin.cpi)}</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-slate-700 dark:text-slate-300">{formatPercent(r.margin.actualMarginPct)}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">
+                          <span className={marginTone(r.margin.forecastMarginPct, r.margin.targetMarginPct)}>{formatPercent(r.margin.forecastMarginPct)}</span>
+                          <span className="text-slate-500"> / {formatPercent(r.margin.targetMarginPct)}</span>
+                        </td>
+                        <td className="px-5 py-2 text-right text-[12px] text-slate-500">{HEALTH_LABEL[r.summary.health]}</td>
+                      </tr>
+                    ))}
+                </Fragment>
               ))}
             </tbody>
           </table>

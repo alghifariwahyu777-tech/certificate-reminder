@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireArea } from "@/lib/auth";
 import { surveillanceSchema } from "@/lib/validations";
 import { SURVEILLANCE_STATUS_LABELS } from "@/lib/surveillance";
 import { logAudit } from "@/lib/audit";
@@ -10,7 +10,7 @@ export async function PUT(
   context: { params: Promise<{ id: string; surveillanceId: string }> }
 ) {
   const params = await context.params;
-  const auth = await requireAdmin();
+  const auth = await requireArea("client");
   if ("error" in auth) return auth.error;
 
   const surveillance = await prisma.surveillance.findFirst({

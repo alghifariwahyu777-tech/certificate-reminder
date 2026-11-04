@@ -5,11 +5,12 @@ import { DEFAULT_SIMPLE_FIELDS, DEFAULT_BODY_HTML } from "@/lib/email-template";
 import { Navbar } from "@/components/layout/Navbar";
 import { EmailTemplateEditor } from "@/components/EmailTemplateEditor";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function EmailTemplatePage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.role !== "ADMIN") redirect("/dashboard");
+  if (!can(session.role, "client")) redirect("/dashboard");
 
   const template = await getEmailTemplate();
 

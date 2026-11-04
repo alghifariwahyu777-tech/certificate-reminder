@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession, requireAdmin } from "@/lib/auth";
+import { getSession, projectDenied, requireArea } from "@/lib/auth";
 import { projectAddendumSchema } from "@/lib/validations";
 import { logAudit } from "@/lib/audit";
 
@@ -19,11 +19,13 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
 
 export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
-  const auth = await requireAdmin();
+  const auth = await requireArea("project");
   if ("error" in auth) return auth.error;
 
   const project = await prisma.project.findFirst({ where: { id: params.id, deletedAt: null } });
   if (!project) return NextResponse.json({ message: "Project tidak ditemukan." }, { status: 404 });
+  const denied = projectDenied(auth.session, project, "project");
+  if (denied) return denied;
 
   const body = await request.json().catch(() => null);
   const parsed = projectAddendumSchema.safeParse(body);

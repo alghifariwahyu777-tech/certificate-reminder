@@ -6,8 +6,10 @@ import bcrypt from "bcryptjs";
 const SESSION_COOKIE = "cert_reminder_session";
 const SESSION_DURATION = 60 * 60 * 24 * 7; // 7 days in seconds
 
-/** PIC = project PIC: may only open /pic and update progress of projects whose PIC email is theirs. */
-export type Role = "ADMIN" | "VIEWER" | "PIC";
+/** Roles and their rights live in lib/permissions.ts. PIC = project PIC: may only open /pic. */
+export type { Role } from "@/lib/permissions";
+import type { Role } from "@/lib/permissions";
+import { can, canEditProject, deniedMessage, type Area } from "@/lib/permissions";
 
 function getSecretKey() {
   const secret = process.env.SESSION_SECRET;
@@ -108,4 +110,21 @@ export async function requireAuth(): Promise<
     return { error: NextResponse.json({ message: "Unauthorized" }, { status: 401 }) };
   }
   return { session };
+}
+
+/**
+ * Guard for API routes that change data in one area (see lib/permissions.ts).
+ * Returns the session, or a ready-to-return 401/403 response.
+ */
+export async function requireArea(area: Area): Promise<{ session: SessionPayload } | { error: NextResponse }> {
+  const session = await getSession();
+  if (!session) return { error: NextResponse.json({ message: "Unauthorized" }, { status: 401 }) };
+  if (!can(session.role, area)) return { error: NextResponse.json({ message: deniedMessage(area) }, { status: 403 }) };
+  return { session };
+}
+
+/** Guard for one project: the user's role must be allowed to change this area. */
+export function projectDenied(session: SessionPayload, project: { picEmail?: string | null }, area: Area): NextResponse | null {
+  if (canEditProject(session, project, area)) return null;
+  return NextResponse.json({ message: deniedMessage(area) }, { status: 403 });
 }

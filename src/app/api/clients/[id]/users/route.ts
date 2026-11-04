@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin, hashPassword } from "@/lib/auth";
+import { requireArea, hashPassword } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 
 const createClientUserSchema = z.object({
@@ -12,7 +12,7 @@ const createClientUserSchema = z.object({
 
 export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
-  const auth = await requireAdmin();
+  const auth = await requireArea("client");
   if ("error" in auth) return auth.error;
 
   const clientUsers = await prisma.clientUser.findMany({
@@ -26,7 +26,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
 
 export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
-  const auth = await requireAdmin();
+  const auth = await requireArea("client");
   if ("error" in auth) return auth.error;
 
   const client = await prisma.client.findUnique({ where: { id: params.id } });

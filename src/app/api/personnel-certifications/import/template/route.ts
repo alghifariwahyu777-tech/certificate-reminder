@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireArea } from "@/lib/auth";
 import { generatePersonnelImportTemplate } from "@/lib/personnel-excel-import";
 
 export const runtime = "nodejs";
 
 export async function GET() {
-  const auth = await requireAdmin();
+  const auth = await requireArea("personnel");
   if ("error" in auth) return auth.error;
 
   const buffer = await generatePersonnelImportTemplate();

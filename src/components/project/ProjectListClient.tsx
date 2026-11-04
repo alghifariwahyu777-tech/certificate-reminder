@@ -49,11 +49,14 @@ export function ProjectListClient({
   initialProjects,
   categories,
   canManage = true,
+  canDelete = canManage,
   extraActions,
 }: {
   initialProjects: ProjectItem[];
   categories: { id: string; name: string }[];
   canManage?: boolean;
+  /** Deleting projects is reserved to Administrators. */
+  canDelete?: boolean;
   extraActions?: React.ReactNode;
 }) {
   const router = useRouter();
@@ -222,7 +225,7 @@ export function ProjectListClient({
         </div>
       </div>
 
-      {canManage && selectedIds.size > 0 && (
+      {canDelete && selectedIds.size > 0 && (
         <div className="flex items-center justify-between rounded-md border border-accent/30 bg-accent/5 px-4 py-2.5">
           <span className="text-sm text-ink">
             <strong>{selectedIds.size}</strong> project dipilih
@@ -245,7 +248,7 @@ export function ProjectListClient({
           <table className="w-full text-sm">
             <thead>
               <tr className="th-row">
-                {canManage && (
+                {canDelete && (
                   <th className="px-4 py-3 font-medium w-10">
                     <input
                       type="checkbox"
@@ -275,7 +278,7 @@ export function ProjectListClient({
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={canManage ? 8 : 7} className="px-4 py-10 text-center text-slate-500">
+                  <td colSpan={canDelete ? 8 : 7} className="px-4 py-10 text-center text-slate-500">
                     Belum ada project yang cocok.
                   </td>
                 </tr>
@@ -284,7 +287,7 @@ export function ProjectListClient({
                   const days = getDaysRemaining(p.targetEndDate);
                   return (
                     <tr key={p.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/60">
-                      {canManage && (
+                      {canDelete && (
                         <td className="px-4 py-3">
                           <input
                             type="checkbox"
@@ -348,13 +351,15 @@ export function ProjectListClient({
                               >
                                 <Pencil className="h-4 w-4" />
                               </Link>
-                              <button
-                                onClick={() => setDeleteTarget(p)}
-                                className="p-1.5 rounded hover:bg-signal-expiredBg text-slate-500 hover:text-signal-expired"
-                                aria-label="Hapus"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
+                              {canDelete && (
+                                <button
+                                  onClick={() => setDeleteTarget(p)}
+                                  className="p-1.5 rounded hover:bg-signal-expiredBg text-slate-500 hover:text-signal-expired"
+                                  aria-label="Hapus"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
                             </>
                           )}
                         </div>

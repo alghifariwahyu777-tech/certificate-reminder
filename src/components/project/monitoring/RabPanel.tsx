@@ -52,7 +52,7 @@ export function RabCard({ data }: { data: ProjectMonitoringDTO }) {
               Unggah file RAB (template Sucofindo). Nilai proyek, total RAB, target margin, dan rincian anggaran per bagian akan langsung terbaca.
             </p>
           </div>
-          {data.canManage && <RabUploadDialog data={data} />}
+          {data.rights.projectCost && <RabUploadDialog data={data} />}
         </CardContent>
       </Card>
     );
@@ -82,7 +82,7 @@ export function RabCard({ data }: { data: ProjectMonitoringDTO }) {
               Riwayat ({data.rab.revisions.length})
             </Button>
           )}
-          {data.canManage && <RabUploadDialog data={data} />}
+          {data.rights.projectCost && <RabUploadDialog data={data} />}
         </div>
       </div>
       <CardContent className="space-y-5">
@@ -605,7 +605,7 @@ function PnlTable({ data }: { data: ProjectMonitoringDTO }) {
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 text-[13px] font-semibold text-ink dark:text-slate-100">
           Pendapatan, biaya, dan laba
-          <InfoTip label="Keterangan pendapatan dan biaya">
+          <InfoTip label="Keterangan pendapatan dan biaya" guide="proyeksi-margin">
             <strong>RAB</strong> = rencana awal (baseline). <strong>Realisasi</strong> = s.d. hari ini; pendapatan diakui sesuai progres pekerjaan (progress basis), sedangkan
             ditagih dan diterima mengikuti termin. <strong>Proyeksi akhir</strong> = bila sisa pekerjaan berjalan sesuai RAB. Laba operasi belum dikurangi overhead
             {data.rab.latest?.overhead ? ` (${formatRupiah(data.rab.latest.overhead, true)})` : ""}.

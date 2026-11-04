@@ -150,7 +150,7 @@ export function SummaryPanel({ data }: { data: ProjectMonitoringDTO }) {
             <div>
               <CardTitle className="flex items-center gap-1.5">
                 Kurva S
-                <InfoTip label="Keterangan kurva S">
+                <InfoTip label="Keterangan kurva S" guide="gantt">
                   Garis putus-putus adalah <strong>rencana</strong> progres kumulatif, garis biru adalah <strong>realisasi</strong>. Titik biru menandai tanggal laporan
                   progres atau milestone selesai. Rencana saat ini dibentuk dari {PLAN_SOURCE_LABEL[s.planSource]}
                   {s.planSource === "STANDARD" ? " (mulai pelan, tercepat di tengah, melambat di akhir) karena jadwal rencana belum diisi" : ""}.

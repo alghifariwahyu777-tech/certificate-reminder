@@ -5,11 +5,12 @@ import { DEFAULT_PROJECT_SIMPLE_FIELDS, DEFAULT_PROJECT_BODY_HTML } from "@/lib/
 import { Navbar } from "@/components/layout/Navbar";
 import { ProjectEmailTemplateEditor } from "@/components/ProjectEmailTemplateEditor";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function ProjectEmailTemplatePage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.role !== "ADMIN") redirect("/dashboard");
+  if (!can(session.role, "system")) redirect("/dashboard");
 
   const template = await getProjectEmailTemplate();
 

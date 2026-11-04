@@ -9,6 +9,7 @@ import { InfoTip } from "@/components/ui/InfoTip";
 import { HEALTH_LABEL, formatPercent, formatRupiah, mergePadSchedules } from "@/lib/project-monitoring-shared";
 import type { PortfolioRow } from "@/lib/project-monitoring";
 import { CHART } from "@/lib/chart-theme";
+import { OWNER_LABEL, OWNER_ORDER, buildAttention, type Attention, type TaskOwner } from "@/lib/project-tasks";
 import { cn } from "@/lib/utils";
 
 export const HEALTH_DOT: Record<string, string> = { KRITIS: CHART.bad, WASPADA: CHART.warn, ON_TRACK: CHART.good, SELESAI: CHART.blue, BATAL: CHART.plan };
@@ -68,7 +69,7 @@ export function TimeCostMatrixCard({ rows }: { rows: PortfolioRow[] }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-1.5">
           Matriks waktu dan biaya
-          <InfoTip label="Keterangan matriks waktu dan biaya">
+          <InfoTip label="Keterangan matriks waktu dan biaya" guide="kinerja-biaya">
             Setiap titik adalah satu project berjalan. Nomor pada titik sama dengan nomor pada tabel Posisi tiap project; ukuran titik menunjukkan nilai kontrak. Sumbu mendatar
             adalah <strong>kinerja waktu</strong> (progres realisasi dibagi rencana), sumbu tegak adalah <strong>kinerja biaya</strong> (nilai pekerjaan yang sudah dikerjakan
             menurut RAB dibagi biaya yang sudah keluar). Nilai 1 berarti sesuai rencana. Klik titik untuk membuka project.
@@ -141,24 +142,27 @@ export function PositionTableCard({ rows }: { rows: PortfolioRow[] }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-1.5">
           Posisi tiap project
-          <InfoTip label="Keterangan posisi tiap project">
-            Diurutkan dari project yang paling perlu perhatian. Kinerja waktu 0,80 berarti progres baru 80% dari rencana; kinerja biaya 0,90 berarti setiap Rp1 biaya yang
-            keluar baru menghasilkan pekerjaan senilai Rp0,90 menurut RAB.
+          <InfoTip label="Keterangan posisi tiap project" guide="kinerja-waktu">
+            Diurutkan dari project yang paling perlu perhatian. Kinerja waktu (SPI) = progres realisasi dibagi progres rencana hari ini; 0,80 berarti progres baru 80% dari
+            rencana. Kinerja biaya (CPI) = nilai pekerjaan selesai menurut RAB (progres x total RAB) dibagi biaya yang sudah keluar; 0,90 berarti setiap Rp1 biaya baru
+            menghasilkan pekerjaan senilai Rp0,90. Margin realisasi = keuntungan atas pekerjaan yang sudah dikerjakan sampai hari ini. Proyeksi = perkiraan margin saat
+            project selesai, dibandingkan target.
           </InfoTip>
         </CardTitle>
-        <CardDescription>Nomor sesuai titik pada matriks waktu dan biaya</CardDescription>
+        <CardDescription>Nomor sesuai titik pada matriks waktu dan biaya. Gulir untuk melihat semua project.</CardDescription>
       </CardHeader>
       <CardContent className="px-0 pb-2">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-[13px]">
-            <thead>
+        <div className="max-h-[560px] overflow-auto">
+          <table className="w-full min-w-[820px] text-[13px]">
+            <thead className="sticky top-0 z-10 bg-white dark:bg-slate-900">
               <tr className="th-row">
                 <th className="w-12 py-2 pl-5 font-medium">No</th>
                 <th className="px-3 py-2 font-medium">Project</th>
                 <th className="px-3 py-2 text-right font-medium">Progres</th>
                 <th className="px-3 py-2 text-right font-medium">Kinerja waktu</th>
                 <th className="px-3 py-2 text-right font-medium">Kinerja biaya</th>
-                <th className="px-3 py-2 text-right font-medium">Proyeksi margin</th>
+                <th className="px-3 py-2 text-right font-medium">Margin realisasi</th>
+                <th className="px-3 py-2 text-right font-medium">Proyeksi / target</th>
                 <th className="px-5 py-2 font-medium">Posisi</th>
               </tr>
             </thead>
@@ -187,6 +191,7 @@ export function PositionTableCard({ rows }: { rows: PortfolioRow[] }) {
                     </td>
                     <td className={cn("px-3 py-2.5 text-right tabular-nums", tone(p.rawSpi))}>{fmt2(p.rawSpi)}</td>
                     <td className={cn("px-3 py-2.5 text-right tabular-nums", tone(p.rawCpi))}>{fmt2(p.rawCpi)}</td>
+                    <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-ink dark:text-slate-100">{formatPercent(r.margin.actualMarginPct)}</td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums">
                       <span className={cn("font-semibold", r.margin.belowTarget ? "text-signal-expired" : "text-ink dark:text-slate-100")}>{formatPercent(r.margin.forecastMarginPct)}</span>
                       <span className="text-slate-500"> / {formatPercent(r.margin.targetMarginPct)}</span>
@@ -215,6 +220,7 @@ export function PositionTableCard({ rows }: { rows: PortfolioRow[] }) {
                   <td className="px-3 py-2.5 text-right tabular-nums">{fmt2(r.summary.spi)}</td>
                   <td className="px-3 py-2.5 text-right text-slate-400">-</td>
                   <td className="px-3 py-2.5 text-right text-slate-400">-</td>
+                  <td className="px-3 py-2.5 text-right text-slate-400">-</td>
                   <td className="whitespace-nowrap px-5 py-2.5 text-[12.5px] text-slate-500">{r.margin.hasBudget ? "Belum ada realisasi biaya" : "Belum ada RAB"}</td>
                 </tr>
               ))}
@@ -230,33 +236,13 @@ export function PositionTableCard({ rows }: { rows: PortfolioRow[] }) {
 // Perlu tindakan
 // ---------------------------------------------------------------------------
 
-type Attention = { id: string; name: string; text: string; tone: "bad" | "warn"; at?: string };
+export { buildAttention } from "@/lib/project-tasks";
 
-export function buildAttention(rows: PortfolioRow[]): Attention[] {
-  return rows
-    .filter((r) => r.status === "ONGOING" || r.closeoutComplete === false)
-    .flatMap((r) => {
-      const out: Attention[] = [];
-      const s = r.summary;
-      if (r.closeoutComplete === false) return [{ id: r.id, name: r.projectName, tone: "warn" as const, text: "Project selesai, tetapi dokumen BAPP, BAST, atau laporan akhir belum lengkap.", at: "dokumen/penutupan" }];
-      if (s.isOverdue) out.push({ id: r.id, name: r.projectName, tone: "bad", text: `Melewati target selesai ${Math.abs(s.daysRemaining)} hari dengan progres ${formatPercent(s.actualPercent)}.`, at: "jadwal/progres" });
-      else if (s.health === "KRITIS") out.push({ id: r.id, name: r.projectName, tone: "bad", text: s.healthReason.endsWith(".") ? s.healthReason : `${s.healthReason}.`, at: "jadwal/progres" });
-      if (r.margin.signals.margin === "bad")
-        out.push({ id: r.id, name: r.projectName, tone: "bad", text: `Proyeksi margin ${formatPercent(r.margin.forecastMarginPct)}, di bawah target ${formatPercent(r.margin.targetMarginPct)}.`, at: "keuangan/margin" });
-      if (s.overdueInvoiceCount) out.push({ id: r.id, name: r.projectName, tone: "bad", text: `${s.overdueInvoiceCount} invoice melewati jatuh tempo senilai ${formatRupiah(s.overdueInvoiceAmount, true)}.`, at: "keuangan/termin" });
-      if (s.openHighIssues) out.push({ id: r.id, name: r.projectName, tone: "bad", text: `${s.openHighIssues} kendala berdampak tinggi belum terselesaikan.`, at: "tim/kendala" });
-      if (r.hse.lostTimeInjury + r.hse.fatality > 0) out.push({ id: r.id, name: r.projectName, tone: "bad", text: `Tercatat ${r.hse.lostTimeInjury + r.hse.fatality} kecelakaan kerja dengan hilang hari kerja.`, at: "tim/hse" });
-      if (r.trend !== null && r.trend <= -5) out.push({ id: r.id, name: r.projectName, tone: "warn", text: `Deviasi memburuk ${Math.abs(r.trend)} poin dibanding minggu lalu.`, at: "jadwal/progres" });
-      if (s.isStale) out.push({ id: r.id, name: r.projectName, tone: "warn", text: `Data progres belum diperbarui selama ${s.daysSinceUpdate} hari.`, at: "jadwal/progres" });
-      if (s.dueUnbilledCount) out.push({ id: r.id, name: r.projectName, tone: "warn", text: `${s.dueUnbilledCount} termin sudah memasuki jadwal penagihan.`, at: "keuangan/termin" });
-      return out;
-    })
-    .sort((a, b) => (a.tone === b.tone ? 0 : a.tone === "bad" ? -1 : 1));
-}
-
-export function AttentionCard({ rows, limit = 6 }: { rows: PortfolioRow[]; limit?: number }) {
-  const [all, setAll] = useState(false);
-  const items = useMemo(() => buildAttention(rows), [rows]);
+export function AttentionCard({ rows }: { rows: PortfolioRow[] }) {
+  const [owner, setOwner] = useState<TaskOwner | "">("");
+  const all = useMemo(() => buildAttention(rows), [rows]);
+  const items = owner ? all.filter((a) => a.owner === owner) : all;
+  const owners = OWNER_ORDER.filter((o) => all.some((a) => a.owner === o));
   // one entry per project, most urgent first, with every point listed under it
   const groups = useMemo(() => {
     const m = new Map<string, { id: string; name: string; items: Attention[] }>();
@@ -267,39 +253,51 @@ export function AttentionCard({ rows, limit = 6 }: { rows: PortfolioRow[]; limit
     }
     return [...m.values()].sort((a, b) => b.items.filter((x) => x.tone === "bad").length - a.items.filter((x) => x.tone === "bad").length || b.items.length - a.items.length);
   }, [items]);
-  const shown = all ? groups : groups.slice(0, limit);
   const bad = items.filter((i) => i.tone === "bad").length;
   return (
-    <Card className="flex flex-col">
+    <Card className="flex max-h-[640px] flex-col">
       <CardHeader>
         <CardTitle>Perlu tindakan</CardTitle>
-        <CardDescription>{items.length ? `${groups.length} project, ${bad} hal mendesak` : "Tidak ada hal yang perlu ditindaklanjuti"}</CardDescription>
+        <CardDescription>{items.length ? `${groups.length} project, ${bad} hal mendesak. Label menunjukkan bagian yang menindaklanjuti.` : "Tidak ada hal yang perlu ditindaklanjuti"}</CardDescription>
+        {owners.length > 1 && (
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
+            {(["", ...owners] as (TaskOwner | "")[]).map((o) => (
+              <button
+                key={o || "all"}
+                type="button"
+                onClick={() => setOwner(o)}
+                className={cn(
+                  "rounded-full border px-2.5 py-0.5 text-[12px] font-semibold transition-colors",
+                  owner === o ? "border-accent bg-accent/10 text-accent" : "border-line text-slate-600 hover:border-slate-400 dark:border-slate-700 dark:text-slate-300"
+                )}
+              >
+                {o ? OWNER_LABEL[o] : "Semua"} {o ? all.filter((a) => a.owner === o).length : all.length}
+              </button>
+            ))}
+          </div>
+        )}
       </CardHeader>
-      <CardContent className="flex-1 pt-1">
+      <CardContent className="min-h-0 flex-1 overflow-y-auto pt-1">
         <ul className="divide-y divide-line dark:divide-slate-800">
-          {shown.map((g) => (
+          {groups.map((g) => (
             <li key={g.id} className="py-2.5">
               <Link href={`/projects/${g.id}${g.items[0].at ? `#${g.items[0].at}` : ""}`} className="text-[13px] font-semibold text-ink hover:text-accent dark:text-slate-100">
                 {g.name}
               </Link>
-              <ul className="mt-1 space-y-0.5">
+              <ul className="mt-1 space-y-1">
                 {g.items.map((a, i) => (
                   <li key={i} className="flex items-start gap-2 text-[12.5px] leading-snug text-slate-600 dark:text-slate-300">
                     <span className={cn("mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full", a.tone === "bad" ? "bg-signal-expiredBar" : "bg-signal-soonBar")} />
-                    <Link href={`/projects/${a.id}${a.at ? `#${a.at}` : ""}`} className="hover:text-accent">
+                    <Link href={`/projects/${a.id}${a.at ? `#${a.at}` : ""}`} className="min-w-0 flex-1 hover:text-accent">
                       {a.text}
                     </Link>
+                    <span className="shrink-0 rounded border border-line px-1.5 text-[10.5px] font-semibold text-slate-500 dark:border-slate-700">{OWNER_LABEL[a.owner]}</span>
                   </li>
                 ))}
               </ul>
             </li>
           ))}
         </ul>
-        {groups.length > limit && (
-          <button type="button" onClick={() => setAll((v) => !v)} className="mt-2 text-[13px] font-semibold text-accent hover:underline">
-            {all ? "Tampilkan lebih sedikit" : `Tampilkan semua (${groups.length} project)`}
-          </button>
-        )}
       </CardContent>
     </Card>
   );
@@ -318,7 +316,7 @@ export function PadCard({ rows }: { rows: PortfolioRow[] }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-1.5">
           Pendapatan yang akan diterima (PAD)
-          <InfoTip label="Keterangan PAD">
+          <InfoTip label="Keterangan PAD" guide="keuangan">
             Nilai kontrak yang belum diterima, dikelompokkan menurut jatuh tempo invoice atau rencana tanggal tagih termin. Merah berarti tertunggak (sudah lewat tanggalnya),
             abu-abu berarti belum memiliki jadwal tagih.
           </InfoTip>

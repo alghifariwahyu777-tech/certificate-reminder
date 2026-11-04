@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireArea } from "@/lib/auth";
 import {
   DEFAULT_EQUIPMENT_SUBJECT,
   DEFAULT_EQUIPMENT_BODY_HTML,
@@ -9,7 +9,7 @@ import {
 import { logAudit } from "@/lib/audit";
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAdmin();
+  const auth = await requireArea("equipment");
   if ("error" in auth) return auth.error;
 
   const body = await request.json().catch(() => ({}));

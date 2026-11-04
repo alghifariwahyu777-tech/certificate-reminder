@@ -10,7 +10,7 @@ import { guardProjectWrite, auditProjectMonitoring } from "@/lib/project-subreso
  * milestones, then to a straight line).
  */
 export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const g = await guardProjectWrite(context);
+  const g = await guardProjectWrite(context, "project");
   if ("error" in g) return g.error;
 
   const body = await request.json().catch(() => null);

@@ -28,6 +28,11 @@ import { IssuePanel } from "@/components/project/monitoring/IssuePanel";
 import type { ProjectMonitoringDTO } from "@/components/project/monitoring/types";
 import type { RabData } from "@/lib/project-rab-import";
 import { DeviationChart } from "@/components/project/monitoring/DeviationChart";
+import { GanttChart } from "@/components/project/monitoring/GanttChart";
+import { ProjectCashflowCard, ProjectCostCauseCard } from "@/components/project/monitoring/ProjectInsights";
+import { RiskHeatmapCard } from "@/components/project/monitoring/PortfolioRiskHse";
+import { cashflowForecast, costOverrunPareto } from "@/lib/portfolio-insights";
+import { projectRights } from "@/lib/permissions";
 
 const STATUS_LABEL: Record<string, string> = { ONGOING: "Berjalan", COMPLETED: "Selesai", CANCELLED: "Dibatalkan" };
 
@@ -49,7 +54,8 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
   const loaded = await getProjectWithMonitoring(params.id);
   if (!loaded) notFound();
   const { project, summary } = loaded;
-  const canManage = session?.role === "ADMIN";
+  const rights = projectRights(session, project);
+  const canManage = rights.project;
   const d = (v: Date | null) => (v ? v.toISOString().slice(0, 10) : null);
   const n = (v: { toString(): string } | null) => (v === null ? null : Number(v.toString()));
 
@@ -64,7 +70,7 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
         assignments: { where: { project: { deletedAt: null, status: "ONGOING" } }, select: { projectId: true } },
       },
     }),
-    canManage
+    rights.projectTeam
       ? prisma.employee.findMany({ where: { isActive: true }, select: { id: true, name: true, employeeId: true, position: true }, orderBy: { name: "asc" } })
       : Promise.resolve([]),
   ]);
@@ -84,6 +90,7 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
     }
   })();
 
+  const projectItem = { p: project, input: loaded.input, summary, margin: loaded.margin };
   const monitoring: ProjectMonitoringDTO = {
     projectId: project.id,
     status: project.status,
@@ -91,6 +98,7 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
     startDate: d(project.startDate),
     targetEndDate: project.targetEndDate.toISOString(),
     canManage,
+    rights,
     today: loaded.today,
     input: loaded.input,
     summary,
@@ -101,7 +109,9 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
       name: m.name,
       description: m.description,
       weight: Number(m.weight),
+      plannedStartDate: d(m.plannedStartDate),
       plannedDate: d(m.plannedDate),
+      actualStartDate: d(m.actualStartDate),
       actualDate: d(m.actualDate),
       status: m.status,
       notes: m.notes,
@@ -250,6 +260,24 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
       })),
     },
     targetMarginPct: project.targetMarginPct,
+    cashflow: cashflowForecast([projectItem], loaded.today),
+    costCauses: costOverrunPareto([{ ...projectItem, p: { ...project, status: "ONGOING" } }]),
+    risks: project.issues
+      .filter((x) => x.status === "OPEN")
+      .map((x) => ({
+        id: x.id,
+        projectId: project.id,
+        projectName: project.projectName,
+        projectHealth: summary.health,
+        type: x.type,
+        title: x.title,
+        likelihood: x.type === "ISSUE" ? "HIGH" : x.likelihood,
+        impact: x.impact,
+        category: x.category,
+        owner: x.owner,
+        targetDate: x.targetDate ? x.targetDate.getTime() : null,
+        createdAt: x.createdAt.getTime(),
+      })),
     pnl: buildProfitLoss(loaded.input, summary, loaded.margin, loaded.today, parsedRab?.years ?? []),
   };
 
@@ -313,7 +341,7 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
 
       <ProjectAddendumSection
         projectId={project.id}
-        canManage={session?.role === "ADMIN"}
+        canManage={rights.project}
         initialAddenda={project.addenda.map((a) => ({
           id: a.id,
           addendumNumber: a.addendumNumber,
@@ -399,7 +427,7 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
                   Laporan project (PDF)
                 </Button>
               </a>
-              {session?.role === "ADMIN" && (
+              {rights.project && (
                 <>
                   <Link href={`/projects/${project.id}/edit`}>
                     <Button variant="outline" size="sm">
@@ -463,15 +491,44 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
                   </div>
                 ),
               },
-              { key: "milestone", label: "Milestone", node: <MilestonePanel data={monitoring} /> },
+              {
+                key: "milestone",
+                label: "Gantt dan milestone",
+                node: (
+                  <div className="space-y-4">
+                    <GanttChart data={monitoring} />
+                    <MilestonePanel data={monitoring} />
+                  </div>
+                ),
+              },
             ],
             keuangan: [
               { key: "margin", label: "Margin", node: <MarginPanel data={monitoring} /> },
-              { key: "biaya", label: "RAB dan biaya", node: <CostPanel data={monitoring} /> },
+              {
+                key: "biaya",
+                label: "RAB dan biaya",
+                node: (
+                  <div className="space-y-4">
+                    <CostPanel data={monitoring} />
+                    <ProjectCostCauseCard causes={monitoring.costCauses} />
+                  </div>
+                ),
+              },
               { key: "termin", label: "Termin dan penagihan", badge: summary.overdueInvoiceCount || undefined, node: <TermPanel data={monitoring} /> },
+              { key: "arus-kas", label: "Arus kas", node: <ProjectCashflowCard months={monitoring.cashflow} /> },
             ],
             tim: [
-              { key: "kendala", label: "Kendala dan risiko", badge: summary.openHighIssues || undefined, node: <IssuePanel data={monitoring} /> },
+              {
+                key: "kendala",
+                label: "Kendala dan risiko",
+                badge: summary.openHighIssues || undefined,
+                node: (
+                  <div className="space-y-4">
+                    {monitoring.risks.length > 0 && <RiskHeatmapCard risks={monitoring.risks} today={monitoring.today} />}
+                    <IssuePanel data={monitoring} />
+                  </div>
+                ),
+              },
               { key: "hse", label: "HSE", badge: monitoring.hse.summary.signal === "bad" ? 1 : undefined, node: <HsePanel data={monitoring} /> },
               { key: "personil", label: "Tim", badge: monitoring.team.filter((m) => m.warnings.some((w) => w.expired)).length || undefined, node: <TeamPanel data={monitoring} /> },
             ],

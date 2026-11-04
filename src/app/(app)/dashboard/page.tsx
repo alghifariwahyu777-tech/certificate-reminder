@@ -10,6 +10,7 @@ import { ReminderCenter } from "@/components/dashboard/ReminderCenter";
 import { ENTITY_ICON } from "@/lib/entity-icons";
 import { PageBody } from "@/components/layout/PageBody";
 import { Notice } from "@/components/ui/Notice";
+import { can } from "@/lib/permissions";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -151,7 +152,7 @@ export default async function DashboardPage() {
   }[] = [];
   let recentActivity: { id: string; userName: string; description: string; createdAt: string }[] = [];
 
-  if (session?.role === "ADMIN") {
+  if (can(session?.role, "system")) {
     // Certificates sitting exactly on a reminder milestone today — a small,
     // targeted query rather than scanning every certificate in JS.
     const milestoneMatches = await prisma.certificate.findMany({
@@ -391,7 +392,7 @@ export default async function DashboardPage() {
           trendData={trendData}
         />
 
-        {session?.role === "ADMIN" && (
+        {can(session?.role, "system") && (
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_1.4fr]">
             <RecentActivity items={recentActivity} />
             <ReminderCenter

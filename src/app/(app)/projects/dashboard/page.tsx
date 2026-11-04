@@ -14,11 +14,12 @@ import { getPersonnelMapping } from "@/lib/personnel-mapping";
 import { getPortfolioCalendar } from "@/lib/portfolio-insights";
 import { getJakartaToday } from "@/lib/status";
 import { PortfolioDashboard } from "@/components/project/monitoring/PortfolioDashboard";
+import { can } from "@/lib/permissions";
 
 export default async function ProjectPortfolioPage() {
   const session = await getSession();
   const demo = await ensureDemoDataOnce();
-  const [{ rows, curve, curves, healthTrend, aging, risks, cashflow, paretoCost, paretoIssues, perfTrend, today: todayMs }, categories, people, calendar] = await Promise.all([
+  const [{ rows, curve, curves, healthTrend, aging, risks, cashflow, cashflowByProject, paretoCost, paretoIssues, perfTrend, perfTrendByPortfolio, today: todayMs }, categories, people, calendar] = await Promise.all([
     getProjectPortfolio(),
     prisma.projectCategory.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
     getPersonnelMapping(false),
@@ -32,21 +33,21 @@ export default async function ProjectPortfolioPage() {
     <>
       <Navbar title="Monitoring Project" subtitle={`Kondisi per ${today}`} adminName={session?.name || "Admin"} role={session?.role || "ADMIN"} />
       <PageBody>
-        {session?.role === "ADMIN" && demo.state === "error" && (
+        {can(session?.role, "system") && demo.state === "error" && (
           <Notice tone="danger" title="Data contoh gagal dibuat" action={<DemoDataButton hasDemo={false} />}>
             {demo.message}
           </Notice>
         )}
         {demo.state === "pending" && <DemoSeeder present={demo.present ?? 0} total={demo.total ?? 0} />}
         {hasDemo && (
-          <Notice tone="warning" title="Data contoh sedang ditampilkan" action={session?.role === "ADMIN" ? <DemoDataButton hasDemo /> : undefined}>
+          <Notice tone="warning" title="Data contoh sedang ditampilkan" action={can(session?.role, "system") ? <DemoDataButton hasDemo /> : undefined}>
             Project bernomor DEMO hanya untuk uji coba. Hapus data contoh sebelum memasukkan data asli.
           </Notice>
         )}
-        <PortfolioDashboard rows={rows} categories={categories} curve={curve} curves={curves} healthTrend={healthTrend} aging={aging} risks={risks} people={people} extra={{ cashflow, paretoCost, paretoIssues, perfTrend, calendar }} today={todayMs}
+        <PortfolioDashboard rows={rows} categories={categories} curve={curve} curves={curves} healthTrend={healthTrend} aging={aging} risks={risks} people={people} extra={{ cashflow, cashflowByProject, paretoCost, paretoIssues, perfTrend, perfTrendByPortfolio, calendar }} today={todayMs}
           actions={
             <>
-              {session?.role === "ADMIN" && (
+              {can(session?.role, "project") && (
                 <Link href="/projects/new">
                   <Button className="w-full">
                     <Plus className="h-4 w-4" />

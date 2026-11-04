@@ -10,6 +10,7 @@ import { WeeklyReportSettingsForm } from "@/components/settings/WeeklyReportSett
 import { buildWeeklyReport, renderWeeklyReportEmail } from "@/lib/weekly-report";
 import { LOGO_DATA_URI } from "@/lib/brand-assets";
 import { WEEKDAY_LABEL } from "@/lib/week";
+import { can } from "@/lib/permissions";
 
 /** This week's management report as recipients will get it, with its sending settings on the same page. */
 export default async function WeeklyReportPreviewPage() {
@@ -52,7 +53,7 @@ export default async function WeeklyReportPreviewPage() {
 
         <iframe title="Pratinjau laporan mingguan" srcDoc={html} className="h-[78vh] w-full rounded-lg border border-line bg-white dark:border-slate-700" />
 
-        {session?.role === "ADMIN" && (
+        {can(session?.role, "system") && (
           <details id="pengaturan" className="rounded-lg border border-line bg-white dark:border-slate-700 dark:bg-slate-900" open={!enabled}>
             <summary className="cursor-pointer select-none px-5 py-3.5 text-[13.5px] font-semibold text-ink dark:text-slate-100">Pengaturan pengiriman: penerima, jadwal, dan kirim uji</summary>
             <div className="border-t border-line p-4 dark:border-slate-800">

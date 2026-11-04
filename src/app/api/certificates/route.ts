@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getSession, requireAdmin } from "@/lib/auth";
+import { getSession, requireArea } from "@/lib/auth";
 import { certificateSchema } from "@/lib/validations";
 import { getJakartaToday } from "@/lib/status";
 import { normalizeCertificatePayload } from "@/lib/certificate-payload";
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAdmin();
+  const auth = await requireArea("client");
   if ("error" in auth) return auth.error;
 
   const body = await request.json().catch(() => null);

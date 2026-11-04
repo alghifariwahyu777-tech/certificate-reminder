@@ -10,6 +10,7 @@ import { formatDate } from "@/lib/utils";
 import { getDaysRemaining } from "@/lib/status";
 import { Pencil, Download, ArrowLeft, FileWarning } from "lucide-react";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function PersonnelCertificationDetailPage(context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -57,7 +58,7 @@ export default async function PersonnelCertificationDetailPage(context: { params
             <ArrowLeft className="h-4 w-4" />
             Kembali ke sertifikasi personil
           </Link>
-          {session?.role === "ADMIN" && (
+          {can(session?.role, "personnel") && (
             <Link href={`/personnel-certifications/${certification.id}/edit`}>
               <Button variant="outline" size="sm">
                 <Pencil className="h-4 w-4" />

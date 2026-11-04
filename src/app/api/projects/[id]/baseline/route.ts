@@ -9,7 +9,7 @@ import { lockBaselineIfOpen } from "@/lib/project-cost-import";
  * that was locked too early; it is audited because it rewrites history.
  */
 export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const g = await guardProjectWrite(context);
+  const g = await guardProjectWrite(context, "project");
   if ("error" in g) return g.error;
   const body = await request.json().catch(() => ({}));
   const reset = body?.reset === true;

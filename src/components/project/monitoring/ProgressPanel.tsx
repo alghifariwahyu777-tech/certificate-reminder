@@ -79,7 +79,7 @@ function ReportsCard({ data }: { data: ProjectMonitoringDTO }) {
         <div>
           <CardTitle className="flex items-center gap-1.5">
             Laporan progres
-            <InfoTip label="Keterangan laporan progres">Isi progres kumulatif secara berkala. Laporan manual mengoreksi angka dari milestone sampai ada milestone selesai/laporan yang lebih baru.</InfoTip>
+            <InfoTip label="Keterangan laporan progres" guide="progres">Isi progres kumulatif secara berkala. Laporan manual mengoreksi angka dari milestone sampai ada milestone selesai/laporan yang lebih baru.</InfoTip>
           </CardTitle>
         </div>
         {data.canManage && (
@@ -93,7 +93,7 @@ function ReportsCard({ data }: { data: ProjectMonitoringDTO }) {
         {data.reports.length === 0 ? (
           <EmptyState icon={ClipboardList} text="Belum ada laporan progres. Progres dapat diisi admin di sini atau oleh PIC melalui tautan email." action={data.canManage ? { label: "Perbarui progres", onClick: () => openForm(null) } : undefined} />
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          <div className="max-h-[520px] divide-y divide-slate-100 overflow-y-auto dark:divide-slate-800">
             {data.reports.map((r) => {
               const planned = interpolate(plan, Date.parse(r.reportDate));
               const dev = r.actualPercent - planned;
@@ -205,7 +205,7 @@ function PlanCard({ data }: { data: ProjectMonitoringDTO }) {
 
   const hasMilestonePlan = data.input.milestones.some((m) => m.plannedDate !== null && m.weight > 0);
   const [shape, setShape] = useState<PlanShape>("S");
-  const [interval, setPeriod] = useState<"WEEKLY" | "MONTHLY">("MONTHLY");
+  const [interval, setPeriod] = useState<"DAILY" | "WEEKLY" | "MONTHLY">("MONTHLY");
   useOpenFromHash("progres", openEditor, "rencana");
 
   function autofill() {
@@ -232,7 +232,7 @@ function PlanCard({ data }: { data: ProjectMonitoringDTO }) {
         <div>
           <CardTitle className="flex items-center gap-1.5">
             Rencana progres
-            <InfoTip label="Keterangan rencana progres">
+            <InfoTip label="Keterangan rencana progres" guide="progres">
               Garis rencana di kurva S diambil dari sumber pertama yang tersedia: (1) jadwal rencana di tabel ini, (2) tanggal rencana dan bobot milestone, (3) kurva S standar
               dari tanggal mulai sampai target selesai. Bila punya jadwal resmi (time schedule di proposal atau kontrak), isi persentase kumulatifnya di sini.
             </InfoTip>
@@ -294,9 +294,10 @@ function PlanCard({ data }: { data: ProjectMonitoringDTO }) {
             </div>
             <div>
               <Label htmlFor="plan-interval">Periode</Label>
-              <select id="plan-interval" value={interval} onChange={(e) => setPeriod(e.target.value as "WEEKLY" | "MONTHLY")} className="mt-1 h-9 w-full rounded-md border border-line bg-white px-2 text-sm dark:border-slate-700 dark:bg-slate-900">
+              <select id="plan-interval" value={interval} onChange={(e) => setPeriod(e.target.value as "DAILY" | "WEEKLY" | "MONTHLY")} className="mt-1 h-9 w-full rounded-md border border-line bg-white px-2 text-sm dark:border-slate-700 dark:bg-slate-900">
                 <option value="MONTHLY">Akhir bulan</option>
                 <option value="WEEKLY">Mingguan</option>
+                {(Date.parse(data.targetEndDate) - Date.parse(data.startDate ?? data.targetEndDate)) / 86400000 <= 395 && <option value="DAILY">Harian</option>}
               </select>
             </div>
             <Button size="sm" variant="outline" onClick={autofill}>

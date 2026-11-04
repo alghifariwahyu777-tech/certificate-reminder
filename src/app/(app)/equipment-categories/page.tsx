@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { EquipmentCategoryManager } from "@/components/equipment/EquipmentCategoryManager";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function EquipmentCategoriesPage() {
   const session = await getSession();
@@ -25,7 +26,7 @@ export default async function EquipmentCategoriesPage() {
       <PageBody>
         <EquipmentCategoryManager
           initialCategories={categories.map((c) => ({ id: c.id, name: c.name, equipmentCount: c._count.equipment }))}
-          canManage={session.role === "ADMIN"}
+          canManage={can(session.role, "equipment")}
         />
       </PageBody>
     </>

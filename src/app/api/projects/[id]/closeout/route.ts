@@ -5,7 +5,7 @@ import { guardProjectWrite, auditProjectMonitoring } from "@/lib/project-subreso
 
 /** Saves the close-out checklist (one row per project, created on first save). */
 export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const g = await guardProjectWrite(context);
+  const g = await guardProjectWrite(context, "project");
   if ("error" in g) return g.error;
   const parsed = projectCloseoutSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {

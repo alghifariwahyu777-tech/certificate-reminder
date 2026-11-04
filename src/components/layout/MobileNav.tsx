@@ -33,6 +33,7 @@ import {
   Users2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { can, type Area, type Role } from "@/lib/permissions";
 import { PAGE_ICON } from "@/lib/entity-icons";
 import { SucofindoMark } from "@/components/brand/SucofindoLogo";
 
@@ -52,72 +53,74 @@ const NAV_GROUPS = [
   {
     label: null,
     items: [
-      { href: "/dashboard", label: "Dasbor", icon: PAGE_ICON["/dashboard"], adminOnly: false },
-      { href: "/applications", label: "Permohonan", icon: PAGE_ICON["/applications"], adminOnly: false },
+      { href: "/dashboard", label: "Dasbor", icon: PAGE_ICON["/dashboard"] },
+      { href: "/tasks", label: "Tugas Saya", icon: PAGE_ICON["/tasks"] },
+      { href: "/applications", label: "Permohonan", icon: PAGE_ICON["/applications"] },
     ],
   },
   {
     label: "Personil",
     items: [
-      { href: "/employees", label: "Karyawan", icon: PAGE_ICON["/employees"], adminOnly: false },
-      { href: "/personnel-certifications", label: "Sertifikasi", icon: PAGE_ICON["/personnel-certifications"], adminOnly: false },
-      { href: "/personnel-categories", label: "Kategori", icon: PAGE_ICON["/personnel-categories"], adminOnly: false },
-      { href: "/personnel-email-template", label: "Template Email", icon: PAGE_ICON["/personnel-email-template"], adminOnly: true },
+      { href: "/employees", label: "Karyawan", icon: PAGE_ICON["/employees"] },
+      { href: "/personnel-certifications", label: "Sertifikasi", icon: PAGE_ICON["/personnel-certifications"] },
+      { href: "/personnel-categories", label: "Kategori", icon: PAGE_ICON["/personnel-categories"] },
+      { href: "/personnel-email-template", label: "Template Email", icon: PAGE_ICON["/personnel-email-template"], area: "personnel" as Area },
     ],
   },
   {
     label: "Klien",
     items: [
-      { href: "/certificate", label: "Sertifikat", icon: PAGE_ICON["/certificate"], adminOnly: false },
-      { href: "/monitoring", label: "Monitoring Permohonan", icon: PAGE_ICON["/monitoring"], adminOnly: false },
-      { href: "/services", label: "Layanan", icon: PAGE_ICON["/services"], adminOnly: false },
-      { href: "/document-types", label: "Jenis Dokumen", icon: PAGE_ICON["/document-types"], adminOnly: false },
-      { href: "/clients", label: "Daftar Klien", icon: PAGE_ICON["/clients"], adminOnly: false },
-      { href: "/category", label: "Kategori", icon: PAGE_ICON["/category"], adminOnly: false },
-      { href: "/email-template", label: "Template Email", icon: PAGE_ICON["/email-template"], adminOnly: true },
+      { href: "/certificate", label: "Sertifikat", icon: PAGE_ICON["/certificate"] },
+      { href: "/monitoring", label: "Monitoring Permohonan", icon: PAGE_ICON["/monitoring"] },
+      { href: "/services", label: "Layanan", icon: PAGE_ICON["/services"] },
+      { href: "/document-types", label: "Jenis Dokumen", icon: PAGE_ICON["/document-types"] },
+      { href: "/clients", label: "Daftar Klien", icon: PAGE_ICON["/clients"] },
+      { href: "/category", label: "Kategori", icon: PAGE_ICON["/category"] },
+      { href: "/email-template", label: "Template Email", icon: PAGE_ICON["/email-template"], area: "client" as Area },
     ],
   },
   {
     label: "Project",
     items: [
-      { href: "/projects/dashboard", label: "Monitoring Project", icon: PAGE_ICON["/projects/dashboard"], adminOnly: false },
-      { href: "/projects", label: "Daftar Project", icon: PAGE_ICON["/projects"], adminOnly: false },
-      { href: "/projects/personnel", label: "Penugasan Personil", icon: PAGE_ICON["/projects/personnel"], adminOnly: false },
-      { href: "/projects/weekly-report", label: "Laporan Mingguan", icon: PAGE_ICON["/projects/weekly-report"], adminOnly: false },
-      { href: "/project-categories", label: "Kategori", icon: PAGE_ICON["/project-categories"], adminOnly: false },
-      { href: "/project-email-template", label: "Template Email", icon: PAGE_ICON["/project-email-template"], adminOnly: true },
+      { href: "/projects/dashboard", label: "Monitoring Project", icon: PAGE_ICON["/projects/dashboard"] },
+      { href: "/projects", label: "Daftar Project", icon: PAGE_ICON["/projects"] },
+      { href: "/projects/personnel", label: "Penugasan Personil", icon: PAGE_ICON["/projects/personnel"] },
+      { href: "/projects/weekly-report", label: "Laporan Mingguan", icon: PAGE_ICON["/projects/weekly-report"] },
+      { href: "/project-categories", label: "Kategori", icon: PAGE_ICON["/project-categories"] },
+      { href: "/project-email-template", label: "Template Email", icon: PAGE_ICON["/project-email-template"], area: "system" as Area },
     ],
   },
   {
     label: "Peralatan",
     items: [
-      { href: "/equipment", label: "Kalibrasi Alat", icon: PAGE_ICON["/equipment"], adminOnly: false },
-      { href: "/equipment-categories", label: "Kategori", icon: PAGE_ICON["/equipment-categories"], adminOnly: false },
-      { href: "/equipment-email-template", label: "Template Email", icon: PAGE_ICON["/equipment-email-template"], adminOnly: true },
+      { href: "/equipment", label: "Kalibrasi Alat", icon: PAGE_ICON["/equipment"] },
+      { href: "/equipment-categories", label: "Kategori", icon: PAGE_ICON["/equipment-categories"] },
+      { href: "/equipment-email-template", label: "Template Email", icon: PAGE_ICON["/equipment-email-template"], area: "equipment" as Area },
     ],
   },
   {
     label: null,
     items: [
-      { href: "/notifications", label: "Notifikasi", icon: PAGE_ICON["/notifications"], adminOnly: false },
-      { href: "/reports", label: "Laporan", icon: PAGE_ICON["/reports"], adminOnly: false },
-      { href: "/users", label: "Pengguna", icon: PAGE_ICON["/users"], adminOnly: true },
-      { href: "/supervisors", label: "Atasan", icon: PAGE_ICON["/supervisors"], adminOnly: true },
-      { href: "/departments", label: "Divisi", icon: PAGE_ICON["/departments"], adminOnly: false },
-      { href: "/settings", label: "Pengaturan", icon: PAGE_ICON["/settings"], adminOnly: true },
-      { href: "/audit-log", label: "Log Audit", icon: PAGE_ICON["/audit-log"], adminOnly: true },
-      { href: "/trash", label: "Sampah", icon: PAGE_ICON["/trash"], adminOnly: true },
-      { href: "/profile", label: "Profil", icon: PAGE_ICON["/profile"], adminOnly: false },
+      { href: "/notifications", label: "Notifikasi", icon: PAGE_ICON["/notifications"] },
+      { href: "/reports", label: "Laporan", icon: PAGE_ICON["/reports"] },
+      { href: "/users", label: "Pengguna", icon: PAGE_ICON["/users"], area: "system" as Area },
+      { href: "/supervisors", label: "Atasan", icon: PAGE_ICON["/supervisors"], area: "system" as Area },
+      { href: "/departments", label: "Divisi", icon: PAGE_ICON["/departments"] },
+      { href: "/settings", label: "Pengaturan", icon: PAGE_ICON["/settings"], area: "system" as Area },
+      { href: "/audit-log", label: "Log Audit", icon: PAGE_ICON["/audit-log"], area: "system" as Area },
+      { href: "/trash", label: "Sampah", icon: PAGE_ICON["/trash"], area: "system" as Area },
+      { href: "/guide", label: "Panduan", icon: PAGE_ICON["/guide"] },
+      { href: "/profile", label: "Profil", icon: PAGE_ICON["/profile"] },
     ],
   },
 ];
 
-export function MobileNav({ role }: { role: "ADMIN" | "VIEWER" | "PIC" }) {
+export function MobileNav({ role }: { role: Role }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const groups = NAV_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter((item) => !item.adminOnly || role === "ADMIN"),
+    items: group.items.filter((item) => !("area" in item) || can(role, (item as { area: Area }).area)),
   })).filter((group) => group.items.length > 0);
 
   return (

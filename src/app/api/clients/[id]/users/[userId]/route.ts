@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin, hashPassword } from "@/lib/auth";
+import { requireArea, hashPassword } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 
 const updateClientUserSchema = z.object({
@@ -15,7 +15,7 @@ export async function PUT(
   context: { params: Promise<{ id: string; userId: string }> }
 ) {
   const params = await context.params;
-  const auth = await requireAdmin();
+  const auth = await requireArea("client");
   if ("error" in auth) return auth.error;
 
   const body = await request.json().catch(() => null);
@@ -54,7 +54,7 @@ export async function DELETE(
   context: { params: Promise<{ id: string; userId: string }> }
 ) {
   const params = await context.params;
-  const auth = await requireAdmin();
+  const auth = await requireArea("client");
   if ("error" in auth) return auth.error;
 
   const clientUser = await prisma.clientUser.findFirst({ where: { id: params.userId, clientId: params.id } });

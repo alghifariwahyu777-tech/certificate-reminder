@@ -54,7 +54,7 @@ export function IssuePanel({ data }: { data: ProjectMonitoringDTO }) {
   }
 
   useOpenFromHash("kendala", () => {
-    if (data.canManage) openForm(null);
+    if (data.rights.projectRisk) openForm(null);
   });
 
 
@@ -83,7 +83,7 @@ export function IssuePanel({ data }: { data: ProjectMonitoringDTO }) {
             ]}
           />
         </div>
-        {data.canManage && (
+        {data.rights.projectRisk && (
           <Button size="sm" onClick={() => openForm(null)}>
             <Plus className="h-4 w-4" />
             Catat kendala
@@ -92,9 +92,9 @@ export function IssuePanel({ data }: { data: ProjectMonitoringDTO }) {
       </CardHeader>
       <CardContent className="p-0">
         {items.length === 0 ? (
-          <EmptyState icon={AlertOctagon} text={filter === "OPEN" ? "Tidak ada kendala atau risiko yang masih terbuka." : "Belum ada kendala atau risiko yang dicatat."} action={data.canManage ? { label: "Catat kendala", onClick: () => openForm(null) } : undefined} />
+          <EmptyState icon={AlertOctagon} text={filter === "OPEN" ? "Tidak ada kendala atau risiko yang masih terbuka." : "Belum ada kendala atau risiko yang dicatat."} action={data.rights.projectRisk ? { label: "Catat kendala", onClick: () => openForm(null) } : undefined} />
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          <div className="max-h-[560px] divide-y divide-slate-100 overflow-y-auto dark:divide-slate-800">
             {items.map((i) => {
               const late = i.status === "OPEN" && i.targetDate && i.targetDate < today;
               return (
@@ -127,7 +127,7 @@ export function IssuePanel({ data }: { data: ProjectMonitoringDTO }) {
                       </p>
                     )}
                   </div>
-                  {data.canManage && (
+                  {data.rights.projectRisk && (
                     <div className="flex gap-1 shrink-0">
                       <button type="button" aria-label="Ubah" onClick={() => openForm(i)} className="p-1.5 rounded text-slate-400 hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800">
                         <Pencil className="h-4 w-4" />

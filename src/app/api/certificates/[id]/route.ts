@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession, requireAdmin } from "@/lib/auth";
+import { getSession, requireArea } from "@/lib/auth";
 import { certificateSchema } from "@/lib/validations";
 import { normalizeCertificatePayload } from "@/lib/certificate-payload";
 import { logAudit } from "@/lib/audit";
@@ -24,7 +24,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
 
 export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
-  const auth = await requireAdmin();
+  const auth = await requireArea("client");
   if ("error" in auth) return auth.error;
 
   const existing = await prisma.certificate.findFirst({ where: { id: params.id, deletedAt: null } });
@@ -75,7 +75,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
  */
 export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
-  const auth = await requireAdmin();
+  const auth = await requireArea("client");
   if ("error" in auth) return auth.error;
 
   const certificate = await prisma.certificate.findFirst({ where: { id: params.id, deletedAt: null } });

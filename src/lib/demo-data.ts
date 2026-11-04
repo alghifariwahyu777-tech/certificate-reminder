@@ -410,7 +410,7 @@ export async function removeDemoData() {
 
 type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 /** Marks demo projects made by the current generator; older or half-made ones are replaced. */
-const DEMO_TAG = "(contoh v6)";
+const DEMO_TAG = "(contoh v7)";
 
 async function deleteProjects(ids: string[]) {
   if (!ids.length) return;
@@ -502,6 +502,8 @@ async function createDemoProject(tx: Tx, sc: Scenario, ctx: { today: number; act
         const from = cum;
         cum += weights[i];
         const planned = start + sShareInverse(cum / 100) * sc.durationDays * DAY;
+        // work on a step starts a little before the previous one is planned to end (overlap), as on real schedules
+        const plannedStart = start + sShareInverse(Math.max(0, from - weights[i] * 0.3) / 100) * sc.durationDays * DAY;
         const done = sc.actual >= cum - 0.01;
         const running = !done && sc.actual > from;
         return {
@@ -509,7 +511,9 @@ async function createDemoProject(tx: Tx, sc: Scenario, ctx: { today: number; act
           sequence: i + 1,
           name,
           weight: weights[i],
+          plannedStartDate: day(plannedStart),
           plannedDate: day(planned),
+          actualStartDate: done || running ? day(Math.min(lastReport, reachedOn(Math.max(0.1, from)))) : null,
           actualDate: done ? day(Math.min(lastReport, reachedOn(cum))) : null,
           status: done ? "DONE" : running ? "IN_PROGRESS" : "PENDING",
         };

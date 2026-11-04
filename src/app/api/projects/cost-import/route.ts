@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireArea } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { commitCostImport, parseCostWorkbook } from "@/lib/project-cost-import";
 import { isSucofindoRab } from "@/lib/project-rab-import";
@@ -15,7 +15,7 @@ const MAX = 10 * 1024 * 1024;
  * sends the same file again to commit what it previewed.
  */
 export async function POST(request: NextRequest) {
-  const auth = await requireAdmin();
+  const auth = await requireArea("projectCost");
   if ("error" in auth) return auth.error;
   const form = await request.formData();
   const file = form.get("file") as File | null;
@@ -31,7 +31,9 @@ export async function POST(request: NextRequest) {
         { message: 'File ini adalah RAB Sucofindo. Unggah melalui tombol "Unggah RAB" pada tab Keuangan project agar data RAB terbaca lengkap.' },
         { status: 400 }
       );
-    preview = await parseCostWorkbook(buffer, { restrictToProjectId: (form.get("projectId") as string) || undefined });
+    preview = await parseCostWorkbook(buffer, {
+      restrictToProjectId: (form.get("projectId") as string) || undefined,
+    });
   } catch {
     return NextResponse.json({ message: "File tidak dapat dibaca. Pastikan formatnya .xlsx (bukan .xls/.csv)." }, { status: 400 });
   }

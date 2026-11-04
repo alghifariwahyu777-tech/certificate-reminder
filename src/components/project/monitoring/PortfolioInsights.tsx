@@ -167,14 +167,14 @@ export function MarginGapCard({ rows }: { rows: PortfolioRow[] }) {
     .filter((r) => r.status === "ONGOING" && r.margin.belowTarget && r.margin.targetGap > 0)
     .sort((a, b) => b.margin.targetGap - a.margin.targetGap);
   const total = list.reduce((s, r) => s + r.margin.targetGap, 0);
-  const top = list.slice(0, 6);
+  const top = list;
   const max = top[0]?.margin.targetGap ?? 1;
   return (
     <Card>
       <div className="px-5 pt-4">
         <CardTitle className="flex items-center gap-1.5">
           Kekurangan margin
-          <InfoTip label="Keterangan kekurangan margin">
+          <InfoTip label="Keterangan kekurangan margin" guide="proyeksi-margin">
             Selisih rupiah antara target margin dan proyeksi margin akhir, per project. Diurutkan dari yang terbesar: perbaikan pada project teratas paling berpengaruh pada
             margin portofolio.
           </InfoTip>
@@ -185,7 +185,7 @@ export function MarginGapCard({ rows }: { rows: PortfolioRow[] }) {
         {top.length === 0 ? (
           <p className="py-10 text-center text-sm text-slate-500">Semua project memenuhi target margin.</p>
         ) : (
-          <ul className="space-y-2.5">
+          <ul className="max-h-80 space-y-2.5 overflow-y-auto pr-1">
             {top.map((r) => (
               <li key={r.id}>
                 <Link href={`/projects/${r.id}#keuangan/margin`} className="group block">
@@ -206,7 +206,6 @@ export function MarginGapCard({ rows }: { rows: PortfolioRow[] }) {
             ))}
           </ul>
         )}
-        {list.length > top.length && <p className="mt-3 text-[12px] text-slate-500">dan {list.length - top.length} project lainnya</p>}
       </CardContent>
     </Card>
   );
@@ -227,7 +226,7 @@ export function AgingCard({ aging }: { aging: AgingBucket[] }) {
       <div className="px-5 pt-4">
         <CardTitle className="flex items-center gap-1.5">
           Umur piutang
-          <InfoTip label="Keterangan umur piutang">
+          <InfoTip label="Keterangan umur piutang" guide="keuangan">
             Invoice yang sudah ditagih tetapi belum dibayar, dikelompokkan menurut lama lewat jatuh tempo. Makin ke kanan makin lama tertunggak dan makin perlu ditindaklanjuti.
           </InfoTip>
         </CardTitle>
@@ -284,7 +283,7 @@ export function HealthTrendCard({ trend }: { trend: HealthTrendRow[] }) {
       <div className="px-5 pt-4">
         <CardTitle className="flex items-center gap-1.5">
           Tren kondisi mingguan
-          <InfoTip label="Keterangan tren kondisi mingguan" align="right">
+          <InfoTip label="Keterangan tren kondisi mingguan" guide="kondisi" align="right">
             Jumlah project berjalan menurut kondisinya setiap minggu (dicatat otomatis tiap minggu). Bila bagian merah makin tinggi, kondisi portofolio memburuk.
           </InfoTip>
         </CardTitle>

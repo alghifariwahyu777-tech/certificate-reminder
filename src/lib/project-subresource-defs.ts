@@ -22,6 +22,7 @@ const files = (v: { fileUrl?: string | null; driveFileId?: string | null; fileMi
 
 export const milestoneDef: SubresourceDef<typeof projectMilestoneSchema> = {
   label: "milestone",
+  area: "project",
   schema: projectMilestoneSchema,
   describe: (v) => v.name,
   toData: (v) => ({
@@ -29,8 +30,11 @@ export const milestoneDef: SubresourceDef<typeof projectMilestoneSchema> = {
     description: emptyToNull(v.description),
     sequence: v.sequence,
     weight: v.weight,
+    plannedStartDate: toDate(v.plannedStartDate),
     plannedDate: toDate(v.plannedDate),
     status: v.status,
+    // started work keeps its start date; if none was given, it started today
+    actualStartDate: v.status === "PENDING" ? null : toDate(v.actualStartDate) ?? getJakartaToday(),
     // a DONE milestone always has a completion date (it drives actual progress);
     // anything not DONE has none
     actualDate: v.status === "DONE" ? toDate(v.actualDate) ?? getJakartaToday() : null,
@@ -45,6 +49,7 @@ export const milestoneDef: SubresourceDef<typeof projectMilestoneSchema> = {
 
 export const progressReportDef: SubresourceDef<typeof projectProgressReportSchema> = {
   label: "laporan progres",
+  area: "project",
   schema: projectProgressReportSchema,
   describe: (v) => `${v.reportDate}, ${v.actualPercent}%`,
   toData: (v, { session, isCreate }) => ({
@@ -63,6 +68,7 @@ export const progressReportDef: SubresourceDef<typeof projectProgressReportSchem
 
 export const termDef: SubresourceDef<typeof projectTermSchema> = {
   label: "termin",
+  area: "projectBilling",
   schema: projectTermSchema,
   describe: (v) => v.name,
   toData: (v) => {
@@ -94,6 +100,7 @@ export const termDef: SubresourceDef<typeof projectTermSchema> = {
 
 export const budgetItemDef: SubresourceDef<typeof projectBudgetItemSchema> = {
   label: "anggaran biaya",
+  area: "projectCost",
   schema: projectBudgetItemSchema,
   describe: (v) => v.category,
   toData: (v) => ({ category: v.category, description: emptyToNull(v.description), amount: v.amount }),
@@ -105,6 +112,7 @@ export const budgetItemDef: SubresourceDef<typeof projectBudgetItemSchema> = {
 
 export const expenseDef: SubresourceDef<typeof projectExpenseSchema> = {
   label: "realisasi biaya",
+  area: "projectCost",
   schema: projectExpenseSchema,
   describe: (v) => v.description,
   toData: (v, { session, isCreate }) => ({
@@ -125,6 +133,7 @@ export const expenseDef: SubresourceDef<typeof projectExpenseSchema> = {
 
 export const issueDef: SubresourceDef<typeof projectIssueSchema> = {
   label: "kendala/risiko",
+  area: "projectRisk",
   schema: projectIssueSchema,
   describe: (v) => v.title,
   toData: (v, { session, isCreate }) => ({
@@ -149,6 +158,7 @@ export const issueDef: SubresourceDef<typeof projectIssueSchema> = {
 
 export const assignmentDef: SubresourceDef<typeof projectAssignmentSchema> = {
   label: "penugasan personil",
+  area: "projectTeam",
   schema: projectAssignmentSchema,
   describe: (v) => v.role,
   toData: (v) => ({
@@ -167,6 +177,7 @@ export const assignmentDef: SubresourceDef<typeof projectAssignmentSchema> = {
 /** Monthly HSE record; the period is stored as the last day of its month so one month has one record. */
 export const hseReportDef: SubresourceDef<typeof projectHseReportSchema> = {
   label: "laporan HSE",
+  area: "projectHse",
   schema: projectHseReportSchema,
   describe: (v) => `periode ${v.periodDate.slice(0, 7)}`,
   toData: (v, { session, isCreate }) => {

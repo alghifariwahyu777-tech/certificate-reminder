@@ -12,6 +12,7 @@ import { getDaysRemaining } from "@/lib/status";
 import { formatDate } from "@/lib/utils";
 import { Pencil, Download, ArrowLeft, FileWarning } from "lucide-react";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function CertificateDetailPage(context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -56,7 +57,7 @@ export default async function CertificateDetailPage(context: { params: Promise<{
             <ArrowLeft className="h-4 w-4" />
             Kembali ke sertifikat
           </Link>
-          {session?.role === "ADMIN" && (
+          {can(session?.role, "client") && (
             <Link href={`/certificate/edit/${certificate.id}`}>
               <Button variant="outline" size="sm">
                 <Pencil className="h-4 w-4" />
@@ -142,7 +143,7 @@ export default async function CertificateDetailPage(context: { params: Promise<{
         <CertificateRenewalSection
           certificateId={certificate.id}
           currentNumber={certificate.certificateNumber}
-          canManage={session?.role === "ADMIN"}
+          canManage={can(session?.role, "client")}
           initialRenewals={renewals.map((r) => ({
             ...r,
             renewalDate: r.renewalDate.toISOString(),
@@ -156,7 +157,7 @@ export default async function CertificateDetailPage(context: { params: Promise<{
         {surveillances.length > 0 && (
           <SurveillanceSection
             certificateId={certificate.id}
-            canManage={session?.role === "ADMIN"}
+            canManage={can(session?.role, "client")}
             initialSurveillances={surveillances.map((s) => ({
               id: s.id,
               sequenceNumber: s.sequenceNumber,

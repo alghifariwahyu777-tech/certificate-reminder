@@ -27,7 +27,9 @@ function toForm(m: MilestoneDTO | null, nextSeq: number, remaining: number): For
         description: null,
         weight: remaining > 0 ? String(Math.round(remaining * 10) / 10) : "",
         sequence: String(nextSeq),
+        plannedStartDate: null,
         plannedDate: null,
+        actualStartDate: null,
         actualDate: null,
         status: "PENDING",
         notes: null,
@@ -60,6 +62,7 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
     ...f,
     weight: f.weight === "" ? 0 : f.weight,
     sequence: f.sequence === "" ? 0 : f.sequence,
+    actualStartDate: f.status === "PENDING" ? null : f.actualStartDate || f.actualDate || todayInput(),
     actualDate: f.status === "DONE" ? f.actualDate || todayInput() : null,
   });
 
@@ -84,7 +87,7 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
         <div>
           <CardTitle>Milestone</CardTitle>
           <p className="text-xs text-slate-500 mt-1">
-            Bobot milestone yang selesai menjadi progres realisasi otomatis. Total bobot saat ini{" "}
+            Isi rencana mulai dan selesai agar tampil di Gantt chart. Bobot milestone yang selesai menjadi progres realisasi otomatis. Total bobot saat ini{" "}
             <span className={cn("font-medium", Math.abs(totalWeight - 100) > 0.05 ? "text-signal-soon" : "text-signal-active")}>
               {totalWeight.toLocaleString("id-ID")}%
             </span>
@@ -110,7 +113,7 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
                   <th className="px-3 py-2.5 font-medium">Milestone</th>
                   <th className="px-3 py-2.5 font-medium text-right">Bobot</th>
                   <th className="px-3 py-2.5 font-medium">Rencana</th>
-                  <th className="px-3 py-2.5 font-medium">Aktual</th>
+                  <th className="px-3 py-2.5 font-medium">Realisasi</th>
                   <th className="px-3 py-2.5 font-medium">Status</th>
                   {data.canManage && <th className="px-5 py-2.5" />}
                 </tr>
@@ -128,10 +131,14 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
                       </td>
                       <td className="px-3 py-3 text-right tabular-nums">{m.weight.toLocaleString("id-ID")}%</td>
                       <td className={cn("px-3 py-3 whitespace-nowrap", late && "text-signal-expired font-medium")}>
+                        {m.plannedStartDate ? `${fmtDate(m.plannedStartDate)} sampai ` : ""}
                         {fmtDate(m.plannedDate)}
                         {late && <span className="block text-[11px]">terlambat</span>}
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap">{fmtDate(m.actualDate)}</td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        {m.actualStartDate ? `${fmtDate(m.actualStartDate)} sampai ` : ""}
+                        {m.actualDate ? fmtDate(m.actualDate) : m.actualStartDate ? "berjalan" : "-"}
+                      </td>
                       <td className="px-3 py-3">
                         <span className={cn("stamp-badge", STATUS_CLASS[m.status])}>{MILESTONE_STATUS_LABEL[m.status] ?? "Belum mulai"}</span>
                       </td>
@@ -190,12 +197,16 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="ms-weight">Bobot (%)</Label>
-              <Input id="ms-weight" type="number" min={0} max={100} step="any" value={form.weight} onChange={(e) => set("weight", e.target.value)} />
+              <Label htmlFor="ms-planned-start">Rencana mulai</Label>
+              <Input id="ms-planned-start" type="date" value={form.plannedStartDate || ""} onChange={(e) => set("plannedStartDate", e.target.value || null)} />
             </div>
             <div>
-              <Label htmlFor="ms-planned">Tanggal rencana</Label>
+              <Label htmlFor="ms-planned">Rencana selesai</Label>
               <Input id="ms-planned" type="date" value={form.plannedDate || ""} onChange={(e) => set("plannedDate", e.target.value || null)} />
+            </div>
+            <div>
+              <Label htmlFor="ms-weight">Bobot (%)</Label>
+              <Input id="ms-weight" type="number" min={0} max={100} step="any" value={form.weight} onChange={(e) => set("weight", e.target.value)} />
             </div>
             <div>
               <Label htmlFor="ms-status">Status</Label>
@@ -207,9 +218,15 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
                 ))}
               </Select>
             </div>
+            {form.status !== "PENDING" && (
+              <div>
+                <Label htmlFor="ms-actual-start">Mulai aktual</Label>
+                <Input id="ms-actual-start" type="date" value={form.actualStartDate || ""} onChange={(e) => set("actualStartDate", e.target.value || null)} />
+              </div>
+            )}
             {form.status === "DONE" && (
               <div>
-                <Label htmlFor="ms-actual">Tanggal selesai aktual</Label>
+                <Label htmlFor="ms-actual">Selesai aktual</Label>
                 <Input id="ms-actual" type="date" value={form.actualDate || ""} onChange={(e) => set("actualDate", e.target.value || null)} />
               </div>
             )}

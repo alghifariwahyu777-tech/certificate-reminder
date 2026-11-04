@@ -61,7 +61,7 @@ export function HsePanel({ data }: { data: ProjectMonitoringDTO }) {
     setOpen(true);
   }
   useOpenFromHash("hse", () => {
-    if (data.canManage) openForm(null);
+    if (data.rights.projectHse) openForm(null);
   });
 
   async function save() {
@@ -95,14 +95,14 @@ export function HsePanel({ data }: { data: ProjectMonitoringDTO }) {
           <div>
             <CardTitle className="flex items-center gap-1.5">
               Kinerja HSE
-              <InfoTip label="Keterangan kinerja HSE">
+              <InfoTip label="Keterangan kinerja HSE" guide="hse">
                 Diisi per bulan oleh PIC atau petugas HSE. <strong>LTIFR</strong> = jumlah cedera hilang hari kerja (termasuk fatal) × 1.000.000 ÷ jam kerja.{" "}
                 <strong>TRIR</strong> = (fatal + hilang hari kerja + perawatan medis) × 1.000.000 ÷ jam kerja. Makin kecil makin baik; target umumnya 0.
               </InfoTip>
             </CardTitle>
             <p className={cn("mt-0.5 text-[12.5px]", s.signal === "bad" ? "font-semibold text-signal-expired" : s.signal === "warn" ? "text-signal-soon" : "text-slate-500")}>{signalText}</p>
           </div>
-          {data.canManage && (
+          {data.rights.projectHse && (
             <Button size="sm" onClick={() => openForm(null)}>
               <Plus className="h-4 w-4" />
               Isi laporan HSE
@@ -111,7 +111,7 @@ export function HsePanel({ data }: { data: ProjectMonitoringDTO }) {
         </CardHeader>
         <CardContent>
           {s.months === 0 ? (
-            <EmptyState icon={HardHat} text="Belum ada laporan HSE. Isi jam kerja dan kejadian K3 setiap bulan." action={data.canManage ? { label: "Isi laporan HSE", onClick: () => openForm(null) } : undefined} />
+            <EmptyState icon={HardHat} text="Belum ada laporan HSE. Isi jam kerja dan kejadian K3 setiap bulan." action={data.rights.projectHse ? { label: "Isi laporan HSE", onClick: () => openForm(null) } : undefined} />
           ) : (
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_1.1fr]">
               <div className="space-y-4">
@@ -136,7 +136,7 @@ export function HsePanel({ data }: { data: ProjectMonitoringDTO }) {
           <CardHeader>
             <CardTitle className="flex items-center gap-1.5">
               Tren bulanan
-              <InfoTip label="Keterangan tren HSE">Batang = jumlah kejadian per bulan, diwarnai menurut tingkat keparahan (merah tua paling berat, kuning paling ringan). Garis putus-putus = TRIR kumulatif sejak project dimulai.</InfoTip>
+              <InfoTip label="Keterangan tren HSE" guide="hse">Batang = jumlah kejadian per bulan, diwarnai menurut tingkat keparahan (merah tua paling berat, kuning paling ringan). Garis putus-putus = TRIR kumulatif sejak project dimulai.</InfoTip>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -207,7 +207,7 @@ export function HsePanel({ data }: { data: ProjectMonitoringDTO }) {
                       <td className="px-3 py-2.5 text-right tabular-nums">{r.nearMiss}</td>
                       <td className="px-3 py-2.5 text-right tabular-nums">{r.safetyTalks}</td>
                       <td className="px-5 py-2.5">
-                        {data.canManage && (
+                        {data.rights.projectHse && (
                           <div className="flex justify-end gap-1">
                             <button type="button" aria-label="Ubah" onClick={() => openForm(r)} className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-ink dark:hover:bg-slate-800">
                               <Pencil className="h-4 w-4" />
@@ -291,7 +291,7 @@ export function SafetyPyramid({ summary }: { summary: ReturnType<typeof summariz
     <div>
       <p className="mb-2 flex items-center gap-1.5 text-[12.5px] font-semibold text-ink dark:text-slate-100">
         Piramida keselamatan
-        <InfoTip label="Keterangan piramida keselamatan" align="right">
+        <InfoTip label="Keterangan piramida keselamatan" guide="hse" align="right">
           Kecelakaan berat jarang terjadi, tetapi berdiri di atas banyak kejadian kecil dan tindakan tidak aman. Tiga lapis atas adalah cedera yang tercatat; tiga lapis bawah
           adalah tanda peringatan dini. Laporan nyaris celaka dan temuan tidak aman yang banyak menandakan budaya pelaporan yang baik; menekan bagian bawah mencegah kejadian di
           puncak.

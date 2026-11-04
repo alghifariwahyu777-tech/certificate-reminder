@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireArea } from "@/lib/auth";
 import { serviceRequirementSchema } from "@/lib/validations";
 import { logAudit } from "@/lib/audit";
 
@@ -9,7 +9,7 @@ export async function PUT(
   context: { params: Promise<{ id: string; reqId: string }> }
 ) {
   const params = await context.params;
-  const auth = await requireAdmin();
+  const auth = await requireArea("client");
   if ("error" in auth) return auth.error;
 
   const body = await request.json().catch(() => null);
@@ -44,7 +44,7 @@ export async function DELETE(
   context: { params: Promise<{ id: string; reqId: string }> }
 ) {
   const params = await context.params;
-  const auth = await requireAdmin();
+  const auth = await requireArea("client");
   if ("error" in auth) return auth.error;
 
   const requirement = await prisma.serviceRequirement.findFirst({

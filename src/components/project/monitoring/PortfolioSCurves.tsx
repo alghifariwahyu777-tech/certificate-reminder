@@ -38,7 +38,7 @@ export function SCurveGridCard({ rows, curves, curve, today }: { rows: Portfolio
         <div>
           <CardTitle className="flex items-center gap-1.5">
             Kurva S
-            <InfoTip label="Keterangan kurva S">
+            <InfoTip label="Keterangan kurva S" guide="gantt">
               <strong>Per project</strong> menampilkan kurva S setiap project berjalan. Garis putus-putus adalah rencana, garis biru adalah realisasi. Klik kartu untuk membuka
               project. <strong>Gabungan</strong> menampilkan rata-rata progres seluruh project berjalan yang dibobot nilai kontrak, untuk melihat posisi keseluruhan.
             </InfoTip>

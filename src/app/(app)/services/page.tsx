@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/layout/Navbar";
 import { ServiceManager } from "@/components/service/ServiceManager";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function ServicesPage() {
   const session = await getSession();
@@ -21,7 +22,7 @@ export default async function ServicesPage() {
       />
       <PageBody>
         <ServiceManager
-          canManage={session?.role === "ADMIN"}
+          canManage={can(session?.role, "client")}
           initialServices={services.map((s) => ({
             id: s.id,
             name: s.name,

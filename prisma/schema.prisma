@@ -717,7 +717,9 @@ model ProjectMilestone {
   name         String
   description  String?
   weight       Decimal   @default(0) // bobot % terhadap total pekerjaan (total idealnya 100)
+  plannedStartDate DateTime? // rencana mulai (Gantt); plannedDate = rencana selesai
   plannedDate  DateTime?
+  actualStartDate DateTime? // mulai aktual, diisi saat pekerjaan dimulai
   actualDate   DateTime? // set when status becomes DONE
   status       String    @default("PENDING") // "PENDING" | "IN_PROGRESS" | "DONE"
   fileUrl      String? // bukti / dokumen deliverable
@@ -844,7 +846,7 @@ model ProjectExpense {
   category     String
   description  String
   amount       Decimal
-  cause        String   @default("NORMAL") // "NORMAL" | "DELAY" (akibat keterlambatan) | "EXTRA_SCOPE" (pekerjaan tambahan)
+  cause        String   @default("NORMAL") // "NORMAL" | "DELAY" (akibat keterlambatan) | "EXTRA_SCOPE" (pekerjaan tambahan) | "REWORK" (pekerjaan ulang)
   referenceNo  String? // no. bukti/voucher (opsional, dari Excel)
   importKey    String? // sidik jari baris Excel — mencegah impor ganda
   fileUrl      String?

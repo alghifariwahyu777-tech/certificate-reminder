@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { PersonnelCategoryManager } from "@/components/personnel/PersonnelCategoryManager";
 import { PageBody } from "@/components/layout/PageBody";
+import { can } from "@/lib/permissions";
 
 export default async function PersonnelCategoriesPage() {
   const session = await getSession();
@@ -21,7 +22,7 @@ export default async function PersonnelCategoriesPage() {
       />
       <PageBody>
         <PersonnelCategoryManager
-          canManage={session?.role === "ADMIN"}
+          canManage={can(session?.role, "personnel")}
           initialCategories={categories.map((c) => ({
             id: c.id,
             name: c.name,
