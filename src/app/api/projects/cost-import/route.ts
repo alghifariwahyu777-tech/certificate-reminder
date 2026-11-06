@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
   if (form.get("commit") !== "1") return NextResponse.json({ preview });
 
-  const result = await commitCostImport(preview, auth.session.name);
+  const result = await commitCostImport(preview, auth.session.name, { packageId: (form.get("projectId") as string) ? (form.get("packageId") as string) || null : null });
   await logAudit({
     userId: auth.session.userId,
     userName: auth.session.name,

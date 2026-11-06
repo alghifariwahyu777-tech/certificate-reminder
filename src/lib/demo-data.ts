@@ -49,6 +49,8 @@ type Scenario = {
   status?: "ONGOING" | "COMPLETED";
   team: [number, string][]; // [employee index, role]
   scopes: string[];
+  /** paket pekerjaan: [name, document number, scope indexes] — the project becomes a main contract with these packages */
+  packages?: [string, string, number[]][];
 };
 
 const PEOPLE = [
@@ -84,6 +86,11 @@ const SCENARIOS: Scenario[] = [
     ],
     team: [[0, "Ketua Tim"], [3, "Tenaga Ahli Geodesi"], [7, "Koordinator Project"]],
     scopes: ["Survey pendahuluan", "Pemasangan patok Bench Mark", "Pengukuran KKH/KKV dan situasi", "Survey drone LiDAR dan fotogrametri", "Pelaporan hasil survey"],
+    packages: [
+      ["Survey pendahuluan dan patok", "045/SPK/EP4/2026", [0, 1]],
+      ["Pengukuran dan drone", "071/SPK/EP4/2026", [2, 3]],
+      ["Pelaporan", "102/SPK/EP4/2026", [4]],
+    ],
   },
   {
     no: "DEMO-02",
@@ -386,6 +393,73 @@ const day = (t: number) => new Date(t);
 const ymd = (t: number) => new Date(t).toISOString().slice(0, 10);
 const round = (v: number) => Math.round(v / 1000) * 1000;
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- demo seeding inside an interactive transaction */
+/**
+ * Turn a demo project into a main contract with packages: each package takes
+ * some activities (by index), its share of the terms and RAB lines (by the
+ * weight of its activities) and the costs dated within its period.
+ */
+async function splitIntoPackages(tx: any, pid: string, sc: Scenario, actor: string) {
+  const ms = await tx.projectMilestone.findMany({ where: { projectId: pid }, orderBy: { sequence: "asc" } });
+  const groups = sc.packages!.map(([name, no, idx], i) => {
+    const mine = idx.map((k: number) => ms[k]).filter(Boolean);
+    const weight = mine.reduce((a: number, m: any) => a + Number(m.weight), 0);
+    const start = Math.min(...mine.map((m: any) => (m.plannedStartDate ?? m.plannedDate).getTime()));
+    const end = Math.max(...mine.map((m: any) => m.plannedDate.getTime()));
+    return { name, no, i, mine, weight, start, end, done: mine.every((m: any) => m.status === "DONE") };
+  });
+  const pkgs: { id: string; share: number; start: number; end: number }[] = [];
+  for (const g of groups) {
+    const p = await tx.projectPackage.create({
+      data: {
+        projectId: pid,
+        sequence: g.i + 1,
+        name: g.name,
+        docType: "SPK",
+        docNumber: g.no,
+        issueDate: new Date(g.start - 7 * DAY),
+        value: Math.round((sc.value * g.weight) / 100),
+        startDate: new Date(g.start),
+        endDate: new Date(g.end),
+        status: g.done ? "COMPLETED" : "ONGOING",
+        actualEndDate: g.done ? new Date(Math.max(...g.mine.map((m: any) => (m.actualDate ?? m.plannedDate).getTime()))) : null,
+        createdBy: actor,
+      },
+    });
+    pkgs.push({ id: p.id, share: g.weight / 100, start: g.start, end: g.end });
+    await tx.projectMilestone.updateMany({ where: { id: { in: g.mine.map((m: any) => m.id) } }, data: { packageId: p.id } });
+  }
+  // terms: in order, each package gets terms until its share of the contract is reached
+  const terms = await tx.projectTerm.findMany({ where: { projectId: pid }, orderBy: { sequence: "asc" } });
+  const total = terms.reduce((a: number, t: any) => a + Number(t.amount), 0) || 1;
+  let cum = 0;
+  for (const t of terms) {
+    cum += Number(t.amount) / total;
+    let acc = 0;
+    const pkg = pkgs.find((p) => (acc += p.share) >= cum - 1e-6) ?? pkgs[pkgs.length - 1];
+    await tx.projectTerm.update({ where: { id: t.id }, data: { packageId: pkg.id } });
+  }
+  // costs: by date, to the package whose period contains it (else the nearest one)
+  const costs = await tx.projectExpense.findMany({ where: { projectId: pid }, select: { id: true, expenseDate: true } });
+  for (const c of costs) {
+    const t = c.expenseDate.getTime();
+    const pkg = pkgs.find((p) => t >= p.start && t <= p.end) ?? [...pkgs].sort((a, b) => Math.abs(t - (a.start + a.end) / 2) - Math.abs(t - (b.start + b.end) / 2))[0];
+    await tx.projectExpense.update({ where: { id: c.id }, data: { packageId: pkg.id } });
+  }
+  // RAB lines: split by package share so totals stay the same
+  const lines = await tx.projectBudgetItem.findMany({ where: { projectId: pid } });
+  if (lines.length) {
+    await tx.projectBudgetItem.deleteMany({ where: { projectId: pid } });
+    await tx.projectBudgetItem.createMany({
+      data: lines.flatMap((l: any) =>
+        pkgs.map((p) => ({ projectId: pid, packageId: p.id, category: l.category, description: l.description, accountCode: l.accountCode, amount: Math.round(Number(l.amount) * p.share) }))
+      ),
+    });
+  }
+  await tx.project.update({ where: { id: pid }, data: { usePackages: true } });
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 export async function hasDemoData() {
   return (await prisma.project.count({ where: { projectNumber: { startsWith: DEMO_PREFIX } } })) > 0;
 }
@@ -410,7 +484,7 @@ export async function removeDemoData() {
 
 type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 /** Marks demo projects made by the current generator; older or half-made ones are replaced. */
-const DEMO_TAG = "(contoh v7)";
+const DEMO_TAG = "(contoh v9)";
 
 async function deleteProjects(ids: string[]) {
   if (!ids.length) return;
@@ -497,8 +571,7 @@ async function createDemoProject(tx: Tx, sc: Scenario, ctx: { today: number; act
     // milestones: equal-ish weights over the scope list, done up to the current progress
     const weights = sc.scopes.map((_, i, a) => (i === a.length - 1 ? 100 - Math.floor(100 / a.length) * (a.length - 1) : Math.floor(100 / a.length)));
     let cum = 0;
-    await tx.projectMilestone.createMany({
-      data: sc.scopes.map((name, i) => {
+    const msRows = sc.scopes.map((name, i) => {
         const from = cum;
         cum += weights[i];
         const planned = start + sShareInverse(cum / 100) * sc.durationDays * DAY;
@@ -516,9 +589,26 @@ async function createDemoProject(tx: Tx, sc: Scenario, ctx: { today: number; act
           actualStartDate: done || running ? day(Math.min(lastReport, reachedOn(Math.max(0.1, from)))) : null,
           actualDate: done ? day(Math.min(lastReport, reachedOn(cum))) : null,
           status: done ? "DONE" : running ? "IN_PROGRESS" : "PENDING",
+          from,
         };
-      }),
-    });
+      });
+    // realisation per activity, filled in weekly (and on the last report date), following the project's S-shaped progress
+    for (const { from, ...row } of msRows) {
+      const m = await tx.projectMilestone.create({ data: row, select: { id: true } });
+      if (!row.actualStartDate) continue;
+      const w = Number(row.weight);
+      const pctAt = (t: number) => Math.max(0, Math.min(100, ((reportedAt((t - start) / Math.max(DAY, lastReport - start)) - from) / w) * 100));
+      const until = row.actualDate ? row.actualDate.getTime() : lastReport;
+      const logs: { date: Date; percent: number }[] = [];
+      for (let t = row.actualStartDate.getTime() + 6 * DAY; t < until; t += 7 * DAY) logs.push({ date: day(Date.UTC(new Date(t).getUTCFullYear(), new Date(t).getUTCMonth(), new Date(t).getUTCDate())), percent: Math.round(pctAt(t) * 10) / 10 });
+      logs.push({ date: day(Date.UTC(new Date(until).getUTCFullYear(), new Date(until).getUTCMonth(), new Date(until).getUTCDate())), percent: row.actualDate ? 100 : Math.round(pctAt(until) * 10) / 10 });
+      const seen = new Set<number>();
+      await tx.projectMilestoneProgress.createMany({
+        data: logs
+          .filter((l) => l.percent > 0 && !seen.has(l.date.getTime()) && seen.add(l.date.getTime()))
+          .map((l) => ({ milestoneId: m.id, projectId: pid, date: l.date, percent: l.percent, createdBy: actor })),
+      });
+    }
 
     // progress reports: six steps up to today's value, following an S shape like real work
     const steps = [1 / 6, 2 / 6, 3 / 6, 4 / 6, 5 / 6, 1];
@@ -527,8 +617,9 @@ async function createDemoProject(tx: Tx, sc: Scenario, ctx: { today: number; act
         projectId: pid,
         reportDate: day(start + (lastReport - start) * f),
         actualPercent: Math.round(reportedAt(f) * 10) / 10,
+        source: "ACTIVITY",
         summary: i === steps.length - 1 ? `Progres ${sc.actual}%: ${sc.scopes[Math.min(sc.scopes.length - 1, Math.floor((sc.actual / 100) * sc.scopes.length))].toLowerCase()} berjalan.` : `Pekerjaan berjalan sesuai tahapan (${Math.round(sc.actual * f)}%).`,
-        createdBy: i === steps.length - 1 ? `${sc.pic} (PIC)` : actor,
+        createdBy: actor,
       })),
     });
 
@@ -677,6 +768,8 @@ async function createDemoProject(tx: Tx, sc: Scenario, ctx: { today: number; act
           createdAt: day(Math.max(start, today - (20 + i * 9) * DAY)),
         })),
       });
+
+    if (sc.packages) await splitIntoPackages(tx, pid, sc, actor);
 
     // HSE: one record per finished month since the start (work hours from crew size; a few incidents)
     const hse = HSE[sc.no];

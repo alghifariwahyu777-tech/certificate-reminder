@@ -135,7 +135,7 @@ const PHASES: { title: string; when: string; steps: [string[], string][] }[] = [
     title: "2. Pelaksanaan",
     when: "Selama project berjalan",
     steps: [
-      [["PM", "PIC"], "Perbarui progres (boleh harian)"],
+      [["PM"], "Perbarui realisasi kegiatan (boleh harian)"],
       [["PM", "Keuangan"], "Catat biaya dan penyebabnya"],
       [["PM", "QHSE"], "Catat kendala dan risiko"],
       [["QHSE"], "Laporan HSE tiap bulan"],
@@ -152,7 +152,7 @@ const PHASES: { title: string; when: string; steps: [string[], string][] }[] = [
     ],
   },
 ];
-const FLOW_ROLES = ["Semua", "PM", "PIC", "Keuangan", "QHSE", "HC"];
+const FLOW_ROLES = ["Semua", "PM", "Keuangan", "QHSE", "HC"];
 
 export function FlowPlay() {
   const [role, setRole] = useState("Semua");

@@ -108,9 +108,11 @@ export type MonitoringInput = {
   targetEndDate: number;
   actualEndDate: number | null;
   contractValue: number | null;
-  milestones: { weight: number; plannedDate: number | null; actualDate: number | null; status: string }[];
+  /** kegiatan (milestone): plannedStartDate..plannedDate is the planned window, logs the daily realisation */
+  milestones: ActivityInput[];
   plans: { periodDate: number; plannedPercent: number }[];
-  reports: { reportDate: number; actualPercent: number }[];
+  /** source "ACTIVITY" = computed from activity logs (kept for its notes, not used as a number) */
+  reports: { reportDate: number; actualPercent: number; source?: string }[];
   terms: {
     amount: number;
     status: string;
@@ -130,6 +132,17 @@ export type MonitoringInput = {
 
 export type CurvePoint = { t: number; value: number };
 
+export type ActivityInput = {
+  weight: number;
+  plannedStartDate?: number | null;
+  plannedDate: number | null;
+  actualDate: number | null;
+  status: string;
+  sequence?: number;
+  /** realisasi kumulatif kegiatan per tanggal */
+  logs?: { t: number; percent: number }[];
+};
+
 const clamp = (v: number, lo = 0, hi = 100) => Math.min(hi, Math.max(lo, v));
 const round1 = (v: number) => Math.round(v * 10) / 10;
 const fmt1 = (v: number) => round1(v).toLocaleString("id-ID");
@@ -144,7 +157,89 @@ export function dateOnly(ms: number): number {
 }
 
 /** Where the planned curve comes from — shown in the UI so users know. */
-export type PlanSource = "MANUAL" | "MILESTONE" | "STANDARD";
+export type PlanSource = "MANUAL" | "ACTIVITY" | "MILESTONE" | "STANDARD";
+
+// ---------------------------------------------------------------------------
+// Kegiatan (activities)
+// ---------------------------------------------------------------------------
+
+/**
+ * Share of the project each activity carries (sums to 1). Uses the weights
+ * entered; when none were entered every activity counts equally.
+ */
+export function activityShares(list: Pick<ActivityInput, "weight">[]): number[] {
+  if (!list.length) return [];
+  const w = list.map((m) => Math.max(0, m.weight || 0));
+  const total = w.reduce((a, b) => a + b, 0);
+  return total > 0 ? w.map((x) => x / total) : list.map(() => 1 / list.length);
+}
+
+export type ActivityWindow = { start: number; end: number };
+
+/**
+ * Planned window of every activity. Start falls back to the previous
+ * activity's end (in sequence order), then the project start; end falls back
+ * to the project target. Returns null when no activity has a planned date,
+ * so the plan falls back to a standard curve.
+ */
+export function activityWindows(input: Pick<MonitoringInput, "milestones" | "startDate" | "createdAt" | "targetEndDate">): ActivityWindow[] | null {
+  const ms = input.milestones;
+  if (!ms.some((m) => m.plannedDate !== null || (m.plannedStartDate ?? null) !== null)) return null;
+  const pStart = projectStart(input);
+  const pEnd = Math.max(pStart, dateOnly(input.targetEndDate));
+  const order = ms.map((m, i) => ({ m, i })).sort((a, b) => (a.m.sequence ?? a.i) - (b.m.sequence ?? b.i) || a.i - b.i);
+  const out: ActivityWindow[] = new Array(ms.length);
+  let prevEnd: number | null = null;
+  for (const { m, i } of order) {
+    let start = m.plannedStartDate != null ? dateOnly(m.plannedStartDate) : prevEnd !== null ? prevEnd + DAY_MS : pStart;
+    let end = m.plannedDate != null ? dateOnly(m.plannedDate) : pEnd;
+    if (end < start) [start, end] = m.plannedStartDate != null ? [start, start] : [end, end];
+    out[i] = { start, end };
+    prevEnd = Math.max(prevEnd ?? end, end);
+  }
+  return out;
+}
+
+/** Number of calendar days in a window, both ends included. */
+export const windowDays = (w: ActivityWindow) => Math.round((w.end - w.start) / DAY_MS) + 1;
+
+/**
+ * Planned % of one activity at time t: spread evenly over its days, so a
+ * 20-day activity plans 5% a day and reaches 100% on its last day.
+ */
+export function activityPlanAt(w: ActivityWindow, t: number): number {
+  if (t < w.start) return 0;
+  const days = windowDays(w);
+  return clamp((((t - w.start) / DAY_MS + 1) / days) * 100);
+}
+
+/** Realised % of one activity at time t: the latest log on or before t; 100 once it is marked done. */
+export function activityActualAt(m: ActivityInput, t: number): number {
+  let v = 0;
+  let at = -Infinity;
+  for (const l of m.logs ?? []) {
+    const d = dateOnly(l.t);
+    if (d <= t && d >= at) {
+      at = d;
+      v = l.percent;
+    }
+  }
+  if (m.status === "DONE" && m.actualDate !== null && dateOnly(m.actualDate) <= t) v = 100;
+  return clamp(v);
+}
+
+/** Per-activity plan and realisation on one date (date-only), for the Gantt and the daily table. */
+export function activityStatusOn(input: MonitoringInput, t: number): { plan: number; actual: number; share: number; window: ActivityWindow | null }[] {
+  const wins = activityWindows(input);
+  const shares = activityShares(input.milestones);
+  const day = dateOnly(t);
+  return input.milestones.map((m, i) => ({
+    plan: wins ? round1(activityPlanAt(wins[i], day)) : 0,
+    actual: round1(activityActualAt(m, day)),
+    share: shares[i],
+    window: wins ? wins[i] : null,
+  }));
+}
 
 /**
  * Planned S-curve control points, cumulative %, sorted by date.
@@ -160,6 +255,28 @@ export function plannedPoints(input: MonitoringInput): { source: PlanSource; poi
       .map((p) => ({ t: p.periodDate, value: clamp(p.plannedPercent) }));
     if (pts[0].t > start && pts[0].value > 0) pts.unshift({ t: start, value: 0 });
     return { source: "MANUAL", points: pts };
+  }
+
+  const wins = activityWindows(input);
+  if (wins) {
+    const shares = activityShares(input.milestones);
+    const first = Math.min(start, ...wins.map((w) => w.start));
+    const last = Math.max(...wins.map((w) => w.end));
+    const span = Math.round((last - first) / DAY_MS);
+    const step = Math.max(1, Math.ceil(span / 400)) * DAY_MS;
+    const times = new Set<number>([first, last]);
+    for (let t = first; t <= last; t += step) times.add(t);
+    for (const w of wins) {
+      times.add(w.start - DAY_MS);
+      times.add(w.start);
+      times.add(w.end);
+    }
+    const pts = [...times]
+      .filter((t) => t >= first - DAY_MS)
+      .sort((a, b) => a - b)
+      .map((t) => ({ t, value: round1(wins.reduce((sum, w, i) => sum + activityPlanAt(w, t) * shares[i], 0)) }));
+    if (pts[0].t > start && pts[0].value > 0) pts.unshift({ t: start, value: 0 });
+    return { source: "ACTIVITY", points: pts };
   }
 
   const dated = input.milestones.filter((m) => m.plannedDate !== null && m.weight > 0);
@@ -265,20 +382,23 @@ export function interpolateLinear(points: CurvePoint[], t: number): number {
  * later report) supersedes it. On the same day, the manual report wins.
  */
 export function actualEvents(input: MonitoringInput): CurvePoint[] {
-  const totalWeight = input.milestones.reduce((s, m) => s + Math.max(0, m.weight), 0);
   const events: (CurvePoint & { manual: boolean })[] = [];
-
-  if (totalWeight > 0) {
-    const done = input.milestones
-      .filter((m) => m.status === "DONE" && m.actualDate !== null)
-      .sort((a, b) => (a.actualDate as number) - (b.actualDate as number));
-    let cum = 0;
-    for (const m of done) {
-      cum += Math.max(0, m.weight);
-      events.push({ t: m.actualDate as number, value: clamp((cum / totalWeight) * 100), manual: false });
+  const ms = input.milestones;
+  const shares = activityShares(ms);
+  const anyWeight = ms.some((m) => m.weight > 0);
+  const anyLogs = ms.some((m) => (m.logs?.length ?? 0) > 0);
+  // activities count when weighted, dated or logged; without weights every activity counts equally
+  if (ms.length && (anyWeight || anyLogs || activityWindows(input) !== null)) {
+    const times = new Set<number>();
+    for (const m of ms) {
+      for (const l of m.logs ?? []) times.add(l.t);
+      if (m.status === "DONE" && m.actualDate !== null) times.add(m.actualDate);
+    }
+    for (const t of [...times].sort((x, y) => x - y)) {
+      events.push({ t, value: round1(ms.reduce((sum, m, i) => sum + activityActualAt(m, t) * shares[i], 0)), manual: false });
     }
   }
-  for (const r of input.reports) events.push({ t: r.reportDate, value: clamp(r.actualPercent), manual: true });
+  for (const r of input.reports) if (r.source !== "ACTIVITY") events.push({ t: r.reportDate, value: clamp(r.actualPercent), manual: true });
 
   events.sort((a, b) => a.t - b.t || Number(a.manual) - Number(b.manual));
   return events.map(({ t, value }) => ({ t, value }));
@@ -586,6 +706,15 @@ export function formatRupiah(value: number | null | undefined, compact = false):
     if (abs >= 1e6) return `Rp ${(value / 1e6).toLocaleString("id-ID", { maximumFractionDigits: 1 })} jt`;
   }
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
+}
+
+/** Short axis label for rupiah amounts: Rp5 M, Rp750 jt, Rp0. */
+export function rupiahAxis(v: number): string {
+  const a = Math.abs(v);
+  const sign = v < 0 ? "−" : "";
+  if (a >= 1e9) return `${sign}Rp${(a / 1e9).toLocaleString("id-ID", { maximumFractionDigits: a >= 1e10 ? 0 : 1 })} M`;
+  if (a >= 1e6) return `${sign}Rp${(a / 1e6).toLocaleString("id-ID", { maximumFractionDigits: 0 })} jt`;
+  return a === 0 ? "0" : `${sign}Rp${a.toLocaleString("id-ID")}`;
 }
 
 export function formatPercent(value: number | null | undefined, digits = 1): string {

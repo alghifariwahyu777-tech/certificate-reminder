@@ -11,7 +11,7 @@ import type { ImportPreview } from "@/lib/project-cost-import";
 import { FormError, fmtDate } from "./shared";
 
 /** Upload → preview (what will be added / skipped / is wrong) → confirm. */
-export function CostImportDialog({ projectId, label = "Impor Excel biaya dan RAB", size = "sm" }: { projectId?: string; label?: string; size?: "sm" | "md" }) {
+export function CostImportDialog({ projectId, packageId, label = "Impor Excel biaya dan RAB", size = "sm" }: { projectId?: string; packageId?: string | null; label?: string; size?: "sm" | "md" }) {
   const router = useRouter();
   const { showToast } = useToast();
   const [open, setOpen] = useState(false);
@@ -33,6 +33,7 @@ export function CostImportDialog({ projectId, label = "Impor Excel biaya dan RAB
       const fd = new FormData();
       fd.append("file", f);
       if (projectId) fd.append("projectId", projectId);
+      if (projectId && packageId) fd.append("packageId", packageId);
       if (commit) fd.append("commit", "1");
       const res = await fetch("/api/projects/cost-import", { method: "POST", body: fd });
       const body = await res.json().catch(() => ({}));

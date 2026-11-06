@@ -54,9 +54,14 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       pic: parsed.data.pic,
       picEmail: parsed.data.picEmail || null,
       ccEmail: parsed.data.ccEmail || null,
-      contractValue: parsed.data.contractValue || null,
-      startDate: parsed.data.startDate ? new Date(parsed.data.startDate) : null,
-      targetEndDate: new Date(parsed.data.targetEndDate),
+      // with paket pekerjaan these three are the totals of the packages, kept by the package routes
+      ...(project.usePackages
+        ? {}
+        : {
+            contractValue: parsed.data.contractValue || null,
+            startDate: parsed.data.startDate ? new Date(parsed.data.startDate) : null,
+            targetEndDate: new Date(parsed.data.targetEndDate),
+          }),
       actualEndDate: parsed.data.actualEndDate ? new Date(parsed.data.actualEndDate) : null,
       status: parsed.data.status,
       description: parsed.data.description || null,
@@ -106,5 +111,35 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     description: `Memindahkan project "${project.projectName}" (${project.projectNumber}) ke Trash.`,
   });
 
+  return NextResponse.json({ success: true });
+}
+
+/** Attach, replace or remove only the contract document (from the "Dokumen kontrak" card). */
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
+  const auth = await requireArea("project");
+  if ("error" in auth) return auth.error;
+  const project = await prisma.project.findFirst({ where: { id: params.id, deletedAt: null } });
+  if (!project) return NextResponse.json({ message: "Project tidak ditemukan." }, { status: 404 });
+  const denied = projectDenied(auth.session, project, "project");
+  if (denied) return denied;
+
+  const body = (await request.json().catch(() => null)) as { fileUrl?: string | null; driveFileId?: string | null; fileMimeType?: string | null } | null;
+  if (!body || !("fileUrl" in body)) return NextResponse.json({ message: "Data tidak valid." }, { status: 400 });
+  const fileUrl = body.fileUrl || null;
+  if (fileUrl && !fileUrl.startsWith("/api/files/")) return NextResponse.json({ message: "Dokumen tidak valid." }, { status: 400 });
+
+  await prisma.project.update({
+    where: { id: params.id },
+    data: { fileUrl, driveFileId: fileUrl ? body.driveFileId || null : null, fileMimeType: fileUrl ? body.fileMimeType || null : null },
+  });
+  await logAudit({
+    userId: auth.session.userId,
+    userName: auth.session.name,
+    action: "UPDATE",
+    entityType: "Project",
+    entityId: project.id,
+    description: `${fileUrl ? (project.fileUrl ? "Mengganti" : "Mengunggah") : "Menghapus"} dokumen kontrak project "${project.projectName}" (${project.projectNumber}).`,
+  });
   return NextResponse.json({ success: true });
 }

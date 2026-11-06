@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getJakartaToday } from "@/lib/status";
 import { isoWeekKey } from "@/lib/week";
 import { analyzeMargin, type MarginAnalysis } from "@/lib/project-margin";
+import { scopeToPackage } from "@/lib/project-packages";
 import {
   DAY_MS,
   actualAt,
@@ -41,7 +42,7 @@ function parseBudgetJson(v: string | null): Record<string, number> {
 /** Everything computeMonitoring() needs, in one include. */
 export const MONITORING_INCLUDE = {
   category: true,
-  milestones: { orderBy: [{ sequence: "asc" }, { createdAt: "asc" }] },
+  milestones: { orderBy: [{ sequence: "asc" }, { createdAt: "asc" }], include: { progressLogs: { orderBy: { date: "asc" }, select: { date: true, percent: true } } } },
   progressPlans: { orderBy: { periodDate: "asc" } },
   progressReports: { orderBy: { reportDate: "desc" } },
   terms: { orderBy: [{ sequence: "asc" }, { createdAt: "asc" }] },
@@ -53,6 +54,7 @@ export const MONITORING_INCLUDE = {
   closeout: true,
   rabRevisions: { orderBy: { version: "desc" }, select: { id: true, version: true, reason: true, fileName: true, contractValue: true, totalCost: true, operatingProfit: true, marginPct: true, createdBy: true, createdAt: true } },
   assignments: { include: { employee: { select: { id: true, name: true, employeeId: true, position: true, isActive: true } } }, orderBy: { createdAt: "asc" } },
+  packages: { orderBy: [{ sequence: "asc" }, { createdAt: "asc" }] },
 } satisfies Prisma.ProjectInclude;
 
 export type ProjectWithMonitoring = Prisma.ProjectGetPayload<{ include: typeof MONITORING_INCLUDE }>;
@@ -79,12 +81,15 @@ export function toMonitoringInput(p: ProjectWithMonitoring): MonitoringInput {
     contractValue: numOrNull(p.contractValue),
     milestones: p.milestones.map((m) => ({
       weight: num(m.weight),
+      sequence: m.sequence,
+      plannedStartDate: ms(m.plannedStartDate),
       plannedDate: ms(m.plannedDate),
       actualDate: ms(m.actualDate),
       status: m.status,
+      logs: m.progressLogs.map((l) => ({ t: l.date.getTime(), percent: num(l.percent) })),
     })),
     plans: p.progressPlans.map((x) => ({ periodDate: x.periodDate.getTime(), plannedPercent: num(x.plannedPercent) })),
-    reports: p.progressReports.map((r) => ({ reportDate: r.reportDate.getTime(), actualPercent: num(r.actualPercent) })),
+    reports: p.progressReports.map((r) => ({ reportDate: r.reportDate.getTime(), actualPercent: num(r.actualPercent), source: r.source })),
     terms: p.terms.map((t) => ({
       amount: num(t.amount),
       status: t.status,
@@ -108,8 +113,8 @@ export function toMonitoringInput(p: ProjectWithMonitoring): MonitoringInput {
   };
 }
 
-/** Detail-page loader: monitoring data plus addenda (history shown on the contract tab). */
-export async function getProjectWithMonitoring(id: string) {
+/** Detail-page loader: monitoring data plus addenda (history shown on the contract tab). With packageId, the monitoring covers that package only. */
+export async function getProjectWithMonitoring(id: string, opts: { packageId?: string | null } = {}) {
   const [project, thresholds] = await Promise.all([
     prisma.project.findFirst({
       where: { id, deletedAt: null },
@@ -119,9 +124,40 @@ export async function getProjectWithMonitoring(id: string) {
   ]);
   if (!project) return null;
   const today = getJakartaToday().getTime();
-  const input = toMonitoringInput(project);
+  const packages = project.usePackages ? project.packages : [];
+  const activePackage = opts.packageId ? (packages.find((p) => p.id === opts.packageId) ?? null) : null;
+  const scoped = activePackage ? scopeToPackage(project, activePackage) : project;
+  const input = toMonitoringInput(scoped);
   const summary = computeMonitoring(input, today, thresholds);
-  return { project, input, today, thresholds, summary, margin: analyzeMargin(input, summary, today, thresholds.marginDropAlert) };
+  // every package monitored on its own, for the overview table
+  const packageRows = packages.map((pkg) => {
+    const sp = scopeToPackage(project, pkg);
+    const i = toMonitoringInput(sp);
+    const s = computeMonitoring(i, today, thresholds);
+    return { pkg, summary: s, margin: analyzeMargin(i, s, today, thresholds.marginDropAlert), counts: { activities: sp.milestones.length, terms: sp.terms.length, costs: sp.expenses.length, budget: sp.budgetItems.length } };
+  });
+  const unassigned = packages.length
+    ? {
+        activities: project.milestones.filter((m) => !m.packageId).length,
+        terms: project.terms.filter((m) => !m.packageId).length,
+        costs: project.expenses.filter((m) => !m.packageId).length,
+        budget: project.budgetItems.filter((m) => !m.packageId).length,
+      }
+    : null;
+  return {
+    /** the whole project (main contract): header, team, documents */
+    project,
+    /** the project narrowed to the chosen package, or the whole project: every monitoring figure */
+    scoped,
+    activePackage,
+    packageRows,
+    unassigned,
+    input,
+    today,
+    thresholds,
+    summary,
+    margin: analyzeMargin(input, summary, today, thresholds.marginDropAlert),
+  };
 }
 
 export type PortfolioRow = {

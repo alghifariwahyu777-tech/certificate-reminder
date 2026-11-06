@@ -7,7 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
-import { formatPercent, interpolate, plannedPoints, suggestPlanRows, type PlanShape } from "@/lib/project-monitoring-shared";
+import { actualAt, actualEvents, formatPercent, interpolate, plannedPoints, suggestPlanRows, type PlanShape } from "@/lib/project-monitoring-shared";
+import { Notice } from "@/components/ui/Notice";
+import { ActivityProgressModal, dayMs } from "./ActivityProgress";
 import { DeleteButton, EmptyState, FileLink, FileUploadField, FormError, fmtDate, todayInput, useMonitoringApi, EMPTY_FILE, useOpenFromHash } from "./shared";
 import type { ProgressReportDTO, ProjectMonitoringDTO } from "./types";
 
@@ -26,7 +28,7 @@ export function ProgressPanel({ data }: { data: ProjectMonitoringDTO }) {
 // Laporan progres (realisasi)
 // ---------------------------------------------------------------------------
 
-type ReportForm = Omit<ProgressReportDTO, "id" | "actualPercent" | "createdBy"> & { actualPercent: string };
+type ReportForm = Omit<ProgressReportDTO, "id" | "actualPercent" | "createdBy" | "source"> & { actualPercent: string };
 
 function ReportsCard({ data }: { data: ProjectMonitoringDTO }) {
   const { send, busy } = useMonitoringApi();
@@ -36,8 +38,14 @@ function ReportsCard({ data }: { data: ProjectMonitoringDTO }) {
   const [error, setError] = useState<string | null>(null);
   const base = `/api/projects/${data.projectId}/progress-reports`;
   const plan = plannedPoints(data.input).points;
+  const events = actualEvents(data.input);
+  // with activities, realisation is entered per activity; the typed project % is only for projects without activities
+  const perActivity = data.milestones.length > 0;
+  const [act, setAct] = useState<{ open: boolean; date?: string; n: number }>({ open: false, n: 0 });
+  const openActivity = (date?: string) => setAct((a) => ({ open: true, date, n: a.n + 1 }));
 
   function openForm(r: ProgressReportDTO | null) {
+    if (perActivity && (!r || r.source === "ACTIVITY")) return openActivity(r?.reportDate.slice(0, 10));
     setEditing(r);
     setForm(
       r
@@ -78,25 +86,32 @@ function ReportsCard({ data }: { data: ProjectMonitoringDTO }) {
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
           <CardTitle className="flex items-center gap-1.5">
-            Laporan progres
-            <InfoTip label="Keterangan laporan progres" guide="progres">Isi progres kumulatif secara berkala. Laporan manual mengoreksi angka dari milestone sampai ada milestone selesai/laporan yang lebih baru.</InfoTip>
+            Riwayat realisasi
+            <InfoTip label="Keterangan riwayat realisasi" guide="progres">
+              {perActivity
+                ? "Klik Perbarui realisasi, lalu isi persentase terbaru setiap kegiatan. Progres project dihitung otomatis dari persentase kegiatan dikali bobotnya. Boleh diisi setiap hari."
+                : "Project ini belum punya kegiatan, jadi progres diisi langsung sebagai persentase project. Tambahkan kegiatan di tab Gantt dan milestone agar progres dihitung per kegiatan."}
+            </InfoTip>
           </CardTitle>
+          <p className="mt-0.5 text-[12.5px] text-slate-500">{perActivity ? "Satu baris per tanggal pengisian. Angka dihitung dari realisasi setiap kegiatan." : "Progres diisi langsung sebagai persentase project."}</p>
         </div>
         {data.canManage && (
           <Button size="sm" onClick={() => openForm(null)}>
             <Plus className="h-4 w-4" />
-            Perbarui progres
+            {perActivity ? "Perbarui realisasi" : "Perbarui progres"}
           </Button>
         )}
       </CardHeader>
       <CardContent className="p-0">
         {data.reports.length === 0 ? (
-          <EmptyState icon={ClipboardList} text="Belum ada laporan progres. Progres dapat diisi admin di sini atau oleh PIC melalui tautan email." action={data.canManage ? { label: "Perbarui progres", onClick: () => openForm(null) } : undefined} />
+          <EmptyState icon={ClipboardList} text={perActivity ? "Belum ada realisasi. Isi persentase setiap kegiatan untuk membentuk kurva S realisasi." : "Belum ada laporan progres."} action={data.canManage ? { label: perActivity ? "Perbarui realisasi" : "Perbarui progres", onClick: () => openForm(null) } : undefined} />
         ) : (
           <div className="max-h-[520px] divide-y divide-slate-100 overflow-y-auto dark:divide-slate-800">
             {data.reports.map((r) => {
               const planned = interpolate(plan, Date.parse(r.reportDate));
-              const dev = r.actualPercent - planned;
+              // a per-activity entry always shows today's recalculation, so later corrections are reflected
+              const value = r.source === "ACTIVITY" ? actualAt(events, dayMs(r.reportDate.slice(0, 10))) : r.actualPercent;
+              const dev = value - planned;
               return (
                 <div key={r.id} className="px-5 py-3 flex items-start gap-4">
                   <div className="w-28 shrink-0">
@@ -104,7 +119,10 @@ function ReportsCard({ data }: { data: ProjectMonitoringDTO }) {
                     <p className="text-xs text-slate-400">{r.createdBy || ""}</p>
                   </div>
                   <div className="w-36 shrink-0">
-                    <p className="font-display font-semibold tabular-nums">{formatPercent(r.actualPercent)}</p>
+                    <p className="font-display font-semibold tabular-nums">
+                      {formatPercent(value)}
+                      {r.source !== "ACTIVITY" && perActivity && <span className="ml-1.5 rounded bg-slate-100 px-1 py-px text-[10.5px] font-medium text-slate-500 dark:bg-slate-800">angka manual</span>}
+                    </p>
                     <p className={`text-xs tabular-nums ${dev < 0 ? "text-signal-expired" : "text-signal-active"}`}>
                       rencana {formatPercent(planned)} ({dev > 0 ? "+" : ""}
                       {dev.toLocaleString("id-ID", { maximumFractionDigits: 1 })})
@@ -138,6 +156,8 @@ function ReportsCard({ data }: { data: ProjectMonitoringDTO }) {
           </div>
         )}
       </CardContent>
+
+      {perActivity && <ActivityProgressModal key={act.n} data={data} open={act.open} initialDate={act.date} onClose={() => setAct((a) => ({ ...a, open: false }))} />}
 
       <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Ubah laporan progres" : "Perbarui progres"} maxWidth="max-w-lg">
         {form && (
@@ -231,32 +251,40 @@ function PlanCard({ data }: { data: ProjectMonitoringDTO }) {
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
           <CardTitle className="flex items-center gap-1.5">
-            Rencana progres
-            <InfoTip label="Keterangan rencana progres" guide="progres">
-              Garis rencana di kurva S diambil dari sumber pertama yang tersedia: (1) jadwal rencana di tabel ini, (2) tanggal rencana dan bobot milestone, (3) kurva S standar
-              dari tanggal mulai sampai target selesai. Bila punya jadwal resmi (time schedule di proposal atau kontrak), isi persentase kumulatifnya di sini.
+            Kurva S resmi kontrak (opsional)
+            <InfoTip label="Keterangan kurva S resmi" guide="progres">
+              Garis rencana kurva S dihitung otomatis dari jadwal kegiatan: setiap kegiatan direncanakan merata dari tanggal mulai sampai selesai, lalu dijumlah sesuai bobotnya.
+              Isi tabel ini hanya bila kontrak memiliki kurva S resmi yang harus diikuti. Bila diisi, tabel ini yang dipakai sebagai garis rencana.
             </InfoTip>
           </CardTitle>
           <p className="mt-0.5 text-[12.5px] text-slate-500">
             {source === "MANUAL"
-              ? `Garis rencana memakai ${data.plans.length} periode jadwal rencana di bawah.`
-              : source === "MILESTONE"
-                ? "Garis rencana saat ini dihitung dari tanggal dan bobot milestone."
-                : "Garis rencana saat ini memakai kurva S standar karena jadwal rencana belum diisi."}
+              ? `Garis rencana memakai ${data.plans.length} titik kurva S resmi di bawah, bukan jadwal kegiatan.`
+              : source === "ACTIVITY"
+                ? "Tidak perlu diisi. Garis rencana sudah dihitung dari jadwal kegiatan."
+                : "Garis rencana memakai kurva S standar karena kegiatan belum punya tanggal rencana. Isi tanggal mulai dan selesai pada setiap kegiatan."}
           </p>
         </div>
         {data.canManage && (
           <Button size="sm" variant="outline" onClick={openEditor}>
             <Pencil className="h-4 w-4" />
-            Atur rencana
+            {data.plans.length ? "Ubah" : "Isi kurva S resmi"}
           </Button>
         )}
       </CardHeader>
-      <CardContent className="p-0">
-        {data.plans.length === 0 ? (
-          <EmptyState icon={LineChart} text="Jadwal rencana belum diisi. Klik Atur rencana untuk membuatnya, bisa diisi otomatis lalu disesuaikan." />
-        ) : (
-          <div className="overflow-x-auto max-h-80">
+      {data.plans.length > 0 && (
+        <CardContent className="p-0">
+          <div className="max-h-80 overflow-x-auto border-t border-line dark:border-slate-800">
+            {data.canManage && data.milestones.length > 0 && (
+              <div className="px-5 pt-3">
+                <Notice tone="info">
+                  Kurva S resmi sedang dipakai sebagai garis rencana.{" "}
+                  <button type="button" onClick={() => save(true)} className="font-semibold underline">
+                    Pakai jadwal kegiatan saja
+                  </button>
+                </Notice>
+              </div>
+            )}
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-white dark:bg-slate-900">
                 <tr className="th-row">
@@ -274,10 +302,10 @@ function PlanCard({ data }: { data: ProjectMonitoringDTO }) {
               </tbody>
             </table>
           </div>
-        )}
-      </CardContent>
+        </CardContent>
+      )}
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title="Atur rencana progres" maxWidth="max-w-lg">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title="Kurva S resmi kontrak" maxWidth="max-w-lg">
         <div className="space-y-4">
           <p className="text-sm text-slate-600 dark:text-slate-300">
             Isi persentase <strong>kumulatif</strong> yang direncanakan tercapai pada tiap tanggal, misalnya 10% di akhir bulan pertama, 35% di akhir bulan kedua, sampai 100% di
@@ -288,7 +316,7 @@ function PlanCard({ data }: { data: ProjectMonitoringDTO }) {
               <Label htmlFor="plan-shape">Bentuk</Label>
               <select id="plan-shape" value={shape} onChange={(e) => setShape(e.target.value as PlanShape)} className="mt-1 h-9 w-full rounded-md border border-line bg-white px-2 text-sm dark:border-slate-700 dark:bg-slate-900">
                 <option value="S">Kurva S standar</option>
-                {hasMilestonePlan && <option value="MILESTONE">Ikuti milestone</option>}
+                {hasMilestonePlan && <option value="MILESTONE">Ikuti jadwal kegiatan</option>}
                 <option value="LINEAR">Garis lurus</option>
               </select>
             </div>
@@ -340,7 +368,7 @@ function PlanCard({ data }: { data: ProjectMonitoringDTO }) {
           <div className="flex justify-between gap-2">
             {data.plans.length > 0 ? (
               <Button variant="danger" onClick={() => save(true)} disabled={busy}>
-                Hapus rencana manual
+                Hapus, pakai jadwal kegiatan
               </Button>
             ) : (
               <span />

@@ -44,7 +44,7 @@ export async function getTasks(): Promise<Task[]> {
   const in30 = new Date(t + 30 * DAY_MS);
   const notDeleted = { deletedAt: null } as const;
 
-  const [portfolio, mapping, persExpired, persSoon, eqExpired, eqSoon, certExpired, certSoon, appsWaiting] = await Promise.all([
+  const [portfolio, mapping, persExpired, persSoon, eqExpired, eqSoon, certExpired, certSoon, appsWaiting, latePackages] = await Promise.all([
     getProjectPortfolio(),
     getPersonnelMapping(false),
     prisma.personnelCertification.count({ where: { ...notDeleted, expiryDate: { lt: today } } }),
@@ -54,6 +54,13 @@ export async function getTasks(): Promise<Task[]> {
     prisma.certificate.count({ where: { ...notDeleted, expiryDate: { lt: today } } }),
     prisma.certificate.count({ where: { ...notDeleted, expiryDate: { gte: today, lte: in30 } } }),
     prisma.application.count({ where: { status: { in: ["SUBMITTED", "DOCUMENT_REVIEW"] } } }),
+    // paket pekerjaan still running after its target date
+    prisma.projectPackage.findMany({
+      where: { status: "ONGOING", endDate: { lt: today }, project: { deletedAt: null, status: "ONGOING", usePackages: true } },
+      select: { id: true, sequence: true, name: true, endDate: true, project: { select: { id: true, projectName: true } } },
+      orderBy: { endDate: "asc" },
+      take: 50,
+    }),
   ]);
 
   const tasks: Task[] = buildAttention(portfolio.rows, portfolio.today).map((a, i) => ({
@@ -64,6 +71,19 @@ export async function getTasks(): Promise<Task[]> {
     subject: a.name,
     href: `/projects/${a.id}${a.at ? `#${a.at}` : ""}`,
   }));
+
+  // PM: packages still running after their target date
+  for (const p of latePackages) {
+    const days = Math.max(1, Math.round((t - p.endDate.getTime()) / DAY_MS));
+    tasks.push({
+      key: `pkg-${p.id}`,
+      owner: "PM",
+      tone: "bad",
+      title: `Paket ${p.sequence} (${p.name}) lewat target selesai ${days} hari. Selesaikan, tandai selesai, atau perbarui tanggalnya.`,
+      subject: p.project.projectName,
+      href: `/projects/${p.project.id}?paket=${p.id}#jadwal/milestone`,
+    });
+  }
 
   // Human Capital: certifications of people who are on a running project
   for (const p of mapping) {

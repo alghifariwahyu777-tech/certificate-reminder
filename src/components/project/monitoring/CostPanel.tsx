@@ -9,6 +9,7 @@ import { Input, Label, Select } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { PROJECT_COST_CATEGORIES, formatPercent, formatRupiah } from "@/lib/project-monitoring-shared";
 import { DeleteButton, EmptyState, FileLink, FileUploadField, FormError, fmtDate, todayInput, useMonitoringApi, EMPTY_FILE } from "./shared";
+import { PackageField, PackageTag, defaultPackageId } from "./Packages";
 import type { BudgetItemDTO, ExpenseDTO, ProjectMonitoringDTO } from "./types";
 import { CostImportDialog } from "./CostImportDialog";
 import { RabCard } from "./RabPanel";
@@ -41,13 +42,17 @@ function BudgetCard({ data }: { data: ProjectMonitoringDTO }) {
   const { send, busy } = useMonitoringApi();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<BudgetItemDTO | null>(null);
-  const [form, setForm] = useState({ category: PROJECT_COST_CATEGORIES[0] as string, description: "", amount: "" });
+  const [form, setForm] = useState<{ category: string; description: string; amount: string; packageId: string | null }>({ category: PROJECT_COST_CATEGORIES[0], description: "", amount: "", packageId: null });
   const [error, setError] = useState<string | null>(null);
   const base = `/api/projects/${data.projectId}/budget`;
 
   function openForm(b: BudgetItemDTO | null) {
     setEditing(b);
-    setForm(b ? { category: b.category, description: b.description || "", amount: String(b.amount) } : { category: PROJECT_COST_CATEGORIES[0], description: "", amount: "" });
+    setForm(
+      b
+        ? { category: b.category, description: b.description || "", amount: String(b.amount), packageId: b.packageId }
+        : { category: PROJECT_COST_CATEGORIES[0], description: "", amount: "", packageId: defaultPackageId(data) }
+    );
     setError(null);
     setOpen(true);
   }
@@ -79,7 +84,10 @@ function BudgetCard({ data }: { data: ProjectMonitoringDTO }) {
               {data.budgetItems.map((b) => (
                 <tr key={b.id} className="border-b border-slate-50 dark:border-slate-800/60">
                   <td className="px-5 py-2.5">
-                    <p className="text-ink dark:text-slate-100">{b.category}</p>
+                    <p className="text-ink dark:text-slate-100">
+                      {b.category}
+                      <PackageTag data={data} id={b.packageId} />
+                    </p>
                     {b.description && <p className="text-xs text-slate-500">{b.description}</p>}
                   </td>
                   <td className="px-5 py-2.5 text-right tabular-nums">{formatRupiah(b.amount)}</td>
@@ -106,6 +114,7 @@ function BudgetCard({ data }: { data: ProjectMonitoringDTO }) {
             <Label htmlFor="bg-cat">Kategori biaya</Label>
             <Input id="bg-cat" list="cost-categories" value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} placeholder="Pilih atau ketik kategori baru" />
           </div>
+          <PackageField data={data} value={form.packageId} onChange={(v) => setForm((f) => ({ ...f, packageId: v }))} id="bg-pkg" />
           <div>
             <Label htmlFor="bg-desc">Keterangan</Label>
             <Input id="bg-desc" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
@@ -139,6 +148,7 @@ type ExpenseForm = {
   fileUrl: string | null;
   driveFileId: string | null;
   fileMimeType: string | null;
+  packageId: string | null;
 };
 
 function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
@@ -166,8 +176,9 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
             fileUrl: e.fileUrl,
             driveFileId: e.driveFileId,
             fileMimeType: e.fileMimeType,
+            packageId: e.packageId,
           }
-        : { expenseDate: todayInput(), category: PROJECT_COST_CATEGORIES[0], description: "", amount: "", cause: "NORMAL", referenceNo: "", ...EMPTY_FILE }
+        : { expenseDate: todayInput(), category: PROJECT_COST_CATEGORIES[0], description: "", amount: "", cause: "NORMAL", referenceNo: "", packageId: defaultPackageId(data), ...EMPTY_FILE }
     );
     setError(null);
     setOpen(true);
@@ -196,7 +207,7 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
         </div>
         {data.rights.projectCost && (
           <div className="flex flex-wrap justify-end gap-2">
-            <CostImportDialog projectId={data.projectId} label="Impor Excel" />
+            <CostImportDialog projectId={data.projectId} packageId={data.activePackageId} label="Impor Excel" />
             <Button size="sm" onClick={() => openForm(null)}>
               <Plus className="h-4 w-4" />
               Catat biaya
@@ -226,6 +237,7 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
                     <td className="px-5 py-2.5 whitespace-nowrap">{fmtDate(e.expenseDate)}</td>
                     <td className="px-3 py-2.5">
                       {e.description}
+                      <PackageTag data={data} id={e.packageId} />
                       <div>
                         <FileLink url={e.fileUrl} label="Bukti" />
                       </div>
@@ -278,6 +290,7 @@ function ExpenseCard({ data }: { data: ProjectMonitoringDTO }) {
                 <Input id="ex-amt" type="number" min={0} step="any" value={form.amount} onChange={(e) => set("amount", e.target.value)} />
               </div>
             </div>
+            <PackageField data={data} value={form.packageId} onChange={(v) => set("packageId", v)} id="ex-pkg" />
             <div>
               <Label htmlFor="ex-cat">Kategori biaya</Label>
               <Input id="ex-cat" list="cost-categories" value={form.category} onChange={(e) => set("category", e.target.value)} placeholder="Pilih atau ketik kategori baru" />

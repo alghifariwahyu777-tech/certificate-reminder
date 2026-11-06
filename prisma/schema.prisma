@@ -19,7 +19,7 @@ model User {
   name             String
   email            String    @unique
   password         String
-  role             String    @default("ADMIN") // "ADMIN" | "VIEWER"
+  role             String    @default("ADMIN") // lihat src/lib/permissions.ts
   isActive         Boolean   @default(true)
   resetToken       String?   @unique
   resetTokenExpiry DateTime?
@@ -516,23 +516,23 @@ model PersonnelCertification {
 /// values that don't belong to any other model — same singleton pattern as
 /// EmailTemplate.
 model AppSettings {
-  id                        String   @id @default("default")
+  id                        String    @id @default("default")
   adminWhatsappNumber       String? // full international format, digits only, e.g. "6281234567890" — used to build wa.me links
   // --- Project Monitoring thresholds (realisasi) ---
-  projectDeviationWarning   Float    @default(5) // deviasi (rencana − realisasi, poin %) ≥ ini → "Waspada"
-  projectDeviationCritical  Float    @default(10) // deviasi ≥ ini → "Kritis" (memicu reminder)
-  projectProgressStaleDays  Int      @default(14) // progres tidak diperbarui selama ini → reminder
-  projectInvoiceOverdueDays Int      @default(30) // invoice belum dibayar lewat jatuh tempo + ini → reminder (dipakai jika jatuh tempo kosong: dihitung dari tanggal invoice)
+  projectDeviationWarning   Float     @default(5) // deviasi (rencana − realisasi, poin %) ≥ ini → "Waspada"
+  projectDeviationCritical  Float     @default(10) // deviasi ≥ ini → "Kritis" (memicu reminder)
+  projectProgressStaleDays  Int       @default(14) // progres tidak diperbarui selama ini → reminder
+  projectInvoiceOverdueDays Int       @default(30) // invoice belum dibayar lewat jatuh tempo + ini → reminder (dipakai jika jatuh tempo kosong: dihitung dari tanggal invoice)
   // --- Weekly management report (laporan mingguan) ---
-  weeklyReportEnabled       Boolean  @default(false)
+  weeklyReportEnabled       Boolean   @default(false)
   weeklyReportRecipients    String? // comma/newline-separated emails
-  weeklyReportDay           Int      @default(1) // ISO weekday in WIB: 1 = Senin … 7 = Minggu
+  weeklyReportDay           Int       @default(1) // ISO weekday in WIB: 1 = Senin … 7 = Minggu
   // --- Weekly "please update progress" email to PICs ---
-  picUpdateRequestEnabled   Boolean  @default(true)
-  picUpdateRequestDay       Int      @default(1)
-  projectMarginDropAlert    Float    @default(10) // margin aktual/prakiraan turun ≥ ini (poin %) dari rencana → masuk "perlu keputusan"
+  picUpdateRequestEnabled   Boolean   @default(true)
+  picUpdateRequestDay       Int       @default(1)
+  projectMarginDropAlert    Float     @default(10) // margin aktual/prakiraan turun ≥ ini (poin %) dari rencana → masuk "perlu keputusan"
   demoDataSeededAt          DateTime? // data contoh (project DEMO-…) sudah pernah diisi otomatis — tidak diisi ulang setelah dihapus
-  updatedAt                 DateTime @updatedAt
+  updatedAt                 DateTime  @updatedAt
 }
 
 /// Portfolio grouping for Project Monitoring — e.g. "PIK", "Serco", etc.
@@ -568,6 +568,7 @@ model Project {
   targetEndDate         DateTime // reminder milestones are computed from this date
   actualEndDate         DateTime? // set when the project is actually finished — distinct from the target
   status                String                  @default("ONGOING") // "ONGOING" | "COMPLETED" | "CANCELLED" — reminders only fire while ONGOING
+  usePackages           Boolean                 @default(false) // true = kontrak induk dengan beberapa paket pekerjaan; nilai dan periode dihitung dari paket
   // --- Baseline (triple constraint): the original plan, locked once so later changes are measured against it ---
   baselineLockedAt      DateTime?
   baselineLockedBy      String?
@@ -600,11 +601,45 @@ model Project {
   hseReports            ProjectHseReport[]
   closeout              ProjectCloseout?
   assignments           ProjectAssignment[]
+  packages              ProjectPackage[]
 
   @@index([categoryId])
   @@index([targetEndDate])
   @@index([status])
   @@index([deletedAt])
+}
+
+/// Paket pekerjaan: one derived contract (SPK, PO, surat pesanan, work order)
+/// under the project's main contract. Activities, terms, costs and RAB lines
+/// can belong to one package, so every package is monitored on its own while
+/// the project shows the total.
+model ProjectPackage {
+  id            String              @id @default(cuid())
+  projectId     String
+  project       Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sequence      Int                 @default(0)
+  name          String // uraian singkat, mis. "Survey Blok A"
+  docType       String              @default("SPK") // "SPK" | "PO" | "SP" | "WO" | "OTHER"
+  docNumber     String? // nomor dokumen
+  issueDate     DateTime? // tanggal terbit dokumen
+  value         Decimal? // nilai paket (Rupiah)
+  startDate     DateTime?
+  endDate       DateTime // target selesai paket
+  actualEndDate DateTime?
+  status        String              @default("ONGOING") // "ONGOING" | "COMPLETED" | "CANCELLED"
+  notes         String?
+  fileUrl       String?
+  driveFileId   String?
+  fileMimeType  String?
+  createdBy     String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  milestones    ProjectMilestone[]
+  terms         ProjectTerm[]
+  budgetItems   ProjectBudgetItem[]
+  expenses      ProjectExpense[]
+
+  @@index([projectId])
 }
 
 /// One row per contract addendum/amendment — history is kept, and the
@@ -710,25 +745,46 @@ model Supervisor {
 /// into the default "actual progress" figure; planned dates + weights form
 /// the default planned S-curve when no explicit plan has been entered.
 model ProjectMilestone {
-  id           String    @id @default(cuid())
-  projectId    String
-  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  sequence     Int       @default(0)
-  name         String
-  description  String?
-  weight       Decimal   @default(0) // bobot % terhadap total pekerjaan (total idealnya 100)
+  id               String                     @id @default(cuid())
+  projectId        String
+  project          Project                    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  packageId        String?
+  package          ProjectPackage?            @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  sequence         Int                        @default(0)
+  name             String
+  description      String?
+  weight           Decimal                    @default(0) // bobot % terhadap total pekerjaan (total idealnya 100)
   plannedStartDate DateTime? // rencana mulai (Gantt); plannedDate = rencana selesai
-  plannedDate  DateTime?
-  actualStartDate DateTime? // mulai aktual, diisi saat pekerjaan dimulai
-  actualDate   DateTime? // set when status becomes DONE
-  status       String    @default("PENDING") // "PENDING" | "IN_PROGRESS" | "DONE"
-  fileUrl      String? // bukti / dokumen deliverable
-  driveFileId  String?
-  fileMimeType String?
-  notes        String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  plannedDate      DateTime?
+  actualStartDate  DateTime? // mulai aktual, diisi saat pekerjaan dimulai
+  actualDate       DateTime? // set when status becomes DONE
+  status           String                     @default("PENDING") // "PENDING" | "IN_PROGRESS" | "DONE"
+  fileUrl          String? // bukti / dokumen deliverable
+  driveFileId      String?
+  fileMimeType     String?
+  notes            String?
+  progressLogs     ProjectMilestoneProgress[]
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
 
+  @@index([projectId])
+  @@index([packageId])
+}
+
+/// Realisasi kumulatif satu kegiatan (milestone) pada satu tanggal. Satu baris
+/// per kegiatan per hari; progres project = jumlah (persentase × bobot).
+model ProjectMilestoneProgress {
+  id          String           @id @default(cuid())
+  milestoneId String
+  milestone   ProjectMilestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  projectId   String
+  date        DateTime // tanggal saja (00:00 UTC)
+  percent     Decimal // kumulatif 0–100 untuk kegiatan ini
+  createdBy   String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([milestoneId, date])
   @@index([projectId])
 }
 
@@ -757,6 +813,7 @@ model ProjectProgressReport {
   project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   reportDate    DateTime
   actualPercent Decimal // kumulatif, 0–100
+  source        String   @default("MANUAL") // "MANUAL" = angka diketik; "ACTIVITY" = dihitung dari realisasi per kegiatan (tidak dipakai sebagai angka)
   summary       String? // pekerjaan yang sudah dilakukan
   nextPlan      String? // rencana periode berikutnya
   fileUrl       String?
@@ -772,16 +829,18 @@ model ProjectProgressReport {
 /// Termin pembayaran — planned billing tranche and its lifecycle:
 /// PLANNED (belum ditagih) → INVOICED (invoice terbit) → PAID (dibayar).
 model ProjectTerm {
-  id            String    @id @default(cuid())
+  id            String          @id @default(cuid())
   projectId     String
-  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  sequence      Int       @default(0)
+  project       Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  packageId     String?
+  package       ProjectPackage? @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  sequence      Int             @default(0)
   name          String // e.g. "Uang Muka", "Termin 1"
   percent       Decimal? // % dari nilai kontrak (opsional, informatif)
   amount        Decimal // nominal Rupiah yang ditagihkan
   requirement   String? // syarat penagihan, mis. "Progres 50% + BAPP"
   plannedDate   DateTime? // rencana tanggal tagih
-  status        String    @default("PLANNED") // "PLANNED" | "INVOICED" | "PAID"
+  status        String          @default("PLANNED") // "PLANNED" | "INVOICED" | "PAID"
   invoiceNumber String?
   invoiceDate   DateTime?
   dueDate       DateTime? // jatuh tempo pembayaran
@@ -791,25 +850,29 @@ model ProjectTerm {
   driveFileId   String?
   fileMimeType  String?
   notes         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
   @@index([projectId])
+  @@index([packageId])
   @@index([status])
 }
 
 /// Anggaran biaya (RAB internal) per kategori biaya.
 model ProjectBudgetItem {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   projectId   String
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  packageId   String?
+  package     ProjectPackage? @relation(fields: [packageId], references: [id], onDelete: SetNull)
   category    String // see PROJECT_COST_CATEGORIES in lib/project-monitoring-shared.ts
   description String?
   accountCode String? // kode akun RAB Sucofindo (mis. 4421) — dipakai mencocokkan realisasi biaya per akun
   amount      Decimal
-  createdAt   DateTime @default(now())
+  createdAt   DateTime        @default(now())
 
   @@index([projectId])
+  @@index([packageId])
 }
 
 /// One uploaded RAB (template RAB Sucofindo). version 0 = RAB awal (baseline), 1.. = revisi.
@@ -839,24 +902,27 @@ model ProjectRabRevision {
 
 /// Realisasi biaya — one row per actual expense.
 model ProjectExpense {
-  id           String   @id @default(cuid())
+  id           String          @id @default(cuid())
   projectId    String
-  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project      Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  packageId    String?
+  package      ProjectPackage? @relation(fields: [packageId], references: [id], onDelete: SetNull)
   expenseDate  DateTime
   category     String
   description  String
   amount       Decimal
-  cause        String   @default("NORMAL") // "NORMAL" | "DELAY" (akibat keterlambatan) | "EXTRA_SCOPE" (pekerjaan tambahan) | "REWORK" (pekerjaan ulang)
+  cause        String          @default("NORMAL") // "NORMAL" | "DELAY" (akibat keterlambatan) | "EXTRA_SCOPE" (pekerjaan tambahan) | "REWORK" (pekerjaan ulang)
   referenceNo  String? // no. bukti/voucher (opsional, dari Excel)
   importKey    String? // sidik jari baris Excel — mencegah impor ganda
   fileUrl      String?
   driveFileId  String?
   fileMimeType String?
   createdBy    String?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime        @default(now())
 
   @@unique([projectId, importKey])
   @@index([projectId])
+  @@index([packageId])
 }
 
 /// Kendala (ISSUE — already happening) atau risiko (RISK — might happen).

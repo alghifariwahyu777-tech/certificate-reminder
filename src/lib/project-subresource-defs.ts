@@ -21,7 +21,8 @@ const files = (v: { fileUrl?: string | null; driveFileId?: string | null; fileMi
 /* eslint-disable @typescript-eslint/no-explicit-any -- data shapes are validated by zod + built in toData */
 
 export const milestoneDef: SubresourceDef<typeof projectMilestoneSchema> = {
-  label: "milestone",
+  label: "kegiatan",
+  packaged: true,
   area: "project",
   schema: projectMilestoneSchema,
   describe: (v) => v.name,
@@ -68,6 +69,7 @@ export const progressReportDef: SubresourceDef<typeof projectProgressReportSchem
 
 export const termDef: SubresourceDef<typeof projectTermSchema> = {
   label: "termin",
+  packaged: true,
   area: "projectBilling",
   schema: projectTermSchema,
   describe: (v) => v.name,
@@ -100,6 +102,7 @@ export const termDef: SubresourceDef<typeof projectTermSchema> = {
 
 export const budgetItemDef: SubresourceDef<typeof projectBudgetItemSchema> = {
   label: "anggaran biaya",
+  packaged: true,
   area: "projectCost",
   schema: projectBudgetItemSchema,
   describe: (v) => v.category,
@@ -112,6 +115,7 @@ export const budgetItemDef: SubresourceDef<typeof projectBudgetItemSchema> = {
 
 export const expenseDef: SubresourceDef<typeof projectExpenseSchema> = {
   label: "realisasi biaya",
+  packaged: true,
   area: "projectCost",
   schema: projectExpenseSchema,
   describe: (v) => v.description,

@@ -52,7 +52,7 @@ export function FlowDiagram() {
       title: "2. Pelaksanaan",
       when: "Selama project berjalan",
       steps: [
-        [["PM", "PIC"], "Perbarui progres (boleh harian)"],
+        [["PM"], "Perbarui realisasi kegiatan (boleh harian)"],
         [["PM", "Keuangan"], "Catat biaya dan penyebabnya"],
         [["PM", "QHSE"], "Catat kendala dan risiko"],
         [["QHSE"], "Laporan HSE tiap bulan"],
@@ -205,32 +205,34 @@ export function MatrixDiagram() {
 // ---------------------------------------------------------------------------
 
 export function GanttDiagram() {
+  // timeline x from 130 to 500; "hari ini" at x = 330
+  const today = 330;
   const rows = [
-    { name: "1. Survey awal", plan: [20, 120], act: [20, 115], color: C.good, note: "selesai tepat waktu" },
-    { name: "2. Pengukuran", plan: [100, 230], act: [120, 250], color: C.bad, note: "lewat rencana, terlambat" },
-    { name: "3. Pelaporan", plan: [265, 375], act: null as number[] | null, color: C.actual, note: "belum mulai" },
+    { name: "A. Survey awal", plan: [140, 260], fill: 1, color: C.good, note: "100%, selesai" },
+    { name: "B. Pengukuran", plan: [250, 450], fill: 0.12, color: C.bad, note: "rencana 40%, realisasi 12%: tertinggal" },
+    { name: "C. Pelaporan", plan: [400, 500], fill: 0, color: C.actual, note: "belum mulai, rencana 0%" },
   ];
-  const ox = 130;
   return (
-    <Figure caption="Batang abu-abu adalah rencana mulai sampai rencana selesai. Batang berwarna di dalamnya adalah realisasi. Garis biru tegak adalah hari ini.">
+    <Figure caption="Batang abu-abu adalah rencana, isinya adalah realisasi. Rencana dibagi rata per hari, jadi pada garis hari ini rencana kegiatan B sudah 40%. Isi batang B baru 12%, tertinggal 28 poin.">
       <svg viewBox="0 0 520 170" className="h-auto w-full max-w-[560px]" role="img" aria-label="Contoh Gantt chart">
         {rows.map((r, i) => {
           const y = 20 + i * 45;
+          const w = r.plan[1] - r.plan[0];
           return (
             <g key={r.name}>
               <text x={0} y={y + 16} fontSize={12} fontWeight={600} className={svgStrong}>
                 {r.name}
               </text>
-              <rect x={ox + r.plan[0]} y={y} width={r.plan[1] - r.plan[0]} height={24} rx={4} className="fill-slate-100 stroke-slate-300 dark:fill-slate-800 dark:stroke-slate-600" />
-              {r.act && <rect x={ox + r.act[0]} y={y + 7} width={r.act[1] - r.act[0]} height={10} rx={2} fill={r.color} />}
-              <text x={ox + r.plan[0]} y={y + 37} fontSize={10.5} className={svgText}>
+              <rect x={r.plan[0]} y={y} width={w} height={24} rx={4} className="fill-slate-100 stroke-slate-300 dark:fill-slate-800 dark:stroke-slate-600" />
+              {r.fill > 0 && <rect x={r.plan[0]} y={y} width={w * r.fill} height={24} rx={4} fill={r.color} />}
+              <text x={Math.min(r.plan[0], 300)} y={y + 37} fontSize={10.5} className={svgText}>
                 {r.note}
               </text>
             </g>
           );
         })}
-        <line x1={ox + 250} x2={ox + 250} y1={10} y2={150} stroke={C.actual} strokeWidth={2} />
-        <text x={ox + 250} y={165} textAnchor="middle" fontSize={11} fill={C.actual}>
+        <line x1={today} x2={today} y1={10} y2={150} stroke={C.actual} strokeWidth={2} />
+        <text x={today} y={165} textAnchor="middle" fontSize={11} fill={C.actual}>
           Hari ini
         </text>
       </svg>

@@ -4,9 +4,9 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ReferenceArea, ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from "recharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Card, CardContent, CardDescription, CardHead, CardHeader, CardTitle } from "@/components/ui/Card";
 import { InfoTip } from "@/components/ui/InfoTip";
-import { HEALTH_LABEL, formatPercent, formatRupiah, mergePadSchedules } from "@/lib/project-monitoring-shared";
+import { HEALTH_LABEL, formatPercent, formatRupiah, mergePadSchedules, rupiahAxis } from "@/lib/project-monitoring-shared";
 import type { PortfolioRow } from "@/lib/project-monitoring";
 import { CHART } from "@/lib/chart-theme";
 import { OWNER_LABEL, OWNER_ORDER, buildAttention, type Attention, type TaskOwner } from "@/lib/project-tasks";
@@ -308,33 +308,36 @@ export function AttentionCard({ rows }: { rows: PortfolioRow[] }) {
 // ---------------------------------------------------------------------------
 
 export function PadCard({ rows }: { rows: PortfolioRow[] }) {
-  const buckets = useMemo(() => mergePadSchedules(rows.map((r) => r.padSchedule)).map((b) => ({ ...b, juta: Math.round(b.amount / 1e5) / 10 })), [rows]);
+  const buckets = useMemo(() => mergePadSchedules(rows.map((r) => r.padSchedule)), [rows]);
   const total = buckets.reduce((s, b) => s + b.amount, 0);
   const overdue = buckets.filter((b) => b.kind === "OVERDUE").reduce((s, b) => s + b.amount, 0);
+  const next = buckets.find((b) => b.kind === "MONTH" && b.amount > 0);
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-1.5">
-          Pendapatan yang akan diterima (PAD)
-          <InfoTip label="Keterangan PAD" guide="keuangan">
-            Nilai kontrak yang belum diterima, dikelompokkan menurut jatuh tempo invoice atau rencana tanggal tagih termin. Merah berarti tertunggak (sudah lewat tanggalnya),
-            abu-abu berarti belum memiliki jadwal tagih.
-          </InfoTip>
-        </CardTitle>
-        <CardDescription>{total ? `Total ${formatRupiah(total, true)}${overdue ? `, tertunggak ${formatRupiah(overdue, true)}` : ""}` : "Belum ada PAD"}</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <Card className="flex h-full flex-col">
+      <CardHead
+        title={
+          <span className="flex items-center gap-1.5">
+            Pendapatan yang akan diterima (PAD)
+            <InfoTip label="Keterangan PAD" guide="keuangan">
+              Nilai kontrak yang belum diterima, dikelompokkan menurut jatuh tempo invoice atau rencana tanggal tagih termin. Merah berarti tertunggak (sudah lewat tanggalnya),
+              abu-abu berarti belum memiliki jadwal tagih.
+            </InfoTip>
+          </span>
+        }
+        description={total ? `Total ${formatRupiah(total, true)}${overdue ? `, tertunggak ${formatRupiah(overdue, true)}` : ""}` : "Belum ada PAD"}
+      />
+      <CardContent className="flex flex-1 flex-col">
         {buckets.length === 0 ? (
-          <p className="py-12 text-center text-sm text-slate-500">Belum ada PAD.</p>
+          <p className="flex flex-1 items-center justify-center py-12 text-sm text-slate-500">Belum ada PAD.</p>
         ) : (
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={buckets} margin={{ top: 8, right: 4, left: -6, bottom: 0 }}>
+              <BarChart data={buckets} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
                 <CartesianGrid stroke={CHART.grid} vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 11, fill: CHART.axis }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: CHART.axis }} axisLine={false} tickLine={false} tickFormatter={(v: number) => v.toLocaleString("id-ID")} />
-                <Tooltip cursor={{ fill: "#F2F4F7" }} contentStyle={tooltipStyle} formatter={(v) => [`Rp${Number(v).toLocaleString("id-ID", { maximumFractionDigits: 1 })} juta`, "PAD"]} />
-                <Bar dataKey="juta" name="PAD" radius={[4, 4, 0, 0]} maxBarSize={36} isAnimationActive={false}>
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: CHART.axis }} interval={0} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+                <YAxis width={58} tick={{ fontSize: 11, fill: CHART.axis }} axisLine={false} tickLine={false} tickFormatter={rupiahAxis} />
+                <Tooltip cursor={{ fill: "#F2F4F7" }} contentStyle={tooltipStyle} formatter={(v) => [formatRupiah(Number(v), true), "PAD"]} />
+                <Bar dataKey="amount" name="PAD" radius={[4, 4, 0, 0]} maxBarSize={40} isAnimationActive={false}>
                   {buckets.map((b) => (
                     <Cell key={b.key} fill={b.kind === "OVERDUE" ? CHART.bad : b.kind === "UNSCHEDULED" ? CHART.neutral : CHART.blue} />
                   ))}
@@ -343,7 +346,11 @@ export function PadCard({ rows }: { rows: PortfolioRow[] }) {
             </ResponsiveContainer>
           </div>
         )}
-        <p className="mt-1 text-[11.5px] text-slate-500">Dalam Rp juta</p>
+        {next && (
+          <p className="mt-auto pt-2 text-[12px] text-slate-600 dark:text-slate-300">
+            Terdekat: <strong>{next.label}</strong>, {formatRupiah(next.amount, true)} dijadwalkan masuk.
+          </p>
+        )}
       </CardContent>
     </Card>
   );

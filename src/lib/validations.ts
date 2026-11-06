@@ -73,13 +73,13 @@ export const createUserSchema = z.object({
   name: z.string().min(1, "Nama wajib diisi"),
   email: z.string().min(1, "Email wajib diisi").email("Format email tidak valid"),
   password: z.string().min(6, "Password minimal 6 karakter"),
-  role: z.enum(["ADMIN", "MANAGEMENT", "PM", "QHSE", "HC", "FINANCE", "VIEWER", "PIC"], { errorMap: () => ({ message: "Peran tidak valid" }) }),
+  role: z.enum(["ADMIN", "MANAGEMENT", "PM", "QHSE", "HC", "FINANCE", "VIEWER"], { errorMap: () => ({ message: "Peran tidak valid" }) }),
 });
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 
 export const updateUserSchema = z.object({
   name: z.string().min(1, "Nama wajib diisi"),
-  role: z.enum(["ADMIN", "MANAGEMENT", "PM", "QHSE", "HC", "FINANCE", "VIEWER", "PIC"], { errorMap: () => ({ message: "Peran tidak valid" }) }),
+  role: z.enum(["ADMIN", "MANAGEMENT", "PM", "QHSE", "HC", "FINANCE", "VIEWER"], { errorMap: () => ({ message: "Peran tidak valid" }) }),
   isActive: z.boolean(),
   password: z.string().min(6, "Password minimal 6 karakter").optional().or(z.literal("")),
 });
@@ -452,6 +452,7 @@ const fileFields = {
 };
 
 export const projectMilestoneSchema = z.object({
+  packageId: z.string().max(40).nullable().optional(),
   name: z.string().trim().min(1, "Nama milestone wajib diisi").max(200, "Maksimal 200 karakter"),
   description: z.string().max(2000).optional().nullable(),
   sequence: z.coerce.number().int().min(0).default(0),
@@ -482,6 +483,7 @@ export const projectProgressReportSchema = z.object({
 });
 
 export const projectTermSchema = z.object({
+  packageId: z.string().max(40).nullable().optional(),
   name: z.string().trim().min(1, "Nama termin wajib diisi").max(150, "Maksimal 150 karakter"),
   sequence: z.coerce.number().int().min(0).default(0),
   percent: optionalMoney,
@@ -499,12 +501,14 @@ export const projectTermSchema = z.object({
 });
 
 export const projectBudgetItemSchema = z.object({
+  packageId: z.string().max(40).nullable().optional(),
   category: z.string().trim().min(1, "Kategori biaya wajib diisi").max(100),
   description: z.string().max(500).optional().nullable(),
   amount: money("Nominal anggaran harus berupa angka"),
 });
 
 export const projectExpenseSchema = z.object({
+  packageId: z.string().max(40).nullable().optional(),
   expenseDate: requiredDate("Tanggal biaya wajib diisi"),
   category: z.string().trim().min(1, "Kategori biaya wajib diisi").max(100),
   description: z.string().trim().min(1, "Keterangan wajib diisi").max(500),
@@ -646,3 +650,21 @@ export const projectHseReportSchema = z.object({
   inspections: count,
   notes: z.string().max(5000).optional().nullable(),
 });
+
+export const projectPackageSchema = z.object({
+  name: z.string().trim().min(1, "Nama paket wajib diisi.").max(200),
+  docType: z.enum(["SPK", "PO", "SP", "WO", "OTHER"]).default("SPK"),
+  docNumber: z.string().trim().max(120).nullable().optional(),
+  issueDate: z.string().nullable().optional(),
+  value: z.union([z.number(), z.string()]).nullable().optional().transform((v) => (v === null || v === undefined || v === "" ? null : Number(v))).refine((v) => v === null || (Number.isFinite(v) && v >= 0), "Nilai paket harus angka positif."),
+  startDate: z.string().nullable().optional(),
+  endDate: z.string().min(1, "Target selesai paket wajib diisi."),
+  actualEndDate: z.string().nullable().optional(),
+  status: z.enum(["ONGOING", "COMPLETED", "CANCELLED"]).default("ONGOING"),
+  sequence: z.union([z.number(), z.string()]).optional().transform((v) => (v === undefined || v === "" ? undefined : Math.max(0, Math.round(Number(v))))),
+  notes: z.string().max(2000).nullable().optional(),
+  fileUrl: z.string().nullable().optional(),
+  driveFileId: z.string().nullable().optional(),
+  fileMimeType: z.string().nullable().optional(),
+}).refine((v) => !v.startDate || v.startDate <= v.endDate, { message: "Tanggal mulai tidak boleh setelah target selesai.", path: ["startDate"] });
+export type ProjectPackageInput = z.infer<typeof projectPackageSchema>;

@@ -47,6 +47,9 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
   if (!/\.xls[xm]$/i.test(file.name)) return NextResponse.json({ message: "Gunakan file Excel RAB (.xlsx atau .xlsm)." }, { status: 400 });
 
   try {
+    const usesPackages = (await prisma.project.findUnique({ where: { id: g.project.id }, select: { usePackages: true } }))?.usePackages;
+    if (usesPackages && !form.get("packageId"))
+      return NextResponse.json({ message: "Project ini dibagi per paket pekerjaan. Pilih paketnya terlebih dahulu, lalu unggah RAB paket tersebut." }, { status: 400 });
     const data = await parseRabWorkbook(Buffer.from(await file.arrayBuffer()));
     if (form.get("commit") !== "1") return NextResponse.json({ preview: await previewRabImport(g.project.id, data, file.name) });
 
@@ -57,7 +60,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       g.project.id,
       data,
       file.name,
-      { reason: (form.get("reason") as string) || null, updateTarget: form.get("updateTarget") === "1", applyFields: apply },
+      { reason: (form.get("reason") as string) || null, updateTarget: form.get("updateTarget") === "1", applyFields: apply, packageId: (form.get("packageId") as string) || null },
       g.session.name
     );
     await auditProjectMonitoring(

@@ -10,7 +10,6 @@ const PUBLIC_PATHS = ["/login", "/forgot-password", "/reset-password"];
 // A PIC account may only reach its own small area. Everything else — every
 // internal page and every internal API (many GET endpoints only require "any
 // session") — is closed to it here, in one place.
-const PIC_ALLOWED_PREFIXES = ["/pic", "/api/pic", "/api/auth", "/profile", "/api/profile"];
 
 // Create/manage-only screens and the area of rights each needs (lib/permissions.ts).
 // Prefix-matched, so "/certificate/edit" also covers "/certificate/edit/abc123".
@@ -100,10 +99,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api/auth/forgot-password") ||
     pathname.startsWith("/api/auth/reset-password") ||
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/uploads") ||
-    // signed one-time-style links emailed to PICs (token checked in the route)
-    pathname.startsWith("/update/") ||
-    pathname.startsWith("/api/update/");
+    pathname.startsWith("/uploads");
 
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   let isAuthenticated = false;
@@ -125,7 +121,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const home = role === "PIC" ? "/pic" : "/dashboard";
+  const home = "/dashboard";
 
   if (isAuthenticated && pathname === "/login") {
     return NextResponse.redirect(new URL(home, request.url));
@@ -133,18 +129,6 @@ export async function middleware(request: NextRequest) {
 
   if (isAuthenticated && pathname === "/") {
     return NextResponse.redirect(new URL(home, request.url));
-  }
-
-  if (
-    isAuthenticated &&
-    role === "PIC" &&
-    !isPublic &&
-    !PIC_ALLOWED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"))
-  ) {
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ message: "Akses tidak diizinkan untuk akun PIC." }, { status: 403 });
-    }
-    return NextResponse.redirect(new URL("/pic", request.url));
   }
 
   if (isAuthenticated && MANAGE_PATHS.some(([prefix, area]) => pathname.startsWith(prefix) && !can(role, area))) {

@@ -25,9 +25,12 @@ type CategoryLite = { id: string; name: string };
 export function ProjectForm({
   categories,
   initialData,
+  usePackages = false,
 }: {
   categories: CategoryLite[];
   initialData?: ProjectInput & { id: string };
+  /** paket pekerjaan: value and dates come from the packages and cannot be typed here */
+  usePackages?: boolean;
 }) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -231,17 +234,18 @@ export function ProjectForm({
 
           <div>
             <Label htmlFor="pr-value">Nilai kontrak (Rp)</Label>
-            <Input id="pr-value" type="number" step="any" {...register("contractValue")} error={errors.contractValue?.message} placeholder="0" />
+            <Input id="pr-value" type="number" step="any" {...register("contractValue")} error={errors.contractValue?.message} placeholder="0" readOnly={usePackages} className={usePackages ? "bg-slate-50 text-slate-500 dark:bg-slate-800" : undefined} />
+            {usePackages && <p className="mt-1 text-xs text-slate-500">Nilai, tanggal mulai, dan target selesai dihitung dari paket pekerjaan. Ubah di tab Dokumen, Paket pekerjaan.</p>}
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div>
               <Label htmlFor="pr-start">Tanggal mulai</Label>
-              <Input id="pr-start" type="date" {...register("startDate")} error={errors.startDate?.message} />
+              <Input id="pr-start" type="date" {...register("startDate")} error={errors.startDate?.message} readOnly={usePackages} className={usePackages ? "bg-slate-50 text-slate-500 dark:bg-slate-800" : undefined} />
             </div>
             <div>
               <Label htmlFor="pr-target">Target selesai</Label>
-              <Input id="pr-target" type="date" {...register("targetEndDate")} error={errors.targetEndDate?.message} />
+              <Input id="pr-target" type="date" {...register("targetEndDate")} error={errors.targetEndDate?.message} readOnly={usePackages} className={usePackages ? "bg-slate-50 text-slate-500 dark:bg-slate-800" : undefined} />
               <p className="text-xs text-slate-400 mt-1">Pengingat dihitung dari tanggal ini.</p>
             </div>
             <div>

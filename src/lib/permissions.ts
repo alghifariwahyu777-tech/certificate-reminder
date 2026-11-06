@@ -8,9 +8,9 @@
  * project; the other departments work across all projects within their own area.
  */
 
-export type Role = "ADMIN" | "MANAGEMENT" | "PM" | "QHSE" | "HC" | "FINANCE" | "VIEWER" | "PIC";
+export type Role = "ADMIN" | "MANAGEMENT" | "PM" | "QHSE" | "HC" | "FINANCE" | "VIEWER";
 
-/** Roles an Admin can assign in the user screen, in display order. PIC accounts are created from the project's PIC email. */
+/** Roles an Admin can assign in the user screen, in display order. */
 export const ASSIGNABLE_ROLES = ["ADMIN", "MANAGEMENT", "PM", "QHSE", "HC", "FINANCE", "VIEWER"] as const;
 
 export const ROLE_LABEL: Record<Role, string> = {
@@ -21,19 +21,17 @@ export const ROLE_LABEL: Record<Role, string> = {
   HC: "Human Capital",
   FINANCE: "Keuangan",
   VIEWER: "Viewer",
-  PIC: "PIC lapangan",
 };
 
 /** One line per role: what that person does in the system. Shown in the user screen and the guide. */
 export const ROLE_DUTY: Record<Role, string> = {
   ADMIN: "Mengelola seluruh data, pengguna, dan pengaturan sistem.",
   MANAGEMENT: "Memantau seluruh data dan laporan mingguan, mengambil keputusan. Tidak mengubah data.",
-  PM: "Mengelola seluruh project: data project, RAB, jadwal, milestone, progres, biaya, termin, kendala, HSE, dan tim.",
+  PM: "Mengelola seluruh project: data project, RAB, jadwal kegiatan, realisasi, biaya, termin, kendala, HSE, dan tim.",
   QHSE: "Mengisi laporan HSE bulanan, mengelola risiko dan kendala di semua project, serta kalibrasi alat.",
   HC: "Mengelola data karyawan dan sertifikasinya, serta penugasan personil ke project.",
   FINANCE: "Mengelola termin, invoice, pembayaran, RAB, dan realisasi biaya semua project.",
   VIEWER: "Hanya melihat dan mengunduh data.",
-  PIC: "Memperbarui progres project yang menjadi tanggung jawabnya melalui halaman PIC.",
 };
 
 /** Areas of data. Each area has its own list of roles that may change it. */

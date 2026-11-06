@@ -10,7 +10,7 @@ import { ConstraintTile, Stat, type Tone } from "./shared";
 import type { ProjectMonitoringDTO } from "./types";
 import { Notice } from "@/components/ui/Notice";
 
-const PLAN_SOURCE_LABEL = { MANUAL: "jadwal rencana project", MILESTONE: "tanggal dan bobot milestone", STANDARD: "kurva S standar" };
+const PLAN_SOURCE_LABEL = { MANUAL: "kurva S resmi kontrak", ACTIVITY: "jadwal kegiatan", MILESTONE: "tanggal dan bobot kegiatan", STANDARD: "kurva S standar" };
 
 /** The one sentence a manager reads first: schedule condition, margin against target, and the main cause. */
 function verdict(data: ProjectMonitoringDTO): string {
@@ -161,8 +161,8 @@ export function SummaryPanel({ data }: { data: ProjectMonitoringDTO }) {
                 {data.canManage && (
                   <>
                     {" "}
-                    <a href="#jadwal/progres/rencana" className="font-semibold text-accent hover:underline">
-                      Atur rencana
+                    <a href="#jadwal/milestone" className="font-semibold text-accent hover:underline">
+                      Atur jadwal kegiatan
                     </a>
                   </>
                 )}

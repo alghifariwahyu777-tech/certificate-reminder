@@ -8,6 +8,7 @@ import type { CostCurveRow, MarginTimelineRow, MarginAnalysis, ProfitLoss } from
 /** Dates are "YYYY-MM-DD" strings (date-only), amounts are plain numbers. */
 export type MilestoneDTO = {
   id: string;
+  packageId: string | null;
   sequence: number;
   name: string;
   description: string | null;
@@ -29,6 +30,8 @@ export type ProgressReportDTO = {
   id: string;
   reportDate: string;
   actualPercent: number;
+  /** MANUAL = angka diketik; ACTIVITY = dihitung dari realisasi per kegiatan */
+  source: string;
   summary: string | null;
   nextPlan: string | null;
   createdBy: string | null;
@@ -39,6 +42,7 @@ export type ProgressReportDTO = {
 
 export type TermDTO = {
   id: string;
+  packageId: string | null;
   sequence: number;
   name: string;
   percent: number | null;
@@ -57,10 +61,11 @@ export type TermDTO = {
   fileMimeType: string | null;
 };
 
-export type BudgetItemDTO = { id: string; category: string; description: string | null; amount: number };
+export type BudgetItemDTO = { id: string; packageId: string | null; category: string; description: string | null; amount: number };
 
 export type ExpenseDTO = {
   id: string;
+  packageId: string | null;
   expenseDate: string;
   category: string;
   description: string;
@@ -92,8 +97,48 @@ export type IssueDTO = {
   createdAt: string;
 };
 
+export type PackageDTO = {
+  id: string;
+  sequence: number;
+  name: string;
+  docType: string;
+  docNumber: string | null;
+  issueDate: string | null;
+  value: number | null;
+  startDate: string | null;
+  endDate: string;
+  actualEndDate: string | null;
+  status: string;
+  notes: string | null;
+  fileUrl: string | null;
+  driveFileId: string | null;
+  fileMimeType: string | null;
+};
+
+/** One package monitored on its own (the overview table). */
+export type PackageRowDTO = PackageDTO & {
+  health: string;
+  actualPercent: number;
+  plannedPercent: number;
+  deviation: number;
+  spi: number | null;
+  forecastMarginPct: number | null;
+  targetMarginPct: number | null;
+  pad: number;
+  forecastEndDate: number | null;
+  counts: { activities: number; terms: number; costs: number; budget: number };
+};
+
 export type ProjectMonitoringDTO = {
   projectId: string;
+  /** paket pekerjaan: off for ordinary projects */
+  usePackages: boolean;
+  packages: PackageDTO[];
+  /** the package this page is narrowed to; null = the whole project */
+  activePackageId: string | null;
+  packageRows: PackageRowDTO[];
+  /** items not yet linked to any package (only when packages are used) */
+  unassigned: { activities: number; terms: number; costs: number; budget: number } | null;
   status: string;
   contractValue: number | null;
   startDate: string | null;

@@ -54,8 +54,10 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     prisma.project.update({
       where: { id: project.id },
       data: {
-        targetEndDate: new Date(parsed.data.newTargetEndDate),
-        ...(parsed.data.newContractValue ? { contractValue: parsed.data.newContractValue } : {}),
+        // with paket pekerjaan, value and dates follow the packages: the addendum is recorded as history only
+        ...(project.usePackages
+          ? {}
+          : { targetEndDate: new Date(parsed.data.newTargetEndDate), ...(parsed.data.newContractValue ? { contractValue: parsed.data.newContractValue } : {}) }),
       },
     }),
   ]);

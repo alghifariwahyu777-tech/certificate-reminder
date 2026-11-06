@@ -1,3 +1,4 @@
+import { syncProjectFromPackages } from "@/lib/project-packages";
 import ExcelJS from "exceljs";
 import { prisma } from "@/lib/prisma";
 import { lockBaselineIfOpen } from "@/lib/project-cost-import";
@@ -517,15 +518,32 @@ export type RabCommitOptions = {
   updateTarget?: boolean;
   /** project fields to overwrite with the values from the RAB */
   applyFields?: RabProjectField[];
+  /** paket pekerjaan: the RAB replaces only this package's lines, and its value/dates go to the package */
+  packageId?: string | null;
 };
 
 export async function commitRabImport(projectId: string, data: RabData, fileName: string, opts: RabCommitOptions, actorName: string) {
   const p = await prisma.project.findUnique({ where: { id: projectId }, include: { rabRevisions: { orderBy: { version: "desc" }, take: 1 } } });
   if (!p) throw new RabFormatError("Project tidak ditemukan.");
   const version = p.rabRevisions.length ? p.rabRevisions[0].version + 1 : 0;
-  if (version > 0 && !opts.reason?.trim()) throw new RabFormatError("Alasan revisi RAB wajib diisi.");
-
   const apply = new Set(opts.applyFields ?? []);
+  const pkg = opts.packageId ? await prisma.projectPackage.findFirst({ where: { id: opts.packageId, projectId } }) : null;
+  if (opts.packageId && !pkg) throw new RabFormatError("Paket pekerjaan tidak ditemukan di project ini.");
+  // a package's first RAB is not a revision, even when other packages already have one
+  const firstForPackage = pkg ? (await prisma.projectBudgetItem.count({ where: { projectId, packageId: pkg.id } })) === 0 : false;
+  if (version > 0 && !firstForPackage && !opts.reason?.trim()) throw new RabFormatError("Alasan revisi RAB wajib diisi.");
+  // with packages, value and dates belong to the package; the project follows the package totals
+  const packageData: Record<string, unknown> = {};
+  if (pkg || p.usePackages) {
+    for (const k of ["contractValue", "startDate", "targetEndDate"] as const) {
+      if (!apply.has(k)) continue;
+      apply.delete(k);
+      if (!pkg) continue;
+      if (k === "contractValue") packageData.value = data.revenue;
+      if (k === "startDate" && data.project.startDate) packageData.startDate = new Date(data.project.startDate);
+      if (k === "targetEndDate" && data.project.endDate) packageData.endDate = new Date(data.project.endDate);
+    }
+  }
   const projectData: Record<string, unknown> = {};
   if (apply.has("contractValue")) projectData.contractValue = data.revenue;
   if (apply.has("startDate") && data.project.startDate) projectData.startDate = new Date(data.project.startDate);
@@ -538,13 +556,14 @@ export async function commitRabImport(projectId: string, data: RabData, fileName
   const budgetRows = [
     ...data.items.map((i) => ({
       projectId,
+      packageId: pkg?.id ?? null,
       category: catOf.get(i.section) ?? "Lainnya",
       description: `${i.code} ${i.description}`.trim(),
       accountCode: i.account,
       amount: i.amount,
     })),
     ...(data.contingency > 0
-      ? [{ projectId, category: "Biaya Tak Terduga", description: `Biaya tak terduga${data.contingencyPct !== null ? ` (${data.contingencyPct.toLocaleString("id-ID")}% dari pendapatan)` : ""}`, accountCode: null, amount: data.contingency }]
+      ? [{ projectId, packageId: pkg?.id ?? null, category: "Biaya Tak Terduga", description: `Biaya tak terduga${data.contingencyPct !== null ? ` (${data.contingencyPct.toLocaleString("id-ID")}% dari pendapatan)` : ""}`, accountCode: null, amount: data.contingency }]
       : []),
   ];
 
@@ -553,7 +572,7 @@ export async function commitRabImport(projectId: string, data: RabData, fileName
       data: {
         projectId,
         version,
-        reason: version === 0 ? opts.reason?.trim() || null : opts.reason!.trim(),
+        reason: version === 0 || firstForPackage ? opts.reason?.trim() || (pkg ? `RAB ${pkg.name}` : null) : opts.reason!.trim(),
         fileName,
         contractValue: data.revenue,
         projectCost: data.projectCost,
@@ -566,10 +585,12 @@ export async function commitRabImport(projectId: string, data: RabData, fileName
         createdBy: actorName,
       },
     }),
-    prisma.projectBudgetItem.deleteMany({ where: { projectId } }),
+    prisma.projectBudgetItem.deleteMany({ where: pkg ? { projectId, packageId: pkg.id } : { projectId } }),
     prisma.projectBudgetItem.createMany({ data: budgetRows }),
     ...(Object.keys(projectData).length ? [prisma.project.update({ where: { id: projectId }, data: projectData })] : []),
+    ...(pkg && Object.keys(packageData).length ? [prisma.projectPackage.update({ where: { id: pkg.id }, data: packageData })] : []),
   ]);
+  if (pkg) await syncProjectFromPackages(prisma, projectId);
 
   // the first RAB becomes the baseline; an earlier baseline locked without any RAB is replaced
   const baselineEmpty = !p.baselineLockedAt || !p.baselineBudget || Number(p.baselineBudget) === 0;

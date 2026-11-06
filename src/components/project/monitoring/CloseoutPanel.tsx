@@ -13,7 +13,7 @@ import type { ProjectMonitoringDTO } from "./types";
 const CHECKS = [
   { key: "bappDate", label: "BAPP", hint: "Berita acara penyelesaian pekerjaan" },
   { key: "bastDate", label: "BAST", hint: "Berita acara serah terima" },
-  { key: "finalReportDate", label: "Laporan final", hint: "Laporan akhir diserahkan ke klien" },
+  { key: "finalReportDate", label: "Laporan akhir", hint: "Laporan akhir diserahkan ke klien" },
 ] as const;
 
 export function CloseoutPanel({ data }: { data: ProjectMonitoringDTO }) {
@@ -58,16 +58,20 @@ export function CloseoutPanel({ data }: { data: ProjectMonitoringDTO }) {
       <CardContent className="space-y-5">
         <div className="space-y-2">
           {CHECKS.map((k) => (
-            <div key={k.key} className="flex items-center gap-3 rounded border border-slate-200 dark:border-slate-700 px-3 py-2.5">
-              {form[k.key] ? <CheckCircle2 className="h-5 w-5 text-signal-active shrink-0" /> : <Circle className="h-5 w-5 text-slate-300 shrink-0" />}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-ink dark:text-slate-100">{k.label}</p>
-                <p className="text-xs text-slate-500">{k.hint}</p>
+            <div key={k.key} className="flex flex-col gap-2 rounded-lg border border-line px-3 py-2.5 sm:flex-row sm:items-center sm:gap-3 dark:border-slate-700">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                {form[k.key] ? <CheckCircle2 className="h-5 w-5 shrink-0 text-signal-active" aria-label="Lengkap" /> : <Circle className="h-5 w-5 shrink-0 text-slate-300" aria-label="Belum" />}
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-ink dark:text-slate-100">{k.label}</p>
+                  <p className="text-xs text-slate-500">{k.hint}</p>
+                </div>
               </div>
               {editable ? (
-                <Input type="date" aria-label={`Tanggal ${k.label}`} value={form[k.key]} onChange={(e) => setForm((f) => ({ ...f, [k.key]: e.target.value }))} className="w-40" />
+                <div className="w-full shrink-0 sm:w-48">
+                  <Input type="date" aria-label={`Tanggal ${k.label}`} value={form[k.key]} onChange={(e) => setForm((f) => ({ ...f, [k.key]: e.target.value }))} />
+                </div>
               ) : (
-                <span className="text-sm">{fmtDate(form[k.key] || null)}</span>
+                <span className="shrink-0 text-sm">{fmtDate(form[k.key] || null)}</span>
               )}
             </div>
           ))}
@@ -93,7 +97,7 @@ export function CloseoutPanel({ data }: { data: ProjectMonitoringDTO }) {
         </div>
 
         <div>
-          <Label htmlFor="co-ll">Lessons learned</Label>
+          <Label htmlFor="co-ll">Catatan pembelajaran (lessons learned)</Label>
           <Textarea
             id="co-ll"
             rows={3}

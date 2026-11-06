@@ -6,7 +6,6 @@ import { sendProjectReminderEmail } from "@/lib/project-email";
 import { sendEquipmentReminderEmail } from "@/lib/equipment-email";
 import { runProjectMonitoringAlerts } from "@/lib/project-alerts";
 import { takeWeeklySnapshots } from "@/lib/project-snapshots";
-import { runPicUpdateRequests } from "@/lib/pic-update-request";
 import { runWeeklyReport } from "@/lib/weekly-report-send";
 
 /** Reminder milestones per spec: days remaining before expiry (0 = expiry day itself). */
@@ -55,7 +54,6 @@ export async function runReminderCheck(): Promise<ReminderRunSummary> {
   // Project monitoring — weekly rhythm. Each step is independent: one
   // failing (e.g. SMTP down) must not stop the others or the reminders above.
   await safely("snapshot mingguan", () => takeWeeklySnapshots());
-  await safely("permintaan update PIC", () => runPicUpdateRequests(summary));
   await safely("laporan mingguan", () => runWeeklyReport(summary));
   await runEquipmentReminders(summary, supervisorCc);
 

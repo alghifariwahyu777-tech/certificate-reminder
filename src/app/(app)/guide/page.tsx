@@ -122,7 +122,7 @@ export default async function GuidePage() {
                 </table>
               </div>
               <ul className="mt-3 space-y-1.5">
-                {[...ASSIGNABLE_ROLES, "PIC" as const].map((r) => (
+                {ASSIGNABLE_ROLES.map((r) => (
                   <li key={r}>
                     <strong className="text-ink dark:text-slate-100">{ROLE_LABEL[r]}</strong>: {ROLE_DUTY[r]}
                   </li>
@@ -180,11 +180,11 @@ export default async function GuidePage() {
               items={[
                 ["PM", "membuat project: nomor, klien, nilai kontrak, tanggal mulai, target selesai, PIC, portofolio, lokasi. Paling cepat dengan mengunggah file RAB, data terisi otomatis", "Daftar Project, Tambah project"],
                 ["PM atau Keuangan", "mengunggah RAB. RAB pertama dikunci sebagai baseline (rencana awal) untuk pembanding biaya dan margin", "project, Keuangan, RAB dan biaya"],
-                ["PM", "mengisi milestone beserta bobot, rencana mulai, dan rencana selesai. Ini membentuk Gantt chart dan garis rencana kurva S", "project, Jadwal dan progres, Gantt dan milestone"],
+                ["PM", "mengisi kegiatan beserta tanggal mulai, tanggal selesai, dan bobot. Ini membentuk Gantt chart dan garis rencana kurva S", "project, Jadwal dan progres, Gantt dan kegiatan"],
                 ["PM", "bila punya jadwal resmi dari kontrak, mengisi rencana kurva S (persen kumulatif per tanggal)", "project, Jadwal dan progres, Progres, Atur rencana"],
                 ["Human Capital", "menugaskan personil ke project; sistem memeriksa sertifikasi setiap personil sampai akhir masa tugas", "project, Risiko HSE dan tim, Tim"],
                 ["Keuangan", "mengisi termin pembayaran: nilai, rencana tanggal tagih, syarat penagihan", "project, Keuangan, Termin dan penagihan"],
-                ["PM atau PIC lapangan", "memperbarui progres secara rutin (boleh harian), dan menandai milestone yang selesai", "project, Perbarui progres, atau halaman PIC"],
+                ["PM", "memperbarui realisasi setiap kegiatan (boleh harian): cukup ketik persentase terbarunya", "project, Gantt chart, Perbarui realisasi"],
                 ["PM atau Keuangan", "mencatat realisasi biaya beserta penyebabnya, satu per satu atau impor Excel", "project, Keuangan, RAB dan biaya"],
                 ["PM atau QHSE", "mencatat kendala dan risiko beserta kemungkinan, dampak, kategori, dan penanggung jawab", "project, Risiko HSE dan tim, Kendala dan risiko"],
                 ["QHSE", "mengisi laporan HSE setiap bulan, paling lambat tanggal 5 bulan berikutnya", "project, Risiko HSE dan tim, HSE"],
@@ -195,13 +195,35 @@ export default async function GuidePage() {
           ),
         },
         {
+          id: "paket",
+          tags: "paket pekerjaan spk po surat pesanan work order kontrak induk turunan",
+          title: "Paket pekerjaan (kontrak turunan)",
+          lead: (
+            <p>
+              Bila satu project memiliki <strong>kontrak induk dengan beberapa kontrak turunan</strong> (SPK, PO, surat pesanan, atau work order), aktifkan paket pekerjaan di
+              tab Dokumen, Paket pekerjaan. Setiap paket lalu terpantau sendiri: Gantt, kurva S, progres, biaya, margin, dan PAD.
+            </p>
+          ),
+          moreLabel: "Lihat cara memakai",
+          more: (
+            <ol className="list-decimal space-y-1.5 pl-5">
+              <li>Klik Aktifkan paket pekerjaan. Kontrak saat ini menjadi Paket 1, dan semua data yang sudah ada tertaut ke Paket 1.</li>
+              <li>Tambah paket berikutnya: jenis dan nomor dokumen, nilai, tanggal mulai, dan target selesai.</li>
+              <li>Saat menambah kegiatan, termin, RAB, atau biaya, pilih paketnya. Bila sedang membuka satu paket, paket itu terpilih otomatis.</li>
+              <li>Nilai kontrak dan periode project otomatis menjadi jumlah semua paket, kecuali paket yang batal.</li>
+              <li>Pilih paket di baris Tampilkan di atas tab untuk melihat angka paket itu saja. Tabel Pemantauan per paket di tab Ringkasan membandingkan semua paket.</li>
+              <li>RAB diunggah per paket, dari tampilan paket tersebut.</li>
+            </ol>
+          ),
+        },
+        {
           id: "rutinitas",
           tags: "rutin harian mingguan bulanan jadwal",
           title: "Rutinitas per bagian",
           lead: (
             <ul className="list-disc space-y-1.5 pl-5">
               <li>
-                <strong>Setiap ada kemajuan</strong>: PM atau PIC memperbarui progres. Progres dianggap basi bila tidak diperbarui {th.progressStaleDays} hari.
+                <strong>Setiap ada kemajuan</strong>: PM memperbarui realisasi setiap kegiatan. Progres dianggap basi bila tidak diperbarui {th.progressStaleDays} hari.
               </li>
               <li>
                 <strong>Setiap ada biaya</strong>: PM atau Keuangan mencatat biaya beserta penyebabnya.
@@ -238,15 +260,14 @@ export default async function GuidePage() {
           moreLabel: "Lihat asal angka progres",
           more: (
             <>
+              <p>Kedua angka dihitung dari jadwal kegiatan:</p>
+              <Formula>Rencana project = jumlah (rencana kegiatan × bobot kegiatan)</Formula>
+              <Formula>Realisasi project = jumlah (realisasi kegiatan × bobot kegiatan)</Formula>
+              <Example>kegiatan A bobot 60% direncanakan 15% dan terealisasi 6%; kegiatan B bobot 40% belum mulai. Rencana project = 60% × 15% = 9%, realisasi = 60% × 6% = 3,6%, deviasi −5,4 poin.</Example>
               <p>
-                Progres realisasi diambil dari laporan progres atau dari penyelesaian milestone (total bobot milestone selesai), mana yang tanggalnya paling akhir.
+                Bila bobot tidak diisi, setiap kegiatan dihitung sama besar. Bila kontrak memiliki kurva S resmi, isi di tab Kurva S dan realisasi; garis rencana lalu mengikuti
+                kurva resmi itu. Project tanpa kegiatan memakai kurva S standar dan progres diisi langsung sebagai persentase project.
               </p>
-              <p className="mt-2">Garis rencana diambil dari sumber pertama yang tersedia:</p>
-              <ol className="mt-1 list-decimal space-y-1 pl-5">
-                <li>rencana kurva S yang diisi pada tab Jadwal dan progres (paling akurat),</li>
-                <li>tanggal rencana dan bobot milestone,</li>
-                <li>kurva S standar dari tanggal mulai sampai target selesai.</li>
-              </ol>
               <Formula>Deviasi = progres realisasi − progres rencana (dalam poin persen)</Formula>
             </>
           ),
@@ -487,21 +508,32 @@ export default async function GuidePage() {
         },
         {
           id: "gantt",
-          tags: "gantt jadwal milestone kurva s",
-          title: "Gantt chart",
+          tags: "gantt jadwal kegiatan milestone kurva s harian realisasi",
+          title: "Jadwal kegiatan, Gantt chart, dan kurva S",
           lead: (
-            <p>
-              Gantt chart (tab Jadwal dan progres) menampilkan setiap milestone sebagai batang. Hijau selesai tepat waktu, biru berjalan, merah terlambat. Isi rencana mulai,
-              rencana selesai, dan bobot pada milestone; tanggal aktual terisi saat status diubah.
-            </p>
+            <ol className="list-decimal space-y-1.5 pl-5">
+              <li>
+                Isi <strong>kegiatan</strong> dengan tanggal mulai, tanggal selesai, dan bobot (tab Jadwal dan progres, Gantt dan kegiatan).
+              </li>
+              <li>
+                Rencana harian dihitung otomatis: <strong>100% dibagi jumlah hari</strong>. Kegiatan 20 hari direncanakan 5% per hari.
+              </li>
+              <li>
+                Klik <strong>Perbarui realisasi</strong>, lalu ketik persentase terbaru setiap kegiatan. Boleh setiap hari.
+              </li>
+              <li>Gantt chart dan kurva S terbentuk sendiri dari isian itu.</li>
+            </ol>
           ),
           figure: <GanttDiagram />,
-          moreLabel: "Lihat hubungannya dengan kurva S",
+          moreLabel: "Lihat cara membaca Gantt chart",
           more: (
-            <p>
-              Kurva S (tab Ringkasan dan Jadwal dan progres) membandingkan progres rencana dan realisasi kumulatif. Setiap laporan progres menjadi satu titik pada garis
-              realisasi, jadi progres boleh diperbarui setiap hari. Rencana kurva S juga dapat dibuat per hari untuk project sampai 13 bulan.
-            </p>
+            <ul className="list-disc space-y-1.5 pl-5">
+              <li>Batang abu-abu adalah rencana. Isi berwarna adalah realisasi: biru sesuai rencana, merah tertinggal, hijau selesai.</li>
+              <li>Garis biru tegak adalah tanggal yang dilihat. Bila isi batang belum mencapai garis itu, kegiatan tertinggal.</li>
+              <li>Pilih tanggal lain dengan tombol panah atau klik timeline; kolom Rencana, Realisasi, dan Selisih ikut berubah untuk tanggal itu.</li>
+              <li>Klik nama kegiatan untuk melihat tabel hariannya: rencana dan realisasi setiap tanggal.</li>
+              <li>Skala Hari, Minggu, dan Bulan mengubah kerapatan timeline.</li>
+            </ul>
           ),
         },
         {
@@ -551,7 +583,7 @@ export default async function GuidePage() {
                 ["Termin", "Bagian nilai kontrak yang ditagih pada tahap tertentu."],
                 ["BAPP", "Berita acara penyelesaian pekerjaan."],
                 ["BAST", "Berita acara serah terima."],
-                ["PIC", "Penanggung jawab project di lapangan; dapat memperbarui progres melalui tautan email."],
+                ["PIC", "Penanggung jawab project; menerima pengingat email target selesai."],
                 ["SPI", "Schedule Performance Index, di sistem disebut kinerja waktu."],
                 ["CPI", "Cost Performance Index, di sistem disebut kinerja biaya."],
                 ["LTIFR", "Lost Time Injury Frequency Rate, tingkat cedera hilang hari kerja per 1 juta jam kerja."],

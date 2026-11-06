@@ -350,6 +350,49 @@ export function marginTimeline(input: MonitoringInput, today: number): MarginTim
     });
 }
 
+export type MarginDrop = {
+  from: number;
+  to: number;
+  /** change in forecast margin, percentage points (negative = turun) */
+  delta: number;
+  before: number;
+  after: number;
+  /** cost recorded in the period, and the RAB value of the work done in it */
+  cost: number;
+  earnedBudget: number;
+  progressFrom: number;
+  progressTo: number;
+};
+
+/**
+ * The periods in which the margin forecast fell the most, largest first. In
+ * each one, cost recorded is compared with the RAB value of the progress made:
+ * the forecast drops when money went out faster than the work it should pay
+ * for. Only periods that actually fell (more than 0,1 point) are returned.
+ */
+export function biggestMarginDrops(rows: MarginTimelineRow[], budget: number, limit = 3): MarginDrop[] {
+  const out: MarginDrop[] = [];
+  for (let i = 1; i < rows.length; i++) {
+    const a = rows[i - 1];
+    const b = rows[i];
+    if (a.forecastMarginPct === null || b.forecastMarginPct === null) continue;
+    const delta = round1(b.forecastMarginPct - a.forecastMarginPct);
+    if (delta >= -0.1) continue;
+    out.push({
+      from: a.t,
+      to: b.t,
+      delta,
+      before: a.forecastMarginPct,
+      after: b.forecastMarginPct,
+      cost: b.actualCost - a.actualCost,
+      earnedBudget: Math.round(((b.progress - a.progress) / 100) * budget),
+      progressFrom: a.progress,
+      progressTo: b.progress,
+    });
+  }
+  return out.sort((x, y) => x.delta - y.delta).slice(0, limit);
+}
+
 export const SIGNAL_LABEL: Record<Signal, string> = { good: "Baik", warn: "Waspada", bad: "Kritis", none: "Belum ada data" };
 export const CAUSE_LABEL: Record<string, string> = { NORMAL: "Normal", DELAY: "Akibat keterlambatan", EXTRA_SCOPE: "Pekerjaan tambahan", REWORK: "Pekerjaan ulang" };
 

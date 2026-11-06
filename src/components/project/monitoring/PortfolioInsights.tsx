@@ -6,10 +6,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardTitle } from "@/components/ui/Card";
 import { InfoTip } from "@/components/ui/InfoTip";
-import { HEALTH_LABEL, formatPercent, formatRupiah, shortDate } from "@/lib/project-monitoring-shared";
+import { HEALTH_LABEL, formatPercent, formatRupiah, rupiahAxis, shortDate } from "@/lib/project-monitoring-shared";
 import type { AgingBucket, HealthTrendRow, PortfolioRow } from "@/lib/project-monitoring";
 import { cn } from "@/lib/utils";
-import { WrapTick } from "./PortfolioMore";
 
 const DAY = 86400000;
 const HEALTH_DOT: Record<string, string> = { KRITIS: "#C2362F", WASPADA: "#D69E2E", ON_TRACK: "#2F855A", SELESAI: "#1671B8", BATAL: "#94A3B8" };
@@ -222,7 +221,7 @@ export function AgingCard({ aging }: { aging: AgingBucket[] }) {
   const overdue = aging.slice(1).reduce((s, b) => s + b.amount, 0);
   const worst = [...aging].reverse().find((b) => b.key !== "current" && b.amount > 0);
   return (
-    <Card>
+    <Card className="flex h-full flex-col">
       <div className="px-5 pt-4">
         <CardTitle className="flex items-center gap-1.5">
           Umur piutang
@@ -234,13 +233,13 @@ export function AgingCard({ aging }: { aging: AgingBucket[] }) {
           {total ? `Piutang ${formatRupiah(total, true)}, lewat jatuh tempo ${formatRupiah(overdue, true)}` : "Tidak ada piutang"}
         </p>
       </div>
-      <CardContent>
-        <div className="h-40">
+      <CardContent className="flex flex-1 flex-col">
+        <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={aging} margin={{ top: 8, right: 4, left: -18, bottom: 0 }}>
+            <BarChart data={aging} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
               <CartesianGrid stroke="#E6EBF1" vertical={false} />
-              <XAxis dataKey="label" height={34} tick={<WrapTick />} interval={0} axisLine={{ stroke: "#E6EBF1" }} tickLine={false} />
-              <YAxis tickFormatter={(v: number) => (v / 1e6).toLocaleString("id-ID", { maximumFractionDigits: 0 })} tick={{ fontSize: 10, fill: "#64748B" }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#64748B" }} interval={0} axisLine={{ stroke: "#E6EBF1" }} tickLine={false} />
+              <YAxis width={58} tickFormatter={rupiahAxis} tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} />
               <Tooltip cursor={{ fill: "#F1F5F9" }} contentStyle={tooltipStyle} formatter={(v) => [formatRupiah(Number(v), true), "Piutang"]} />
               <Bar dataKey="amount" radius={[3, 3, 0, 0]} maxBarSize={36} isAnimationActive={false}>
                 {aging.map((b, i) => (
@@ -251,7 +250,7 @@ export function AgingCard({ aging }: { aging: AgingBucket[] }) {
           </ResponsiveContainer>
         </div>
         {worst && (
-          <p className="mt-2 text-[12px] text-slate-600 dark:text-slate-300">
+          <p className="mt-auto pt-2 text-[12px] text-slate-600 dark:text-slate-300">
             Paling lama ({worst.label}):{" "}
             {worst.projects.slice(0, 2).map((x, i) => (
               <span key={x.id}>

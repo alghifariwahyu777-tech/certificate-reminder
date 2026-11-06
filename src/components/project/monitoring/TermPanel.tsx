@@ -10,6 +10,7 @@ import { Modal } from "@/components/ui/Modal";
 import { TERM_STATUS_LABEL, formatRupiah, isInvoiceOverdue } from "@/lib/project-monitoring-shared";
 import { cn } from "@/lib/utils";
 import { DeleteButton, EmptyState, FileLink, FileUploadField, FormError, Stat, fmtDate, todayInput, useMonitoringApi, EMPTY_FILE, useOpenFromHash } from "./shared";
+import { PackageField, PackageTag, defaultPackageId } from "./Packages";
 import type { ProjectMonitoringDTO, TermDTO } from "./types";
 
 const STATUS_CLASS: Record<string, string> = {
@@ -35,13 +36,15 @@ type Form = {
   fileUrl: string | null;
   driveFileId: string | null;
   fileMimeType: string | null;
+  packageId: string | null;
 };
 
 const s = (v: string | number | null | undefined) => (v === null || v === undefined ? "" : String(v));
 
-function toForm(t: TermDTO | null, nextSeq: number): Form {
+function toForm(t: TermDTO | null, nextSeq: number, packageId: string | null = null): Form {
   if (!t)
     return {
+      packageId,
       name: `Termin ${nextSeq}`,
       sequence: String(nextSeq),
       percent: "",
@@ -58,6 +61,7 @@ function toForm(t: TermDTO | null, nextSeq: number): Form {
       ...EMPTY_FILE,
     };
   return {
+    packageId: t.packageId,
     name: t.name,
     sequence: s(t.sequence),
     percent: s(t.percent),
@@ -90,7 +94,7 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
 
   function openForm(t: TermDTO | null) {
     setEditing(t);
-    setForm(toForm(t, data.terms.length + 1));
+    setForm(toForm(t, data.terms.length + 1, defaultPackageId(data)));
     setError(null);
     setOpen(true);
   }
@@ -182,7 +186,10 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
                     return (
                       <tr key={t.id} className="border-b border-slate-50 dark:border-slate-800/60 align-top">
                         <td className="px-5 py-3">
-                          <p className="font-medium text-ink dark:text-slate-100">{t.name}</p>
+                          <p className="font-medium text-ink dark:text-slate-100">
+                            {t.name}
+                            <PackageTag data={data} id={t.packageId} />
+                          </p>
                           {t.requirement && <p className="text-xs text-slate-500 mt-0.5">Syarat: {t.requirement}</p>}
                           <FileLink url={t.fileUrl} label="Dokumen" />
                         </td>
@@ -255,9 +262,10 @@ export function TermPanel({ data }: { data: ProjectMonitoringDTO }) {
               <Input id="tm-seq" type="number" min={0} value={form.sequence} onChange={(e) => set("sequence", e.target.value)} />
             </div>
           </div>
+          <PackageField data={data} value={form.packageId} onChange={(v) => set("packageId", v)} id="tm-pkg" />
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="tm-pct">% dari kontrak (opsional)</Label>
+              <Label htmlFor="tm-pct">{data.activePackageId ? "% dari nilai paket (opsional)" : "% dari kontrak (opsional)"}</Label>
               <Input id="tm-pct" type="number" min={0} max={100} step="any" value={form.percent} onChange={(e) => setPercent(e.target.value)} />
             </div>
             <div>

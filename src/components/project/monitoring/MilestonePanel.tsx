@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Select, Textarea } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
-import { MILESTONE_STATUS_LABEL } from "@/lib/project-monitoring-shared";
+import { activityActualAt, formatPercent, MILESTONE_STATUS_LABEL } from "@/lib/project-monitoring-shared";
 import { cn } from "@/lib/utils";
 import { DeleteButton, EmptyState, FileLink, FileUploadField, FormError, fmtDate, todayInput, useMonitoringApi, EMPTY_FILE, useOpenFromHash } from "./shared";
+import { PackageField, PackageTag, defaultPackageId } from "./Packages";
 import type { MilestoneDTO, ProjectMonitoringDTO } from "./types";
 
 const STATUS_CLASS: Record<string, string> = {
@@ -19,10 +20,11 @@ const STATUS_CLASS: Record<string, string> = {
 
 type FormState = Omit<MilestoneDTO, "id" | "weight" | "sequence"> & { weight: string; sequence: string };
 
-function toForm(m: MilestoneDTO | null, nextSeq: number, remaining: number): FormState {
+function toForm(m: MilestoneDTO | null, nextSeq: number, remaining: number, packageId: string | null = null): FormState {
   return m
     ? { ...m, weight: String(m.weight), sequence: String(m.sequence) }
     : {
+        packageId,
         name: "",
         description: null,
         weight: remaining > 0 ? String(Math.round(remaining * 10) / 10) : "",
@@ -48,7 +50,7 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
 
   function openForm(m: MilestoneDTO | null) {
     setEditing(m);
-    setForm(toForm(m, data.milestones.length + 1, 100 - totalWeight));
+    setForm(toForm(m, data.milestones.length + 1, 100 - totalWeight, defaultPackageId(data)));
     setError(null);
     setOpen(true);
   }
@@ -67,10 +69,10 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
   });
 
   async function save() {
-    if (!form.name.trim()) return setError("Nama milestone wajib diisi.");
+    if (!form.name.trim()) return setError("Nama kegiatan wajib diisi.");
     const err = editing
-      ? await send("PATCH", `${base}/${editing.id}`, payload(form), "Milestone diperbarui.")
-      : await send("POST", base, payload(form), "Milestone ditambahkan.");
+      ? await send("PATCH", `${base}/${editing.id}`, payload(form), "Kegiatan diperbarui.")
+      : await send("POST", base, payload(form), "Kegiatan ditambahkan.");
     if (err) setError(err);
     else setOpen(false);
   }
@@ -85,47 +87,57 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
-          <CardTitle>Milestone</CardTitle>
+          <CardTitle>Daftar kegiatan</CardTitle>
           <p className="text-xs text-slate-500 mt-1">
-            Isi rencana mulai dan selesai agar tampil di Gantt chart. Bobot milestone yang selesai menjadi progres realisasi otomatis. Total bobot saat ini{" "}
-            <span className={cn("font-medium", Math.abs(totalWeight - 100) > 0.05 ? "text-signal-soon" : "text-signal-active")}>
-              {totalWeight.toLocaleString("id-ID")}%
-            </span>
-            .
+            Isi rencana mulai, rencana selesai, dan bobot. Rencana setiap kegiatan dibagi rata per hari, lalu dijumlah sesuai bobot menjadi kurva S.{" "}
+            {totalWeight > 0 ? (
+              <>
+                Total bobot{" "}
+                <span className={cn("font-medium", Math.abs(totalWeight - 100) > 0.05 ? "text-signal-soon" : "text-signal-active")}>{totalWeight.toLocaleString("id-ID")}%</span>
+                {Math.abs(totalWeight - 100) > 0.05 ? ", dihitung sebagai 100%." : "."}
+              </>
+            ) : (
+              "Bobot belum diisi, jadi setiap kegiatan dihitung sama besar."
+            )}
           </p>
         </div>
         {data.canManage && (
           <Button size="sm" onClick={() => openForm(null)}>
             <Plus className="h-4 w-4" />
-            Tambah milestone
+            Tambah kegiatan
           </Button>
         )}
       </CardHeader>
       <CardContent className="p-0">
         {data.milestones.length === 0 ? (
-          <EmptyState icon={Flag} text="Belum ada milestone. Tambahkan tahapan pekerjaan beserta bobotnya, misalnya Kick-off 5%, Pelaksanaan 60%, Laporan final 30%, BAST 5%." action={data.canManage ? { label: "Tambah milestone", onClick: () => openForm(null) } : undefined} />
+          <EmptyState icon={Flag} text="Belum ada kegiatan. Tambahkan tahapan pekerjaan beserta tanggal dan bobotnya, misalnya Mobilisasi 5%, Pelaksanaan 60%, Laporan 30%, BAST 5%." action={data.canManage ? { label: "Tambah kegiatan", onClick: () => openForm(null) } : undefined} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="th-row">
                   <th className="px-5 py-2.5 font-medium w-10">#</th>
-                  <th className="px-3 py-2.5 font-medium">Milestone</th>
+                  <th className="px-3 py-2.5 font-medium">Kegiatan</th>
                   <th className="px-3 py-2.5 font-medium text-right">Bobot</th>
                   <th className="px-3 py-2.5 font-medium">Rencana</th>
-                  <th className="px-3 py-2.5 font-medium">Realisasi</th>
+                  <th className="px-3 py-2.5 font-medium text-right">Realisasi</th>
+                  <th className="px-3 py-2.5 font-medium">Tanggal aktual</th>
                   <th className="px-3 py-2.5 font-medium">Status</th>
                   {data.canManage && <th className="px-5 py-2.5" />}
                 </tr>
               </thead>
               <tbody>
-                {data.milestones.map((m) => {
+                {data.milestones.map((m, i) => {
+                  const realised = activityActualAt(data.input.milestones[i], data.today);
                   const late = m.status !== "DONE" && m.plannedDate && m.plannedDate < todayInput();
                   return (
                     <tr key={m.id} className="border-b border-slate-50 dark:border-slate-800/60 align-top">
                       <td className="px-5 py-3 text-slate-400 tabular-nums">{m.sequence}</td>
                       <td className="px-3 py-3">
-                        <p className="font-medium text-ink dark:text-slate-100">{m.name}</p>
+                        <p className="font-medium text-ink dark:text-slate-100">
+                          {m.name}
+                          <PackageTag data={data} id={m.packageId} />
+                        </p>
                         {m.description && <p className="text-xs text-slate-500 mt-0.5 whitespace-pre-line">{m.description}</p>}
                         <FileLink url={m.fileUrl} label="Bukti" />
                       </td>
@@ -135,6 +147,7 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
                         {fmtDate(m.plannedDate)}
                         {late && <span className="block text-[11px]">terlambat</span>}
                       </td>
+                      <td className="px-3 py-3 text-right font-semibold tabular-nums">{formatPercent(realised)}</td>
                       <td className="px-3 py-3 whitespace-nowrap">
                         {m.actualStartDate ? `${fmtDate(m.actualStartDate)} sampai ` : ""}
                         {m.actualDate ? fmtDate(m.actualDate) : m.actualStartDate ? "berjalan" : "-"}
@@ -160,13 +173,13 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
                             <button
                               type="button"
                               title="Ubah"
-                              aria-label="Ubah milestone"
+                              aria-label="Ubah kegiatan"
                               onClick={() => openForm(m)}
                               className="p-1.5 rounded text-slate-400 hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800"
                             >
                               <Pencil className="h-4 w-4" />
                             </button>
-                            <DeleteButton what="milestone" onConfirm={() => send("DELETE", `${base}/${m.id}`, undefined, "Milestone dihapus.")} />
+                            <DeleteButton what="kegiatan" onConfirm={() => send("DELETE", `${base}/${m.id}`, undefined, "Kegiatan dihapus.")} />
                           </div>
                         </td>
                       )}
@@ -179,11 +192,11 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
         )}
       </CardContent>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Ubah milestone" : "Tambah milestone"} maxWidth="max-w-lg">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? "Ubah kegiatan" : "Tambah kegiatan"} maxWidth="max-w-lg">
         <div className="space-y-4">
           <div className="grid grid-cols-[1fr_5rem] gap-3">
             <div>
-              <Label htmlFor="ms-name">Nama milestone / deliverable</Label>
+              <Label htmlFor="ms-name">Nama kegiatan</Label>
               <Input id="ms-name" value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Contoh: Laporan Final" />
             </div>
             <div>
@@ -191,6 +204,7 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
               <Input id="ms-seq" type="number" min={0} value={form.sequence} onChange={(e) => set("sequence", e.target.value)} />
             </div>
           </div>
+          <PackageField data={data} value={form.packageId} onChange={(v) => set("packageId", v)} id="ms-pkg" />
           <div>
             <Label htmlFor="ms-desc">Keterangan</Label>
             <Textarea id="ms-desc" rows={2} value={form.description || ""} onChange={(e) => set("description", e.target.value)} />
@@ -205,7 +219,7 @@ export function MilestonePanel({ data }: { data: ProjectMonitoringDTO }) {
               <Input id="ms-planned" type="date" value={form.plannedDate || ""} onChange={(e) => set("plannedDate", e.target.value || null)} />
             </div>
             <div>
-              <Label htmlFor="ms-weight">Bobot (%)</Label>
+              <Label htmlFor="ms-weight">Bobot (%), kosongkan bila sama rata</Label>
               <Input id="ms-weight" type="number" min={0} max={100} step="any" value={form.weight} onChange={(e) => set("weight", e.target.value)} />
             </div>
             <div>

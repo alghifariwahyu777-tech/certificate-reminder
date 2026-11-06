@@ -212,3 +212,8 @@ textarea:focus-visible {
   color: #94a3b8;
   border-color: #1e293b;
 }
+
+/* Date fields draw their own Indonesian text (components/ui/Input.tsx): hide the browser's mm/dd/yyyy but keep the calendar button */
+.date-field::-webkit-datetime-edit { color: transparent; }
+.date-field::-webkit-calendar-picker-indicator { opacity: 0.55; cursor: pointer; }
+.dark .date-field::-webkit-calendar-picker-indicator { filter: invert(1); }

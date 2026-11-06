@@ -34,7 +34,23 @@ export type SubresourceDef<S extends z.ZodTypeAny> = {
   update: (id: string, data: Record<string, unknown>) => Promise<{ id: string }>;
   remove: (id: string) => Promise<unknown>;
   findOwner: (id: string) => Promise<{ projectId: string } | null>;
+  /** item can be linked to a paket pekerjaan (input field packageId) */
+  packaged?: boolean;
 };
+
+/**
+ * The packageId of a packaged item, checked to belong to this project. A
+ * missing field leaves the link as it is on update; empty unlinks it.
+ */
+async function packageField(projectId: string, input: unknown, isCreate: boolean): Promise<{ error: NextResponse } | { data: Record<string, unknown> }> {
+  const has = typeof input === "object" && input !== null && "packageId" in input;
+  const raw = has ? (input as { packageId?: string | null }).packageId : undefined;
+  if (!has || raw === undefined) return { data: isCreate ? { packageId: null } : {} };
+  if (!raw) return { data: { packageId: null } };
+  const pkg = await prisma.projectPackage.findFirst({ where: { id: raw, projectId }, select: { id: true } });
+  if (!pkg) return { error: NextResponse.json({ message: "Paket pekerjaan tidak ditemukan di project ini." }, { status: 400 }) };
+  return { data: { packageId: pkg.id } };
+}
 
 const isUniqueViolation = (err: unknown) => typeof err === "object" && err !== null && (err as { code?: string }).code === "P2002";
 
@@ -84,9 +100,11 @@ export function collectionHandlers<S extends z.ZodTypeAny>(def: SubresourceDef<S
       if ("error" in g) return g.error;
       const p = await parse(request, def.schema);
       if ("error" in p) return p.error;
+      const pk = def.packaged ? await packageField(g.project.id, p.data, true) : { data: {} };
+      if ("error" in pk) return pk.error;
       let item: { id: string };
       try {
-        item = await def.create({ projectId: g.project.id, ...def.toData(p.data, { session: g.session, isCreate: true }) });
+        item = await def.create({ projectId: g.project.id, ...def.toData(p.data, { session: g.session, isCreate: true }), ...pk.data });
       } catch (err) {
         if (isUniqueViolation(err)) return NextResponse.json({ message: `Data ${def.label} yang sama sudah ada.` }, { status: 409 });
         throw err;
@@ -112,9 +130,11 @@ export function itemHandlers<S extends z.ZodTypeAny>(def: SubresourceDef<S>) {
       if (!(await owned(g))) return notFound();
       const p = await parse(request, def.schema);
       if ("error" in p) return p.error;
+      const pk = def.packaged ? await packageField(g.project.id, p.data, false) : { data: {} };
+      if ("error" in pk) return pk.error;
       let item: { id: string };
       try {
-        item = await def.update(g.itemId as string, def.toData(p.data, { session: g.session, isCreate: false }));
+        item = await def.update(g.itemId as string, { ...def.toData(p.data, { session: g.session, isCreate: false }), ...pk.data });
       } catch (err) {
         if (isUniqueViolation(err)) return NextResponse.json({ message: `Data ${def.label} yang sama sudah ada.` }, { status: 409 });
         throw err;
@@ -134,3 +154,7 @@ export function itemHandlers<S extends z.ZodTypeAny>(def: SubresourceDef<S>) {
 }
 
 export { guard as guardProjectWrite, audit as auditProjectMonitoring };
+
+/** For project routes that are not a plain child collection (e.g. saving many activities at once). */
+export const projectGuard = guard;
+export const auditProject = audit;

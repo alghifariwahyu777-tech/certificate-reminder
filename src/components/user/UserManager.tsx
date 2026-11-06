@@ -1,6 +1,6 @@
 "use client";
 
-import { ASSIGNABLE_ROLES, ROLE_DUTY, ROLE_LABEL, type Role } from "@/lib/permissions";
+import { ALL_AREAS, AREA_LABEL, ASSIGNABLE_ROLES, ROLE_DUTY, ROLE_LABEL, rolesFor, type Role } from "@/lib/permissions";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,7 +14,7 @@ import { createUserSchema, updateUserSchema, type CreateUserInput, type UpdateUs
 import { formatDate } from "@/lib/utils";
 import { Notice } from "@/components/ui/Notice";
 
-const ROLE_OPTIONS: Role[] = [...ASSIGNABLE_ROLES, "PIC"];
+const ROLE_OPTIONS: Role[] = [...ASSIGNABLE_ROLES];
 
 type UserItem = {
   id: string;
@@ -186,17 +186,42 @@ export function UserManager({
 
       <Card>
         <CardHead title="Hak akses per peran" description="Semua peran dapat melihat seluruh data. Perbedaannya ada pada data yang boleh diubah." />
-        <div className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">
-          {ROLE_OPTIONS.map((r) => (
-            <div key={r} className="grid gap-1 px-5 py-2.5 text-sm sm:grid-cols-[180px_1fr]">
-              <span className="font-semibold text-ink dark:text-slate-100">{ROLE_LABEL[r]}</span>
-              <span className="text-slate-600 dark:text-slate-300">{ROLE_DUTY[r]}</span>
-            </div>
-          ))}
-          <div className="grid gap-1 px-5 py-2.5 text-sm sm:grid-cols-[180px_1fr]">
-            <span className="font-semibold text-ink dark:text-slate-100">{ROLE_LABEL.PIC}</span>
-            <span className="text-slate-600 dark:text-slate-300">{ROLE_DUTY.PIC}</span>
-          </div>
+        <div className="mt-2 overflow-x-auto">
+          <table className="w-full min-w-[640px] text-sm">
+            <thead>
+              <tr className="th-row">
+                <th className="w-44 px-5 py-2.5">Peran</th>
+                <th className="px-3 py-2.5">Tugas</th>
+                <th className="px-5 py-2.5">Boleh mengubah</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ROLE_OPTIONS.map((r) => {
+                const areas = ALL_AREAS.filter((a) => rolesFor(a).includes(r));
+                return (
+                  <tr key={r} className="border-t border-line/70 align-top dark:border-slate-800">
+                    <td className="px-5 py-3 font-semibold text-ink dark:text-slate-100">{ROLE_LABEL[r]}</td>
+                    <td className="px-3 py-3 text-slate-600 dark:text-slate-300">{ROLE_DUTY[r]}</td>
+                    <td className="px-5 py-3">
+                      {areas.length === 0 ? (
+                        <span className="text-slate-400">Hanya melihat</span>
+                      ) : r === "ADMIN" ? (
+                        <span className="rounded bg-[#EAF5EE] px-1.5 py-0.5 text-[11.5px] font-semibold text-signal-active">Semua data</span>
+                      ) : (
+                        <span className="flex flex-wrap gap-1">
+                          {areas.map((a) => (
+                            <span key={a} className="rounded bg-[#EEF5FB] px-1.5 py-0.5 text-[11.5px] font-semibold text-brand-blueDark dark:bg-slate-800 dark:text-slate-200">
+                              {AREA_LABEL[a]}
+                            </span>
+                          ))}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </Card>
 

@@ -12,6 +12,7 @@ import {
   Line,
   LineChart,
   ReferenceArea,
+  ReferenceDot,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -20,7 +21,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { formatPercent, formatRupiah, shortDate } from "@/lib/project-monitoring-shared";
-import { BRIDGE_SHORT } from "@/lib/project-margin";
+import { BRIDGE_SHORT, CAUSE_LABEL, biggestMarginDrops } from "@/lib/project-margin";
 import { cn } from "@/lib/utils";
 import type { ProjectMonitoringDTO } from "./types";
 import { Notice } from "@/components/ui/Notice";
@@ -52,6 +53,8 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
   });
 
   const history = data.marginTimeline;
+  const drops = biggestMarginDrops(history, data.budgetItems.reduce((sum, b) => sum + b.amount, 0));
+  const top = drops[0];
 
   return (
     <div className="space-y-5">
@@ -285,6 +288,7 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
           </CardTitle>
           <CardDescription>
             {history.length ? `Sejak ${shortDate(history[0].t)} sampai hari ini. ` : ""}Area merah muda berarti proyeksi berada di bawah target.
+            {top ? ` Penurunan terbesar ${shortDate(top.from)} sampai ${shortDate(top.to)}, ditandai pada grafik.` : ""}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -311,6 +315,18 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
                         <ReferenceLine y={m.targetMarginPct} stroke="#123F6B" strokeDasharray="6 4" label={{ value: `Target ${formatPercent(m.targetMarginPct)}`, fontSize: 11, fill: "#123F6B", position: "insideTopLeft" }} />
                       )}
                       <ReferenceLine y={0} stroke="#94A3B8" />
+                      {top && <ReferenceArea x1={top.from} x2={top.to} fill="#C2362F" fillOpacity={0.12} />}
+                      {top && (
+                        <ReferenceDot
+                          x={top.to}
+                          y={top.after}
+                          r={5}
+                          fill="#C2362F"
+                          stroke="#fff"
+                          strokeWidth={2}
+                          label={{ value: `Turun ${Math.abs(top.delta).toLocaleString("id-ID", { maximumFractionDigits: 1 })} poin`, position: "bottom", fontSize: 11, fontWeight: 700, fill: "#C2362F" }}
+                        />
+                      )}
                       <Line type="linear" dataKey="forecastMarginPct" name="Proyeksi margin akhir" stroke="#1671B8" strokeWidth={2.5} dot={false} isAnimationActive={false} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -327,7 +343,57 @@ export function MarginPanel({ data }: { data: ProjectMonitoringDTO }) {
               <span className="w-4 border-t-2 border-dashed border-[#123F6B]" />
               Target margin
             </span>
+            {top && (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-3 w-4 rounded-sm bg-[#C2362F]/20" />
+                Penurunan terbesar
+              </span>
+            )}
           </div>
+          {drops.length > 0 && (
+            <div className="mt-4 border-t border-line pt-3 dark:border-slate-800">
+              <p className="mb-2 text-[13px] font-semibold text-ink dark:text-slate-100">Penurunan proyeksi margin terbesar</p>
+              <ol className="space-y-2.5">
+                {drops.map((d, i) => {
+                  const spent = data.expenses
+                    .filter((e) => {
+                      const t = Date.parse(e.expenseDate.slice(0, 10));
+                      return t > d.from && t <= d.to;
+                    })
+                    .sort((a, b) => b.amount - a.amount)
+                    .slice(0, 3);
+                  return (
+                    <li key={d.to} className="rounded-lg border border-line px-3 py-2.5 text-[12.5px] dark:border-slate-700">
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <span className="font-semibold text-ink dark:text-slate-100">
+                          {i + 1}. {shortDate(d.from)} sampai {shortDate(d.to)}
+                        </span>
+                        <span className="font-bold tabular-nums text-signal-expired">
+                          {formatPercent(d.before)} menjadi {formatPercent(d.after)} (turun {Math.abs(d.delta).toLocaleString("id-ID", { maximumFractionDigits: 1 })} poin)
+                        </span>
+                      </div>
+                      <p className="mt-1 text-slate-600 dark:text-slate-300">
+                        Biaya keluar {formatRupiah(d.cost, true)}, sedangkan nilai RAB untuk progres yang dicapai ({formatPercent(d.progressFrom)} ke {formatPercent(d.progressTo)}) hanya{" "}
+                        {formatRupiah(d.earnedBudget, true)}.
+                      </p>
+                      {spent.length > 0 && (
+                        <p className="mt-1 text-slate-500">
+                          Biaya terbesar:{" "}
+                          {spent.map((e, j) => (
+                            <span key={e.id}>
+                              {j > 0 && ", "}
+                              {e.description || e.category} {formatRupiah(e.amount, true)}
+                              {e.cause !== "NORMAL" ? ` (${CAUSE_LABEL[e.cause] ?? e.cause})` : ""}
+                            </span>
+                          ))}
+                        </p>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          )}
         </CardContent>
       </Card>
 

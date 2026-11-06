@@ -97,32 +97,6 @@ export function WeeklyReportSettingsForm({ canManage, initial, embedded = false 
           </div>
         </div>
 
-        <div className="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-5">
-          <label className="flex items-center gap-2 text-sm font-medium text-ink dark:text-slate-200">
-            <input type="checkbox" disabled={!canManage} className="h-4 w-4 rounded border-slate-300" checked={v.picUpdateRequestEnabled} onChange={(e) => setV((s) => ({ ...s, picUpdateRequestEnabled: e.target.checked }))} />
-            Kirim email permintaan pembaruan progres ke PIC
-          </label>
-          <p className="text-xs text-slate-500">
-            Setiap PIC menerima satu email berisi tautan pembaruan untuk semua project berjalannya, tanpa perlu masuk. Pilih hari sebelum hari laporan agar data laporan terbaru.
-          </p>
-          <div className="max-w-[12rem]">
-            <Label htmlFor="pu-day">Hari kirim</Label>
-            <Select id="pu-day" disabled={!canManage} value={v.picUpdateRequestDay} onChange={(e) => setV((s) => ({ ...s, picUpdateRequestDay: Number(e.target.value) }))}>
-              {days.map(([d, l]) => (
-                <option key={d} value={d}>
-                  {l}
-                </option>
-              ))}
-            </Select>
-          </div>
-          {canManage && (
-            <Button size="sm" variant="outline" isLoading={busy === "pic"} onClick={() => call("pic", "/api/pic-update-request/send", "POST", undefined, "Permintaan update dikirim (yang belum menerima minggu ini).")}>
-              <Send className="h-4 w-4" />
-              Kirim permintaan pembaruan sekarang
-            </Button>
-          )}
-        </div>
-
         {error && <p className="text-sm text-signal-expired">{error}</p>}
         {canManage && (
           <div className="flex justify-end">

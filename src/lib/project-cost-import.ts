@@ -295,11 +295,21 @@ export async function parseCostWorkbook(buffer: Buffer, opts: { restrictToProjec
 }
 
 /** Writes a parsed preview. Only NEW rows are written; RAB replaces each listed project's RAB. */
-export async function commitCostImport(preview: ImportPreview, actorName: string): Promise<{ costs: number; budgetProjects: number; baselinesLocked: number }> {
+/**
+ * opts.packageId (import from inside one package of one project): costs and
+ * RAB lines go to that package, and only that package's RAB lines are
+ * replaced. A project that uses packages but is imported without a package
+ * gets its costs unlinked and keeps its RAB (it cannot know which package the
+ * lines belong to).
+ */
+export async function commitCostImport(preview: ImportPreview, actorName: string, opts: { packageId?: string | null } = {}): Promise<{ costs: number; budgetProjects: number; baselinesLocked: number }> {
   const projects = await prisma.project.findMany({
     where: { deletedAt: null, projectNumber: { in: [...new Set([...preview.costs, ...preview.budgets].map((r) => r.projectNumber))] } },
-    select: { id: true, projectNumber: true },
+    select: { id: true, projectNumber: true, usePackages: true },
   });
+  const pkg = opts.packageId ? await prisma.projectPackage.findUnique({ where: { id: opts.packageId }, select: { id: true, projectId: true } }) : null;
+  const packageOf = (projectId: string) => (pkg && pkg.projectId === projectId ? pkg.id : null);
+  const usesPackages = new Set(projects.filter((p) => p.usePackages).map((p) => p.id));
   const idOf = new Map(projects.map((p) => [p.projectNumber.trim().toLowerCase(), p.id]));
 
   const costs = preview.costs.filter((c) => c.status === "NEW" && idOf.has(c.projectNumber.toLowerCase()));
@@ -307,6 +317,7 @@ export async function commitCostImport(preview: ImportPreview, actorName: string
     await prisma.projectExpense.createMany({
       data: costs.map((c) => ({
         projectId: idOf.get(c.projectNumber.toLowerCase()) as string,
+        packageId: packageOf(idOf.get(c.projectNumber.toLowerCase()) as string),
         expenseDate: new Date(c.date as string),
         category: c.category,
         description: c.description,
@@ -325,12 +336,13 @@ export async function commitCostImport(preview: ImportPreview, actorName: string
   for (const b of preview.budgets.filter((x) => x.status === "NEW")) {
     const id = idOf.get(b.projectNumber.toLowerCase());
     if (!id) continue;
+    if (usesPackages.has(id) && !packageOf(id)) continue;
     budgetByProject.set(id, [...(budgetByProject.get(id) || []), b]);
   }
   for (const [projectId, rows] of budgetByProject) {
     await prisma.$transaction([
-      prisma.projectBudgetItem.deleteMany({ where: { projectId } }),
-      prisma.projectBudgetItem.createMany({ data: rows.map((r) => ({ projectId, category: r.category, description: r.description, amount: r.amount })) }),
+      prisma.projectBudgetItem.deleteMany({ where: packageOf(projectId) ? { projectId, packageId: packageOf(projectId) } : { projectId } }),
+      prisma.projectBudgetItem.createMany({ data: rows.map((r) => ({ projectId, packageId: packageOf(projectId), category: r.category, description: r.description, amount: r.amount })) }),
     ]);
     const locked = await lockBaselineIfOpen(projectId, actorName);
     if (locked) baselinesLocked += 1;

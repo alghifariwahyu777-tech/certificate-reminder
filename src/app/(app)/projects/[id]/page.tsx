@@ -29,6 +29,9 @@ import type { ProjectMonitoringDTO } from "@/components/project/monitoring/types
 import type { RabData } from "@/lib/project-rab-import";
 import { DeviationChart } from "@/components/project/monitoring/DeviationChart";
 import { GanttChart } from "@/components/project/monitoring/GanttChart";
+import { PackageManager, PackageOverview, PackageSwitcher } from "@/components/project/monitoring/Packages";
+import { ContractDocumentCard } from "@/components/project/ContractDocumentCard";
+import { ScheduleCurveCard } from "@/components/project/monitoring/ScheduleCurveCard";
 import { ProjectCashflowCard, ProjectCostCauseCard } from "@/components/project/monitoring/ProjectInsights";
 import { RiskHeatmapCard } from "@/components/project/monitoring/PortfolioRiskHse";
 import { cashflowForecast, costOverrunPareto } from "@/lib/portfolio-insights";
@@ -47,11 +50,12 @@ function formatRupiah(value: string | null | undefined) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(num);
 }
 
-export default async function ProjectDetailPage(context: { params: Promise<{ id: string }> }) {
+export default async function ProjectDetailPage(context: { params: Promise<{ id: string }>; searchParams: Promise<{ paket?: string }> }) {
   const params = await context.params;
+  const { paket } = await context.searchParams;
   const session = await getSession();
 
-  const loaded = await getProjectWithMonitoring(params.id);
+  const loaded = await getProjectWithMonitoring(params.id, { packageId: paket ?? null });
   if (!loaded) notFound();
   const { project, summary } = loaded;
   const rights = projectRights(session, project);
@@ -89,21 +93,57 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
     }
   })();
 
-  const projectItem = { p: project, input: loaded.input, summary, margin: loaded.margin };
+  const sp = loaded.scoped;
+  const projectItem = { p: sp, input: loaded.input, summary, margin: loaded.margin };
+  const pkgDto = (p: (typeof project.packages)[number]) => ({
+    id: p.id,
+    sequence: p.sequence,
+    name: p.name,
+    docType: p.docType,
+    docNumber: p.docNumber,
+    issueDate: d(p.issueDate),
+    value: n(p.value),
+    startDate: d(p.startDate),
+    endDate: d(p.endDate) as string,
+    actualEndDate: d(p.actualEndDate),
+    status: p.status,
+    notes: p.notes,
+    fileUrl: p.fileUrl,
+    driveFileId: p.driveFileId,
+    fileMimeType: p.fileMimeType,
+  });
   const monitoring: ProjectMonitoringDTO = {
     projectId: project.id,
-    status: project.status,
-    contractValue: n(project.contractValue),
-    startDate: d(project.startDate),
-    targetEndDate: project.targetEndDate.toISOString(),
+    usePackages: project.usePackages,
+    packages: project.packages.map(pkgDto),
+    activePackageId: loaded.activePackage?.id ?? null,
+    packageRows: loaded.packageRows.map((r) => ({
+      ...pkgDto(r.pkg),
+      health: r.summary.health,
+      actualPercent: r.summary.actualPercent,
+      plannedPercent: r.summary.plannedPercent,
+      deviation: r.summary.deviation,
+      spi: r.summary.spi,
+      forecastMarginPct: r.margin.forecastMarginPct,
+      targetMarginPct: r.margin.targetMarginPct,
+      pad: r.summary.pad,
+      forecastEndDate: r.summary.forecastEndDate,
+      counts: r.counts,
+    })),
+    unassigned: loaded.unassigned,
+    status: sp.status,
+    contractValue: n(sp.contractValue),
+    startDate: d(sp.startDate),
+    targetEndDate: sp.targetEndDate.toISOString(),
     canManage,
     rights,
     today: loaded.today,
     input: loaded.input,
     summary,
     thresholds: loaded.thresholds,
-    milestones: project.milestones.map((m) => ({
+    milestones: sp.milestones.map((m) => ({
       id: m.id,
+      packageId: m.packageId,
       sequence: m.sequence,
       name: m.name,
       description: m.description,
@@ -118,11 +158,12 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
       driveFileId: m.driveFileId,
       fileMimeType: m.fileMimeType,
     })),
-    plans: project.progressPlans.map((p) => ({ periodDate: d(p.periodDate) as string, plannedPercent: Number(p.plannedPercent) })),
-    reports: project.progressReports.map((r) => ({
+    plans: sp.progressPlans.map((p) => ({ periodDate: d(p.periodDate) as string, plannedPercent: Number(p.plannedPercent) })),
+    reports: sp.progressReports.map((r) => ({
       id: r.id,
       reportDate: d(r.reportDate) as string,
       actualPercent: Number(r.actualPercent),
+      source: r.source,
       summary: r.summary,
       nextPlan: r.nextPlan,
       createdBy: r.createdBy,
@@ -130,8 +171,9 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
       driveFileId: r.driveFileId,
       fileMimeType: r.fileMimeType,
     })),
-    terms: project.terms.map((t) => ({
+    terms: sp.terms.map((t) => ({
       id: t.id,
+      packageId: t.packageId,
       sequence: t.sequence,
       name: t.name,
       percent: n(t.percent),
@@ -149,9 +191,10 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
       driveFileId: t.driveFileId,
       fileMimeType: t.fileMimeType,
     })),
-    budgetItems: project.budgetItems.map((b) => ({ id: b.id, category: b.category, description: b.description, amount: Number(b.amount) })),
-    expenses: project.expenses.map((e) => ({
+    budgetItems: sp.budgetItems.map((b) => ({ id: b.id, packageId: b.packageId, category: b.category, description: b.description, amount: Number(b.amount) })),
+    expenses: sp.expenses.map((e) => ({
       id: e.id,
+      packageId: e.packageId,
       expenseDate: d(e.expenseDate) as string,
       category: e.category,
       description: e.description,
@@ -183,9 +226,9 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
       records: project.hseReports.map((h) => ({ ...toHseRecord(h), id: h.id, periodDate: h.periodDate.toISOString().slice(0, 10), notes: h.notes, createdBy: h.createdBy })),
       summary: summarizeHse(project.hseReports.map(toHseRecord)),
     },
-    trend: project.status === "ONGOING" ? deviationTrend(project, summary.deviation) : null,
+    trend: sp.status === "ONGOING" ? deviationTrend(sp, summary.deviation) : null,
     padSchedule: padSchedule(loaded.input, loaded.today, loaded.thresholds),
-    snapshots: project.snapshots.map((x) => ({
+    snapshots: sp.snapshots.map((x) => ({
       weekKey: x.weekKey,
       actualPercent: x.actualPercent,
       plannedPercent: x.plannedPercent,
@@ -228,16 +271,16 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
     costCurve: buildCostCurve(loaded.input, summary, loaded.margin, loaded.today),
     marginTimeline: marginTimeline(loaded.input, loaded.today),
     categorySuggestions: [...new Set([...PROJECT_COST_CATEGORIES, ...usedCategories.map((c) => c.category)])].sort((a, b) => a.localeCompare(b)),
-    baseline: project.baselineLockedAt
+    baseline: sp.baselineLockedAt
       ? {
-          lockedAt: project.baselineLockedAt.toISOString(),
-          lockedBy: project.baselineLockedBy,
-          contractValue: n(project.baselineContractValue),
-          budget: n(project.baselineBudget),
-          endDate: d(project.baselineEndDate),
+          lockedAt: sp.baselineLockedAt.toISOString(),
+          lockedBy: sp.baselineLockedBy,
+          contractValue: n(sp.baselineContractValue),
+          budget: n(sp.baselineBudget),
+          endDate: d(sp.baselineEndDate),
         }
       : null,
-    marginHistory: project.snapshots.map((x) => ({
+    marginHistory: sp.snapshots.map((x) => ({
       weekKey: x.weekKey,
       actualMarginPct: x.actualMarginPct,
       forecastMarginPct: x.forecastMarginPct,
@@ -260,7 +303,7 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
     },
     targetMarginPct: project.targetMarginPct,
     cashflow: cashflowForecast([projectItem], loaded.today),
-    costCauses: costOverrunPareto([{ ...projectItem, p: { ...project, status: "ONGOING" } }]),
+    costCauses: costOverrunPareto([{ ...projectItem, p: { ...sp, status: "ONGOING" } }]),
     risks: project.issues
       .filter((x) => x.status === "OPEN")
       .map((x) => ({
@@ -288,7 +331,7 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
     { label: "PIC", value: project.pic },
     { label: "Email PIC", value: project.picEmail || "-" },
     { label: "Email CC (atasan)", value: project.ccEmail || "-" },
-    { label: "Nilai kontrak", value: formatRupiah(project.contractValue?.toString()) },
+    { label: project.usePackages ? `Nilai kontrak (${project.packages.filter((p) => p.status !== "CANCELLED").length} paket)` : "Nilai kontrak", value: formatRupiah(project.contractValue?.toString()) },
     { label: "Tanggal mulai", value: project.startDate ? formatDate(project.startDate) : "-" },
     { label: "Target selesai", value: formatDate(project.targetEndDate) },
     {
@@ -353,31 +396,7 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
         }))}
       />
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Dokumen kontrak</CardTitle>
-          {project.fileUrl && (
-            <a href={`${project.fileUrl}?download=1`}>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4" />
-                Unduh
-              </Button>
-            </a>
-          )}
-        </CardHeader>
-        <CardContent>
-          {!project.fileUrl ? (
-            <div className="py-10 text-center text-slate-500">
-              <p className="text-sm">Belum ada dokumen yang diunggah.</p>
-            </div>
-          ) : project.fileMimeType?.startsWith("image/") ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={project.fileUrl} alt={project.projectName} className="mx-auto max-h-[600px] rounded border border-line dark:border-slate-700" />
-          ) : (
-            <iframe src={project.fileUrl} className="h-[600px] w-full rounded border border-line dark:border-slate-700" />
-          )}
-        </CardContent>
-      </Card>
+      <ContractDocumentCard projectId={project.id} projectName={project.projectName} fileUrl={project.fileUrl} fileMimeType={project.fileMimeType} canEdit={rights.project} />
     </div>
   );
 
@@ -468,15 +487,33 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
           </dl>
         </section>
 
+        <PackageSwitcher data={monitoring} />
         <MonitoringTabs
           panels={{
-            ringkasan: <SummaryPanel data={monitoring} />,
+            ringkasan: (
+              <div className="space-y-4">
+                <PackageOverview data={monitoring} />
+                <SummaryPanel data={monitoring} />
+              </div>
+            ),
             jadwal: [
               {
-                key: "progres",
-                label: "Progres",
+                key: "milestone",
+                label: "Gantt dan kegiatan",
                 node: (
                   <div className="space-y-4">
+                    <GanttChart data={monitoring} />
+                    <ScheduleCurveCard data={monitoring} />
+                    <MilestonePanel data={monitoring} />
+                  </div>
+                ),
+              },
+              {
+                key: "progres",
+                label: "Kurva S dan realisasi",
+                node: (
+                  <div className="space-y-4">
+                    <ScheduleCurveCard data={monitoring} />
                     <ProgressPanel data={monitoring} />
                     <Card>
                       <CardHeader>
@@ -487,16 +524,6 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
                         <DeviationChart input={monitoring.input} today={monitoring.today} />
                       </CardContent>
                     </Card>
-                  </div>
-                ),
-              },
-              {
-                key: "milestone",
-                label: "Gantt dan milestone",
-                node: (
-                  <div className="space-y-4">
-                    <GanttChart data={monitoring} />
-                    <MilestonePanel data={monitoring} />
                   </div>
                 ),
               },
@@ -533,6 +560,7 @@ export default async function ProjectDetailPage(context: { params: Promise<{ id:
             ],
             dokumen: [
               { key: "kontrak", label: "Kontrak dan addendum", node: kontrak },
+              { key: "paket", label: "Paket pekerjaan", node: <PackageManager data={monitoring} /> },
               { key: "penutupan", label: "Penutupan", node: <CloseoutPanel data={monitoring} /> },
             ],
           }}

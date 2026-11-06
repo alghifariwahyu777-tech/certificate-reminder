@@ -320,7 +320,8 @@ export function RabUploadDialog({ data }: { data: ProjectMonitoringDTO }) {
   const [apply, setApply] = useState<Set<RabProjectField>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const isRevision = data.rab.revisions.length > 0;
+  // per package, a revision means this package already has RAB lines
+  const isRevision = data.activePackageId ? data.budgetItems.length > 0 : data.rab.revisions.length > 0;
   useOpenFromHash("biaya", () => setOpen(true));
 
   function reset() {
@@ -338,6 +339,7 @@ export function RabUploadDialog({ data }: { data: ProjectMonitoringDTO }) {
     try {
       const fd = new FormData();
       fd.append("file", f);
+      if (data.activePackageId) fd.append("packageId", data.activePackageId);
       if (commit) {
         fd.append("commit", "1");
         fd.append("reason", reason);
@@ -372,6 +374,11 @@ export function RabUploadDialog({ data }: { data: ProjectMonitoringDTO }) {
       else n.add(k);
       return n;
     });
+
+  // with packages, a RAB belongs to one package: upload it from that package's view
+  if (data.usePackages && !data.activePackageId) {
+    return <span className="text-[12px] text-slate-500">Pilih paket di atas untuk mengunggah RAB-nya.</span>;
+  }
 
   return (
     <>
@@ -503,7 +510,7 @@ export function RabUploadDialog({ data }: { data: ProjectMonitoringDTO }) {
                 </div>
               )}
 
-              {preview.nextVersion > 0 && (
+              {preview.nextVersion > 0 && isRevision && (
                 <div className="space-y-3">
                   <div>
                     <label htmlFor="rab-reason" className="mb-1.5 block text-[13px] font-medium text-slate-600 dark:text-slate-400">
@@ -542,7 +549,7 @@ export function RabUploadDialog({ data }: { data: ProjectMonitoringDTO }) {
                 <Button variant="outline" onClick={reset}>
                   Pilih file lain
                 </Button>
-                <Button isLoading={busy} disabled={preview.nextVersion > 0 && !reason.trim()} onClick={() => file && send(file, true)}>
+                <Button isLoading={busy} disabled={preview.nextVersion > 0 && isRevision && !reason.trim()} onClick={() => file && send(file, true)}>
                   {preview.nextVersion === 0 ? "Simpan RAB" : "Simpan revisi RAB"}
                 </Button>
               </div>
