@@ -22,7 +22,7 @@ export async function POST(request: NextRequest, context: Ctx) {
     });
     await syncProjectFromPackages(tx, g.project.id);
     return created;
-  });
+  }, { timeout: 20000, maxWait: 10000 });
   await auditProject(g.session, g.project, "CREATE", item.id, `Menambahkan paket pekerjaan "${p.data.name}"`);
   return NextResponse.json({ item }, { status: 201 });
 }

@@ -3,6 +3,9 @@ import { requireArea } from "@/lib/auth";
 import { importCertificatesFromExcel } from "@/lib/excel-import";
 import { logAudit } from "@/lib/audit";
 
+/** large Excel files: allow up to a minute */
+export const maxDuration = 60;
+
 export const runtime = "nodejs";
 
 const MAX_IMPORT_FILE_SIZE = 5 * 1024 * 1024; // 5 MB — spreadsheet, not a document scan

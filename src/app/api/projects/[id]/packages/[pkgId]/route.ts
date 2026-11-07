@@ -20,7 +20,7 @@ export async function PATCH(request: NextRequest, context: Ctx) {
   await prisma.$transaction(async (tx) => {
     await tx.projectPackage.update({ where: { id: pkgId }, data: { ...packageData(p.data), ...(p.data.sequence !== undefined ? { sequence: p.data.sequence } : {}) } });
     await syncProjectFromPackages(tx, g.project.id);
-  });
+  }, { timeout: 20000, maxWait: 10000 });
   await auditProject(g.session, g.project, "UPDATE", pkgId, `Mengubah paket pekerjaan "${p.data.name}"`);
   return NextResponse.json({ ok: true });
 }
@@ -37,7 +37,7 @@ export async function DELETE(_request: NextRequest, context: Ctx) {
   await prisma.$transaction(async (tx) => {
     await tx.projectPackage.delete({ where: { id: pkgId } });
     await syncProjectFromPackages(tx, g.project.id);
-  });
+  }, { timeout: 20000, maxWait: 10000 });
   await auditProject(g.session, g.project, "DELETE", pkgId, `Menghapus paket pekerjaan "${pkg.name}"`);
   return NextResponse.json({ ok: true });
 }

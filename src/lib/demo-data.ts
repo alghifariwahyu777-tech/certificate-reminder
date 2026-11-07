@@ -430,21 +430,28 @@ async function splitIntoPackages(tx: any, pid: string, sc: Scenario, actor: stri
     await tx.projectMilestone.updateMany({ where: { id: { in: g.mine.map((m: any) => m.id) } }, data: { packageId: p.id } });
   }
   // terms: in order, each package gets terms until its share of the contract is reached
-  const terms = await tx.projectTerm.findMany({ where: { projectId: pid }, orderBy: { sequence: "asc" } });
+  const terms = await tx.projectTerm.findMany({ where: { projectId: pid }, orderBy: { sequence: "asc" }, select: { id: true, amount: true } });
   const total = terms.reduce((a: number, t: any) => a + Number(t.amount), 0) || 1;
+  const termsOf = new Map<string, string[]>();
   let cum = 0;
   for (const t of terms) {
     cum += Number(t.amount) / total;
     let acc = 0;
     const pkg = pkgs.find((p) => (acc += p.share) >= cum - 1e-6) ?? pkgs[pkgs.length - 1];
-    await tx.projectTerm.update({ where: { id: t.id }, data: { packageId: pkg.id } });
+    termsOf.set(pkg.id, [...(termsOf.get(pkg.id) ?? []), t.id]);
   }
   // costs: by date, to the package whose period contains it (else the nearest one)
   const costs = await tx.projectExpense.findMany({ where: { projectId: pid }, select: { id: true, expenseDate: true } });
+  const costsOf = new Map<string, string[]>();
   for (const c of costs) {
     const t = c.expenseDate.getTime();
     const pkg = pkgs.find((p) => t >= p.start && t <= p.end) ?? [...pkgs].sort((a, b) => Math.abs(t - (a.start + a.end) / 2) - Math.abs(t - (b.start + b.end) / 2))[0];
-    await tx.projectExpense.update({ where: { id: c.id }, data: { packageId: pkg.id } });
+    costsOf.set(pkg.id, [...(costsOf.get(pkg.id) ?? []), c.id]);
+  }
+  // one update per package instead of one per row
+  for (const p of pkgs) {
+    if (termsOf.get(p.id)?.length) await tx.projectTerm.updateMany({ where: { id: { in: termsOf.get(p.id) } }, data: { packageId: p.id } });
+    if (costsOf.get(p.id)?.length) await tx.projectExpense.updateMany({ where: { id: { in: costsOf.get(p.id) } }, data: { packageId: p.id } });
   }
   // RAB lines: split by package share so totals stay the same
   const lines = await tx.projectBudgetItem.findMany({ where: { projectId: pid } });
@@ -593,22 +600,24 @@ async function createDemoProject(tx: Tx, sc: Scenario, ctx: { today: number; act
         };
       });
     // realisation per activity, filled in weekly (and on the last report date), following the project's S-shaped progress
-    for (const { from, ...row } of msRows) {
-      const m = await tx.projectMilestone.create({ data: row, select: { id: true } });
-      if (!row.actualStartDate) continue;
+    // all activities in one call, then all their daily realisation in one more (few round trips: the database may be far away)
+    const createdMs: { id: string }[] = await tx.projectMilestone.createManyAndReturn({ data: msRows.map(({ from: _from, ...row }) => row), select: { id: true } });
+    const allLogs: { milestoneId: string; projectId: string; date: Date; percent: number; createdBy: string }[] = [];
+    msRows.forEach(({ from, ...row }, idx) => {
+      if (!row.actualStartDate) return;
       const w = Number(row.weight);
       const pctAt = (t: number) => Math.max(0, Math.min(100, ((reportedAt((t - start) / Math.max(DAY, lastReport - start)) - from) / w) * 100));
       const until = row.actualDate ? row.actualDate.getTime() : lastReport;
+      const dayOf = (t: number) => day(Date.UTC(new Date(t).getUTCFullYear(), new Date(t).getUTCMonth(), new Date(t).getUTCDate()));
       const logs: { date: Date; percent: number }[] = [];
-      for (let t = row.actualStartDate.getTime() + 6 * DAY; t < until; t += 7 * DAY) logs.push({ date: day(Date.UTC(new Date(t).getUTCFullYear(), new Date(t).getUTCMonth(), new Date(t).getUTCDate())), percent: Math.round(pctAt(t) * 10) / 10 });
-      logs.push({ date: day(Date.UTC(new Date(until).getUTCFullYear(), new Date(until).getUTCMonth(), new Date(until).getUTCDate())), percent: row.actualDate ? 100 : Math.round(pctAt(until) * 10) / 10 });
+      for (let t = row.actualStartDate.getTime() + 6 * DAY; t < until; t += 7 * DAY) logs.push({ date: dayOf(t), percent: Math.round(pctAt(t) * 10) / 10 });
+      logs.push({ date: dayOf(until), percent: row.actualDate ? 100 : Math.round(pctAt(until) * 10) / 10 });
       const seen = new Set<number>();
-      await tx.projectMilestoneProgress.createMany({
-        data: logs
-          .filter((l) => l.percent > 0 && !seen.has(l.date.getTime()) && seen.add(l.date.getTime()))
-          .map((l) => ({ milestoneId: m.id, projectId: pid, date: l.date, percent: l.percent, createdBy: actor })),
-      });
-    }
+      for (const l of logs)
+        if (l.percent > 0 && !seen.has(l.date.getTime()) && seen.add(l.date.getTime()))
+          allLogs.push({ milestoneId: createdMs[idx].id, projectId: pid, date: l.date, percent: l.percent, createdBy: actor });
+    });
+    if (allLogs.length) await tx.projectMilestoneProgress.createMany({ data: allLogs });
 
     // progress reports: six steps up to today's value, following an S shape like real work
     const steps = [1 / 6, 2 / 6, 3 / 6, 4 / 6, 5 / 6, 1];

@@ -44,29 +44,31 @@ export async function POST(request: NextRequest, context: Ctx) {
   const byId = new Map(milestones.map((m) => [m.id, m]));
   for (const it of items) if (!byId.has(it.milestoneId)) return NextResponse.json({ message: "Kegiatan tidak ditemukan di project ini." }, { status: 400 });
 
-  await prisma.$transaction(async (tx) => {
-    for (const it of items) {
-      const m = byId.get(it.milestoneId)!;
-      const percent = Math.round(it.percent * 10) / 10;
-      await tx.projectMilestoneProgress.upsert({
-        where: { milestoneId_date: { milestoneId: m.id, date: day } },
-        create: { milestoneId: m.id, projectId: project.id, date: day, percent, createdBy: session.name },
-        update: { percent, createdBy: session.name },
+  // few round trips: all of the day's values replaced in two statements, statuses only where they change
+  await prisma.$transaction(
+    async (tx) => {
+      const ids = items.map((it) => it.milestoneId);
+      await tx.projectMilestoneProgress.deleteMany({ where: { milestoneId: { in: ids }, date: day } });
+      await tx.projectMilestoneProgress.createMany({
+        data: items.map((it) => ({ milestoneId: it.milestoneId, projectId: project.id, date: day, percent: Math.round(it.percent * 10) / 10, createdBy: session.name })),
       });
-      // status follows the number
-      const firstLog = [...m.progressLogs.map((l) => l.date.getTime()), day.getTime()].sort((a, b) => a - b)[0];
-      const data: Record<string, unknown> = {};
-      if (percent >= 100) {
-        if (m.status !== "DONE") Object.assign(data, { status: "DONE", actualDate: day });
-        if (!m.actualStartDate) data.actualStartDate = new Date(firstLog);
-      } else if (percent > 0) {
-        if (m.status !== "IN_PROGRESS") Object.assign(data, { status: "IN_PROGRESS", actualDate: null });
-        if (!m.actualStartDate) data.actualStartDate = new Date(firstLog);
-      } else if (m.status === "DONE") {
-        Object.assign(data, { status: "IN_PROGRESS", actualDate: null });
+      for (const it of items) {
+        const m = byId.get(it.milestoneId)!;
+        const percent = Math.round(it.percent * 10) / 10;
+        // status follows the number
+        const firstLog = [...m.progressLogs.map((l) => l.date.getTime()), day.getTime()].sort((a, b) => a - b)[0];
+        const data: Record<string, unknown> = {};
+        if (percent >= 100) {
+          if (m.status !== "DONE") Object.assign(data, { status: "DONE", actualDate: day });
+          if (!m.actualStartDate) data.actualStartDate = new Date(firstLog);
+        } else if (percent > 0) {
+          if (m.status !== "IN_PROGRESS") Object.assign(data, { status: "IN_PROGRESS", actualDate: null });
+          if (!m.actualStartDate) data.actualStartDate = new Date(firstLog);
+        } else if (m.status === "DONE") {
+          Object.assign(data, { status: "IN_PROGRESS", actualDate: null });
+        }
+        if (Object.keys(data).length) await tx.projectMilestone.update({ where: { id: m.id }, data });
       }
-      if (Object.keys(data).length) await tx.projectMilestone.update({ where: { id: m.id }, data });
-    }
 
     // project percentage on that day, from all activities (weights as entered, or equal)
     const fresh = await tx.projectMilestone.findMany({
@@ -88,7 +90,9 @@ export async function POST(request: NextRequest, context: Ctx) {
     const notes = { summary: summary?.trim() || existing?.summary || null, nextPlan: nextPlan?.trim() || existing?.nextPlan || null };
     if (existing) await tx.projectProgressReport.update({ where: { id: existing.id }, data: { actualPercent: total, ...notes } });
     else await tx.projectProgressReport.create({ data: { projectId: project.id, reportDate: day, actualPercent: total, source: "ACTIVITY", createdBy: session.name, ...notes } });
-  });
+    },
+    { timeout: 30000, maxWait: 10000 }
+  );
 
   await auditProject(session, project, "UPDATE", project.id, `Memperbarui realisasi ${items.length} kegiatan per ${parsed.data.date}`);
   return NextResponse.json({ ok: true });

@@ -49,7 +49,7 @@ export async function PUT(request: NextRequest, context: Ctx) {
     await tx.projectTerm.updateMany(link);
     await tx.projectBudgetItem.updateMany(link);
     await tx.projectExpense.updateMany(link);
-  });
+  }, { timeout: 20000, maxWait: 10000 });
 
   await auditProject(g.session, g.project, "UPDATE", project.id, body.enabled ? "Mengaktifkan paket pekerjaan" : "Menonaktifkan paket pekerjaan");
   return NextResponse.json({ ok: true });

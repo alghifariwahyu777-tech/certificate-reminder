@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import ExcelJS from "exceljs";
 import { prisma } from "@/lib/prisma";
 
@@ -131,138 +132,130 @@ export async function importCertificatesFromExcel(buffer: Buffer): Promise<Impor
   }
 
   const results: ImportRowResult[] = [];
-  const categoryCache = new Map<string, string>();
-  const clientCache = new Map<string, string>();
-  const departmentCache = new Map<string, string>();
-
-  async function getOrCreateCategory(name: string): Promise<string> {
-    const key = name.toLowerCase();
-    if (categoryCache.has(key)) return categoryCache.get(key)!;
-    const existing = await prisma.category.findFirst({ where: { name: { equals: name } } });
-    const record = existing ?? (await prisma.category.create({ data: { name } }));
-    categoryCache.set(key, record.id);
-    return record.id;
-  }
-
-  async function getOrCreateClient(name: string): Promise<string> {
-    const key = name.toLowerCase();
-    if (clientCache.has(key)) return clientCache.get(key)!;
-    const existing = await prisma.client.findFirst({ where: { name: { equals: name } } });
-    const record = existing ?? (await prisma.client.create({ data: { name } }));
-    clientCache.set(key, record.id);
-    return record.id;
-  }
-
-  async function getOrCreateDepartment(name: string): Promise<string> {
-    const key = name.toLowerCase();
-    if (departmentCache.has(key)) return departmentCache.get(key)!;
-    const existing = await prisma.department.findFirst({ where: { name: { equals: name } } });
-    const record = existing ?? (await prisma.department.create({ data: { name } }));
-    departmentCache.set(key, record.id);
-    return record.id;
-  }
-
   const lastRow = sheet.rowCount;
 
+  // Read every row first, then talk to the database a few times for the whole
+  // file (not several times per row), so large files finish well within the
+  // hosting time limit even when the database is far away.
+  type Pending = { row: number; certificateNumber: string; data: Omit<Prisma.CertificateUncheckedCreateInput, "categoryId" | "clientId" | "departmentId">; categoryName: string; clientName: string; departmentName: string };
+  const pending: Pending[] = [];
   for (let rowNumber = 2; rowNumber <= lastRow; rowNumber++) {
     const row = sheet.getRow(rowNumber);
     if (row.cellCount === 0 || row.values === undefined) continue;
-
     const get = (key: string) => {
       const idx = columnIndexByKey.get(key);
       return idx ? row.getCell(idx).value : null;
     };
-
     const certificateNumber = cellToString(get("certificateNumber"));
-    if (!certificateNumber) continue; // blank row — skip silently, not an error
+    if (!certificateNumber) continue; // blank row: skip silently, not an error
+    const certificateName = cellToString(get("certificateName"));
+    const categoryName = cellToString(get("category"));
+    const clientName = cellToString(get("client"));
+    const departmentName = cellToString(get("department"));
+    const pic = cellToString(get("pic"));
+    const issueDate = cellToDate(get("issueDate"));
+    const expiryDate = cellToDate(get("expiryDate"));
+    const validFrom = cellToDate(get("validFrom"));
 
-    try {
-      const certificateName = cellToString(get("certificateName"));
-      const categoryName = cellToString(get("category"));
-      const clientName = cellToString(get("client"));
-      const departmentName = cellToString(get("department"));
-      const pic = cellToString(get("pic"));
-      const issueDate = cellToDate(get("issueDate"));
-      const expiryDate = cellToDate(get("expiryDate"));
-      const validFrom = cellToDate(get("validFrom"));
-
-      const missing: string[] = [];
-      if (!certificateName) missing.push("Certificate Name");
-      if (!categoryName) missing.push("Category");
-      if (!clientName) missing.push("Client");
-      if (!pic) missing.push("PIC");
-      if (!issueDate) missing.push("Issue Date");
-      if (!expiryDate) missing.push("Expiry Date");
-
-      if (missing.length > 0) {
-        results.push({
-          row: rowNumber,
-          certificateNumber,
-          status: "ERROR",
-          message: `Field wajib kosong/tidak valid: ${missing.join(", ")}.`,
-        });
-        continue;
-      }
-
-      if (expiryDate! <= issueDate!) {
-        results.push({
-          row: rowNumber,
-          certificateNumber,
-          status: "ERROR",
-          message: "Expiry Date harus lebih besar dari Issue Date.",
-        });
-        continue;
-      }
-
-      const existing = await prisma.certificate.findUnique({ where: { certificateNumber } });
-      if (existing) {
-        results.push({
-          row: rowNumber,
-          certificateNumber,
-          status: "SKIPPED",
-          message: existing.deletedAt
-            ? "Nomor sertifikat sudah dipakai oleh sertifikat di Trash."
-            : "Nomor sertifikat sudah ada, dilewati.",
-        });
-        continue;
-      }
-
-      const [categoryId, clientId, departmentId] = await Promise.all([
-        getOrCreateCategory(categoryName),
-        getOrCreateClient(clientName),
-        departmentName ? getOrCreateDepartment(departmentName) : Promise.resolve(null),
-      ]);
-
-      await prisma.certificate.create({
-        data: {
-          certificateNumber,
-          certificateName,
-          categoryId,
-          clientId,
-          departmentId,
-          issuingBody: cellToString(get("issuingBody")) || null,
-          issueDate: issueDate!,
-          validFrom: validFrom,
-          expiryDate: expiryDate!,
-          storageLocation: cellToString(get("storageLocation")) || null,
-          pic,
-          picEmail: cellToString(get("picEmail")) || null,
-          ccEmail: cellToString(get("ccEmail")) || null,
-          description: cellToString(get("description")) || null,
-          notes: cellToString(get("notes")) || null,
-        },
-      });
-
-      results.push({ row: rowNumber, certificateNumber, status: "CREATED" });
-    } catch (err) {
-      results.push({
-        row: rowNumber,
+    const missing: string[] = [];
+    if (!certificateName) missing.push("Certificate Name");
+    if (!categoryName) missing.push("Category");
+    if (!clientName) missing.push("Client");
+    if (!pic) missing.push("PIC");
+    if (!issueDate) missing.push("Issue Date");
+    if (!expiryDate) missing.push("Expiry Date");
+    if (missing.length > 0) {
+      results.push({ row: rowNumber, certificateNumber, status: "ERROR", message: `Field wajib kosong/tidak valid: ${missing.join(", ")}.` });
+      continue;
+    }
+    if (expiryDate! <= issueDate!) {
+      results.push({ row: rowNumber, certificateNumber, status: "ERROR", message: "Expiry Date harus lebih besar dari Issue Date." });
+      continue;
+    }
+    pending.push({
+      row: rowNumber,
+      certificateNumber,
+      categoryName,
+      clientName,
+      departmentName,
+      data: {
         certificateNumber,
-        status: "ERROR",
-        message: err instanceof Error ? err.message : "Gagal memproses baris ini.",
-      });
+        certificateName,
+        issuingBody: cellToString(get("issuingBody")) || null,
+        issueDate: issueDate!,
+        validFrom,
+        expiryDate: expiryDate!,
+        storageLocation: cellToString(get("storageLocation")) || null,
+        pic,
+        picEmail: cellToString(get("picEmail")) || null,
+        ccEmail: cellToString(get("ccEmail")) || null,
+        description: cellToString(get("description")) || null,
+        notes: cellToString(get("notes")) || null,
+      },
+    });
+  }
+
+  // numbers already in the system (one query), and duplicates inside the file
+  const existing = new Map(
+    (await prisma.certificate.findMany({ where: { certificateNumber: { in: pending.map((p) => p.certificateNumber) } }, select: { certificateNumber: true, deletedAt: true } })).map((c) => [c.certificateNumber, c])
+  );
+  const seen = new Set<string>();
+  const toCreate: Pending[] = [];
+  for (const p of pending) {
+    const ex = existing.get(p.certificateNumber);
+    if (ex) {
+      results.push({ row: p.row, certificateNumber: p.certificateNumber, status: "SKIPPED", message: ex.deletedAt ? "Nomor sertifikat sudah dipakai oleh sertifikat di Trash." : "Nomor sertifikat sudah ada, dilewati." });
+    } else if (seen.has(p.certificateNumber)) {
+      results.push({ row: p.row, certificateNumber: p.certificateNumber, status: "SKIPPED", message: "Nomor sertifikat muncul lebih dari sekali di file, baris ini dilewati." });
+    } else {
+      seen.add(p.certificateNumber);
+      toCreate.push(p);
     }
   }
+
+  // master data: load once, create only the names that are new
+  const ensure = async (
+    names: string[],
+    load: () => Promise<{ id: string; name: string }[]>,
+    create: (name: string) => Promise<{ id: string }>
+  ): Promise<Map<string, string>> => {
+    const map = new Map((await load()).map((r) => [r.name.toLowerCase(), r.id]));
+    for (const n of [...new Set(names.filter(Boolean))]) if (!map.has(n.toLowerCase())) map.set(n.toLowerCase(), (await create(n)).id);
+    return map;
+  };
+  const [categories, clients, departments] = toCreate.length
+    ? await Promise.all([
+        ensure(toCreate.map((p) => p.categoryName), () => prisma.category.findMany({ select: { id: true, name: true } }), (name) => prisma.category.create({ data: { name } })),
+        ensure(toCreate.map((p) => p.clientName), () => prisma.client.findMany({ select: { id: true, name: true } }), (name) => prisma.client.create({ data: { name } })),
+        ensure(toCreate.map((p) => p.departmentName), () => prisma.department.findMany({ select: { id: true, name: true } }), (name) => prisma.department.create({ data: { name } })),
+      ])
+    : [new Map<string, string>(), new Map<string, string>(), new Map<string, string>()];
+
+  const rowData = (p: Pending): Prisma.CertificateUncheckedCreateInput => ({
+    ...p.data,
+    categoryId: categories.get(p.categoryName.toLowerCase())!,
+    clientId: clients.get(p.clientName.toLowerCase())!,
+    departmentId: p.departmentName ? (departments.get(p.departmentName.toLowerCase()) ?? null) : null,
+  });
+
+  // write in chunks; a chunk that fails is retried row by row so each row gets its own result
+  for (let i = 0; i < toCreate.length; i += 200) {
+    const chunk = toCreate.slice(i, i + 200);
+    try {
+      await prisma.certificate.createMany({ data: chunk.map(rowData) });
+      for (const p of chunk) results.push({ row: p.row, certificateNumber: p.certificateNumber, status: "CREATED" });
+    } catch {
+      for (const p of chunk) {
+        try {
+          await prisma.certificate.create({ data: rowData(p) });
+          results.push({ row: p.row, certificateNumber: p.certificateNumber, status: "CREATED" });
+        } catch (err) {
+          results.push({ row: p.row, certificateNumber: p.certificateNumber, status: "ERROR", message: err instanceof Error ? err.message : "Gagal memproses baris ini." });
+        }
+      }
+    }
+  }
+  results.sort((a, b) => a.row - b.row);
 
   return {
     totalRows: results.length,

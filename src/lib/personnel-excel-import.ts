@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import ExcelJS from "exceljs";
 import { prisma } from "@/lib/prisma";
 
@@ -127,148 +128,141 @@ export async function importPersonnelCertificationsFromExcel(buffer: Buffer): Pr
   }
 
   const results: PersonnelImportRowResult[] = [];
-  const categoryCache = new Map<string, string>();
-  const departmentCache = new Map<string, string>();
-  const employeeCache = new Map<string, string>();
-
-  async function getOrCreateCategory(name: string): Promise<string> {
-    const key = name.toLowerCase();
-    if (categoryCache.has(key)) return categoryCache.get(key)!;
-    const existing = await prisma.personnelCertificationCategory.findFirst({ where: { name: { equals: name } } });
-    const record = existing ?? (await prisma.personnelCertificationCategory.create({ data: { name } }));
-    categoryCache.set(key, record.id);
-    return record.id;
-  }
-
-  async function getOrCreateDepartment(name: string): Promise<string> {
-    const key = name.toLowerCase();
-    if (departmentCache.has(key)) return departmentCache.get(key)!;
-    const existing = await prisma.department.findFirst({ where: { name: { equals: name } } });
-    const record = existing ?? (await prisma.department.create({ data: { name } }));
-    departmentCache.set(key, record.id);
-    return record.id;
-  }
-
-  async function getOrCreateEmployee(params: {
-    email: string;
-    name: string;
-    employeeId: string;
-    position: string;
-    departmentId: string | null;
-  }): Promise<string> {
-    const key = params.email.toLowerCase();
-    if (employeeCache.has(key)) return employeeCache.get(key)!;
-    const existing = await prisma.employee.findFirst({ where: { email: { equals: params.email } } });
-    const record =
-      existing ??
-      (await prisma.employee.create({
-        data: {
-          name: params.name,
-          email: params.email,
-          employeeId: params.employeeId || null,
-          position: params.position || null,
-          departmentId: params.departmentId,
-        },
-      }));
-    employeeCache.set(key, record.id);
-    return record.id;
-  }
-
   const lastRow = sheet.rowCount;
 
+  // Read every row first, then talk to the database a few times for the whole
+  // file (not several times per row), so large files finish within the
+  // hosting time limit even when the database is far away.
+  type Pending = {
+    row: number;
+    employeeName: string;
+    employeeEmail: string;
+    employeeCode: string;
+    position: string;
+    categoryName: string;
+    departmentName: string;
+    certificationName: string;
+    certificationNumber: string | null;
+    data: Omit<Prisma.PersonnelCertificationUncheckedCreateInput, "employeeId" | "categoryId">;
+  };
+  const pending: Pending[] = [];
   for (let rowNumber = 2; rowNumber <= lastRow; rowNumber++) {
     const row = sheet.getRow(rowNumber);
     if (row.cellCount === 0 || row.values === undefined) continue;
-
     const get = (key: string) => {
       const idx = columnIndexByKey.get(key);
       return idx ? row.getCell(idx).value : null;
     };
-
     const employeeName = cellToString(get("employeeName"));
     const certificationName = cellToString(get("certificationName"));
-    if (!employeeName && !certificationName) continue; // blank row — skip silently
+    if (!employeeName && !certificationName) continue; // blank row: skip silently
+    const employeeEmail = cellToString(get("employeeEmail"));
+    const categoryName = cellToString(get("category"));
+    const expiryDate = cellToDate(get("expiryDate"));
+    const missing: string[] = [];
+    if (!employeeName) missing.push("Employee Name");
+    if (!employeeEmail) missing.push("Employee Email");
+    if (!categoryName) missing.push("Category");
+    if (!certificationName) missing.push("Certification Name");
+    if (!expiryDate) missing.push("Expiry Date");
+    if (missing.length > 0) {
+      results.push({ row: rowNumber, employeeName: employeeName || "-", certificationName: certificationName || "-", status: "ERROR", message: `Field wajib kosong/tidak valid: ${missing.join(", ")}.` });
+      continue;
+    }
+    const certificationNumber = cellToString(get("certificationNumber")) || null;
+    pending.push({
+      row: rowNumber,
+      employeeName,
+      employeeEmail,
+      employeeCode: cellToString(get("employeeId")),
+      position: cellToString(get("position")),
+      categoryName,
+      departmentName: cellToString(get("department")),
+      certificationName,
+      certificationNumber,
+      data: {
+        certificationName,
+        certificationNumber,
+        issuingBody: cellToString(get("issuingBody")) || null,
+        issueDate: cellToDate(get("issueDate")),
+        validFrom: cellToDate(get("validFrom")),
+        expiryDate: expiryDate!,
+        ccEmail: cellToString(get("ccEmail")) || null,
+        notes: cellToString(get("notes")) || null,
+      },
+    });
+  }
 
-    try {
-      const employeeEmail = cellToString(get("employeeEmail"));
-      const categoryName = cellToString(get("category"));
-      const departmentName = cellToString(get("department"));
-      const expiryDate = cellToDate(get("expiryDate"));
-
-      const missing: string[] = [];
-      if (!employeeName) missing.push("Employee Name");
-      if (!employeeEmail) missing.push("Employee Email");
-      if (!categoryName) missing.push("Category");
-      if (!certificationName) missing.push("Certification Name");
-      if (!expiryDate) missing.push("Expiry Date");
-
-      if (missing.length > 0) {
-        results.push({
-          row: rowNumber,
-          employeeName: employeeName || "-",
-          certificationName: certificationName || "-",
-          status: "ERROR",
-          message: `Field wajib kosong/tidak valid: ${missing.join(", ")}.`,
-        });
-        continue;
-      }
-
-      const certificationNumber = cellToString(get("certificationNumber")) || null;
-
-      if (certificationNumber) {
-        const existingCert = await prisma.personnelCertification.findFirst({
-          where: { certificationNumber, deletedAt: null },
-        });
-        if (existingCert) {
-          results.push({
-            row: rowNumber,
-            employeeName,
-            certificationName,
-            status: "SKIPPED",
-            message: "Nomor sertifikasi sudah ada, dilewati.",
-          });
-          continue;
-        }
-      }
-
-      const departmentId = departmentName ? await getOrCreateDepartment(departmentName) : null;
-      const [categoryId, employeeId] = await Promise.all([
-        getOrCreateCategory(categoryName),
-        getOrCreateEmployee({
-          email: employeeEmail,
-          name: employeeName,
-          employeeId: cellToString(get("employeeId")),
-          position: cellToString(get("position")),
-          departmentId,
-        }),
-      ]);
-
-      await prisma.personnelCertification.create({
-        data: {
-          employeeId,
-          categoryId,
-          certificationName,
-          certificationNumber,
-          issuingBody: cellToString(get("issuingBody")) || null,
-          issueDate: cellToDate(get("issueDate")),
-          validFrom: cellToDate(get("validFrom")),
-          expiryDate: expiryDate!,
-          ccEmail: cellToString(get("ccEmail")) || null,
-          notes: cellToString(get("notes")) || null,
-        },
-      });
-
-      results.push({ row: rowNumber, employeeName, certificationName, status: "CREATED" });
-    } catch (err) {
-      results.push({
-        row: rowNumber,
-        employeeName: employeeName || "-",
-        certificationName: certificationName || "-",
-        status: "ERROR",
-        message: err instanceof Error ? err.message : "Gagal memproses baris ini.",
-      });
+  // certification numbers already in the system (one query), and duplicates inside the file
+  const numbers = pending.map((p) => p.certificationNumber).filter((n): n is string => !!n);
+  const taken = new Set(
+    (await prisma.personnelCertification.findMany({ where: { certificationNumber: { in: numbers }, deletedAt: null }, select: { certificationNumber: true } })).map((c) => c.certificationNumber)
+  );
+  const seen = new Set<string>();
+  const toCreate: Pending[] = [];
+  for (const p of pending) {
+    if (p.certificationNumber && taken.has(p.certificationNumber)) {
+      results.push({ row: p.row, employeeName: p.employeeName, certificationName: p.certificationName, status: "SKIPPED", message: "Nomor sertifikasi sudah ada, dilewati." });
+    } else if (p.certificationNumber && seen.has(p.certificationNumber)) {
+      results.push({ row: p.row, employeeName: p.employeeName, certificationName: p.certificationName, status: "SKIPPED", message: "Nomor sertifikasi muncul lebih dari sekali di file, baris ini dilewati." });
+    } else {
+      if (p.certificationNumber) seen.add(p.certificationNumber);
+      toCreate.push(p);
     }
   }
+
+  // master data and employees: load once, create only what is new
+  const categories = new Map((await prisma.personnelCertificationCategory.findMany({ select: { id: true, name: true } })).map((r) => [r.name.toLowerCase(), r.id]));
+  const departments = new Map((await prisma.department.findMany({ select: { id: true, name: true } })).map((r) => [r.name.toLowerCase(), r.id]));
+  const emails = [...new Set(toCreate.map((p) => p.employeeEmail.toLowerCase()))];
+  const employees = new Map(
+    (await prisma.employee.findMany({ where: { email: { in: toCreate.map((p) => p.employeeEmail), mode: "insensitive" } }, select: { id: true, email: true } })).map((e) => [e.email.toLowerCase(), e.id])
+  );
+  for (const p of toCreate) {
+    const c = p.categoryName.toLowerCase();
+    if (!categories.has(c)) categories.set(c, (await prisma.personnelCertificationCategory.create({ data: { name: p.categoryName } })).id);
+    const d = p.departmentName.toLowerCase();
+    if (p.departmentName && !departments.has(d)) departments.set(d, (await prisma.department.create({ data: { name: p.departmentName } })).id);
+  }
+  for (const email of emails) {
+    if (employees.has(email)) continue;
+    const p = toCreate.find((x) => x.employeeEmail.toLowerCase() === email)!;
+    const created = await prisma.employee.create({
+      data: {
+        name: p.employeeName,
+        email: p.employeeEmail,
+        employeeId: p.employeeCode || null,
+        position: p.position || null,
+        departmentId: p.departmentName ? (departments.get(p.departmentName.toLowerCase()) ?? null) : null,
+      },
+    });
+    employees.set(email, created.id);
+  }
+
+  const rowData = (p: Pending): Prisma.PersonnelCertificationUncheckedCreateInput => ({
+    ...p.data,
+    employeeId: employees.get(p.employeeEmail.toLowerCase())!,
+    categoryId: categories.get(p.categoryName.toLowerCase())!,
+  });
+
+  // write in chunks; a chunk that fails is retried row by row so each row gets its own result
+  for (let i = 0; i < toCreate.length; i += 200) {
+    const chunk = toCreate.slice(i, i + 200);
+    try {
+      await prisma.personnelCertification.createMany({ data: chunk.map(rowData) });
+      for (const p of chunk) results.push({ row: p.row, employeeName: p.employeeName, certificationName: p.certificationName, status: "CREATED" });
+    } catch {
+      for (const p of chunk) {
+        try {
+          await prisma.personnelCertification.create({ data: rowData(p) });
+          results.push({ row: p.row, employeeName: p.employeeName, certificationName: p.certificationName, status: "CREATED" });
+        } catch (err) {
+          results.push({ row: p.row, employeeName: p.employeeName, certificationName: p.certificationName, status: "ERROR", message: err instanceof Error ? err.message : "Gagal memproses baris ini." });
+        }
+      }
+    }
+  }
+  results.sort((a, b) => a.row - b.row);
 
   return {
     totalRows: results.length,
